@@ -1,0 +1,49 @@
+[project]
+name = "tendia-scoring"
+version = "0.1.0"
+description = "Motor de scoring de TendIA: scorecard interpretable de probabilidad de incumplimiento a 90 días."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+    "pydantic==2.10.3",
+    "numpy==2.2.0",
+    "scikit-learn==1.6.0",
+    "structlog==24.4.0",
+    "sentry-sdk[fastapi]==2.19.2",
+    "scipy==1.14.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "pytest-cov==6.0.0",
+    "httpx==0.28.1",
+    "ruff==0.8.4",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tendia_scoring"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]
+"tendia_scoring/synthetic.py" = ["S311"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=tendia_scoring --cov-report=term-missing --cov-fail-under=70"
+
+[tool.coverage.run]
+omit = ["tendia_scoring/train.py"]

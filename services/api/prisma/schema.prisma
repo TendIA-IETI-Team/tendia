@@ -1,0 +1,273 @@
+// Modelo de datos de TendIA (TND-004). Diagrama entidad-relación en docs/data-model.md.
+// Convención: entidades del dominio en español, sin tildes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum FuenteTipo {
+  DATAFONO
+  DISTRIBUIDOR
+  OPEN_FINANCE
+  MANUAL
+}
+
+enum EstadoSolicitud {
+  BORRADOR
+  DATOS_INCOMPLETOS
+  SCORE_LISTO
+  ENVIADA
+  GARANTIA_SOLICITADA
+  GARANTIA_ENVIADA
+  APROBADA
+  RECHAZADA
+}
+
+enum RolUsuario {
+  ANALISTA
+  ADMIN_ALIADO
+}
+
+enum TipoAliado {
+  BANCO
+  FINTECH
+  MICROFINANCIERA
+  DISTRIBUIDOR
+}
+
+enum TipoGarantia {
+  FNG
+  CODEUDOR
+  OTRA
+}
+
+enum EstadoGarantia {
+  SOLICITADA
+  ENVIADA
+  ACEPTADA
+  RECHAZADA
+}
+
+model Tendero {
+  id                String           @id @default(uuid())
+  // El celular se guarda cifrado; el hash (HMAC) permite buscar sin descifrar.
+  celularHash       String           @unique
+  celularCifrado    String
+  nombre            String?
+  cedulaCifrada     String?
+  creadoEn          DateTime         @default(now())
+  negocio           Negocio?
+  consentimientos   Consentimiento[]
+  solicitudes       Solicitud[]
+}
+
+model OtpCodigo {
+  id          String    @id @default(uuid())
+  celularHash String
+  codigoHash  String
+  expiraEn    DateTime
+  intentos    Int       @default(0)
+  usadoEn     DateTime?
+  creadoEn    DateTime  @default(now())
+
+  @@index([celularHash, creadoEn])
+}
+
+model Negocio {
+  id                     String       @id @default(uuid())
+  tenderoId              String       @unique
+  tendero                Tendero      @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  nombre                 String?
+  tipo                   String       @default("tienda")
+  barrio                 String?
+  ciudad                 String       @default("Bogotá")
+  antiguedadMeses        Int?
+  ventasMensualesDeclaradas Int?
+  // Solo para demos y pruebas: fija el perfil que devuelven los conectores simulados.
+  perfilSimulado         String?
+  datos                  DatoMensual[]
+}
+
+model Consentimiento {
+  id           String     @id @default(uuid())
+  tenderoId    String
+  tendero      Tendero    @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  fuente       FuenteTipo
+  proveedor    String
+  versionTexto String
+  otorgadoEn   DateTime   @default(now())
+  revocadoEn   DateTime?
+
+  @@index([tenderoId, fuente])
+}
+
+model DatoMensual {
+  id           String     @id @default(uuid())
+  negocioId    String
+  negocio      Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  fuente       FuenteTipo
+  mes          String // YYYY-MM
+  ventas       Int?
+  compras      Int?
+  facturas     Int?
+  pagadasATiempo Int?
+  diasRetrasoPromedio Float?
+  creadoEn     DateTime   @default(now())
+
+  @@unique([negocioId, fuente, mes])
+}
+
+model Aliado {
+  id          String      @id @default(uuid())
+  nombre      String
+  slug        String      @unique
+  tipo        TipoAliado
+  usuarios    Usuario[]
+  politica    Politica?
+  solicitudes Solicitud[]
+  apiKeys     ApiKey[]
+  consumos    ConsumoApi[]
+}
+
+model Usuario {
+  id           String     @id @default(uuid())
+  aliadoId     String
+  aliado       Aliado     @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  email        String     @unique
+  nombre       String
+  passwordHash String
+  rol          RolUsuario @default(ANALISTA)
+  totpSecreto  String?
+  mfaActivo    Boolean    @default(false)
+  // Bloqueo temporal tras 5 intentos fallidos (TND-011).
+  intentosFallidos Int      @default(0)
+  bloqueadoHasta   DateTime?
+  creadoEn     DateTime   @default(now())
+}
+
+model Politica {
+  id                   String   @id @default(uuid())
+  aliadoId             String   @unique
+  aliado               Aliado   @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  scoreMinAprobar      Int      @default(60)
+  scoreMinConGarantia  Int      @default(45)
+  montoMaximo          Int      @default(5000000)
+  // Sube en cada cambio; cada recomendación muestra con qué versión se calculó (TND-061).
+  version              Int      @default(1)
+  actualizadaEn        DateTime @updatedAt
+}
+
+model Solicitud {
+  id            String          @id @default(uuid())
+  tenderoId     String
+  tendero       Tendero         @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  aliadoId      String?
+  aliado        Aliado?         @relation(fields: [aliadoId], references: [id])
+  monto         Int
+  destino       String
+  plazoMeses    Int
+  estado        EstadoSolicitud @default(BORRADOR)
+  calidadDatos  Json?
+  notaDecision  String?
+  decididaEn    DateTime?
+  decididaPor   String?
+  enviadaEn     DateTime?
+  satisfaccion  Int?
+  comentarioSatisfaccion String?
+  creadaEn      DateTime        @default(now())
+  actualizadaEn DateTime        @updatedAt
+  scores        Score[]
+  variaciones   Variacion[]
+  garantia      Garantia?
+
+  @@index([aliadoId, estado])
+  @@index([tenderoId])
+}
+
+model Score {
+  id                 String    @id @default(uuid())
+  solicitudId        String
+  solicitud          Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  version            Int // 1 = original, 2+ = con variaciones justificadas
+  puntaje            Int
+  probabilidadIncumplimiento Float
+  nivel              String
+  modeloVersion      String
+  contribuciones     Json
+  calidadDatos       Json
+  explicacion        Json // { resumen, fortalezas[], aMejorar[] }
+  explicacionFuente  String // "ia" | "plantilla"
+  conVariaciones     Boolean   @default(false)
+  creadoEn           DateTime  @default(now())
+
+  @@unique([solicitudId, version])
+}
+
+model Variacion {
+  id          String    @id @default(uuid())
+  solicitudId String
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  mes         String
+  motivo      String
+  creadaEn    DateTime  @default(now())
+
+  @@unique([solicitudId, mes])
+}
+
+model Garantia {
+  id            String         @id @default(uuid())
+  solicitudId   String         @unique
+  solicitud     Solicitud      @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  tipo          TipoGarantia
+  notaAliado    String?
+  respuesta     String?
+  estado        EstadoGarantia @default(SOLICITADA)
+  creadaEn      DateTime       @default(now())
+  actualizadaEn DateTime       @updatedAt
+}
+
+model ApiKey {
+  id         String       @id @default(uuid())
+  aliadoId   String
+  aliado     Aliado       @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  nombre     String
+  prefijo    String       @unique
+  hash       String
+  creadaEn   DateTime     @default(now())
+  revocadaEn DateTime?
+  ultimoUso  DateTime?
+  consumos   ConsumoApi[]
+}
+
+model ConsumoApi {
+  id        String   @id @default(uuid())
+  aliadoId  String
+  aliado    Aliado   @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  apiKeyId  String
+  apiKey    ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  endpoint  String
+  estado    Int
+  creadoEn  DateTime @default(now())
+
+  @@index([aliadoId, creadoEn])
+}
+
+model Auditoria {
+  id        String   @id @default(uuid())
+  actorTipo String // TENDERO | USUARIO | API_KEY | SISTEMA
+  actorId   String
+  aliadoId  String?
+  accion    String
+  entidad   String
+  entidadId String?
+  detalle   Json?
+  creadoEn  DateTime @default(now())
+
+  @@index([aliadoId, creadoEn])
+  @@index([entidad, entidadId])
+}

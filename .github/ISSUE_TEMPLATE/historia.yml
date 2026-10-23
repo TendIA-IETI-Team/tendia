@@ -1,0 +1,35 @@
+name: Historia de usuario
+description: Una funcionalidad desde el punto de vista de quien la usa
+title: 'TND-XXX '
+labels: [feature]
+body:
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      description: Como <rol>, quiero <qué>, para <para qué>.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: epica
+    attributes:
+      label: Épica
+      placeholder: E5 App del tendero
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad (MoSCoW)
+      options: [Must, Should, Could]
+  - type: input
+    id: estimacion
+    attributes:
+      label: Estimación (puntos)

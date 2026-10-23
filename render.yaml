@@ -1,0 +1,65 @@
+# Blueprint de Render para staging (TND-005). Render despliega al fusionar a main.
+# Los secretos marcados con sync: false se cargan a mano en el panel de Render; nunca en el repo.
+services:
+  - type: pserv
+    name: tendia-scoring
+    runtime: docker
+    dockerfilePath: ./services/scoring/Dockerfile
+    dockerContext: ./services/scoring
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: web
+    name: tendia-api
+    runtime: docker
+    dockerfilePath: ./services/api/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: DATABASE_URL # Postgres del proyecto Supabase de staging
+        sync: false
+      - key: SCORING_URL
+        fromService:
+          type: pserv
+          name: tendia-scoring
+          property: hostport
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATA_ENCRYPTION_KEY # 32 bytes en base64
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: OTP_DEV_MODE # true solo mientras no haya proveedor SMS en staging
+        value: 'true'
+      - key: SEED_ON_START
+        value: 'true'
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+
+  - type: web
+    name: tendia-portal
+    runtime: docker
+    dockerfilePath: ./apps/portal/Dockerfile
+    dockerContext: .
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_URL # URL pública de tendia-api
+        sync: false

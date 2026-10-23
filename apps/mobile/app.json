@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "TendIA",
+    "slug": "tendia",
+    "scheme": "tendia",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F5FC",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.tendia.app"
+    },
+    "android": {
+      "package": "co.tendia.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/logo.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/logo.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-font",
+      "expo-splash-screen"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

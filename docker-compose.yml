@@ -1,0 +1,85 @@
+# Entorno local completo de TendIA.
+#   docker compose up -d db            -> solo Postgres (para desarrollar con pnpm dev)
+#   docker compose up --build          -> todo: db, scoring, api y portal
+services:
+  db:
+    image: postgres:16.6-alpine
+    environment:
+      POSTGRES_USER: tendia
+      POSTGRES_PASSWORD: tendia
+      POSTGRES_DB: tendia
+    ports:
+      - '55432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U tendia']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  scoring:
+    build: ./services/scoring
+    environment:
+      APP_ENV: local
+    ports:
+      - '8000:8000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://tendia:tendia@db:5432/tendia
+      SCORING_URL: http://scoring:8000
+      APP_ENV: local
+      OTP_DEV_MODE: 'true'
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8081
+      JWT_SECRET: ${JWT_SECRET:-solo-para-desarrollo-local-cambiar-en-staging}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:-MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+      SEED_ON_START: 'true'
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4000/health']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      db:
+        condition: service_healthy
+      scoring:
+        condition: service_healthy
+
+  portal:
+    build:
+      context: .
+      dockerfile: apps/portal/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/login']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    depends_on:
+      - api
+
+volumes:
+  db-data:

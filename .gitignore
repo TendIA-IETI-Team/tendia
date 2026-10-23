@@ -1,0 +1,36 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+.venv/
+__pycache__/
+*.pyc
+
+# Builds
+dist/
+build/
+.next/
+.expo/
+web-build/
+.turbo/
+coverage/
+.coverage
+htmlcov/
+*.tsbuildinfo
+
+# Pruebas e2e
+playwright-report/
+test-results/
+
+# Entorno y secretos: nunca se suben
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

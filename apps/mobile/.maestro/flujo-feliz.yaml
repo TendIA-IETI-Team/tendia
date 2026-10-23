@@ -1,0 +1,47 @@
+# E2E del flujo feliz de la app (TND-070), con Maestro: https://maestro.dev
+# Requiere la API corriendo con OTP_DEV_MODE=true y la app abierta en un emulador:
+#   maestro test apps/mobile/.maestro/flujo-feliz.yaml
+appId: co.tendia.app
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: celular
+- inputText: '3000000001'
+- tapOn:
+    id: pedir-codigo
+- extendedWaitUntil:
+    visible: 'Modo de prueba: tu código es .*'
+    timeout: 10000
+- copyTextFrom:
+    text: 'Modo de prueba: tu código es .*'
+- tapOn:
+    id: codigo
+- inputText: ${maestro.copiedText.slice(-6)}
+- tapOn:
+    id: entrar
+- tapOn:
+    id: solicitar
+- tapOn: '$3.000.000'
+- tapOn: 'Surtir la tienda'
+- tapOn: '3 a 5 años'
+- tapOn:
+    id: siguiente
+- tapOn:
+    id: fuente-DATAFONO
+- tapOn:
+    id: fuente-DISTRIBUIDOR
+- tapOn:
+    id: autorizar
+- extendedWaitUntil:
+    visible:
+      id: puntaje
+    timeout: 20000
+- assertVisible: 'Este no es un puntaje de DataCrédito.*'
+- tapOn:
+    id: compartir
+- tapOn:
+    id: 'aliado-Banco Demo Popular'
+- tapOn:
+    id: enviar
+- assertVisible: 'Banco Demo Popular está revisando tu solicitud'

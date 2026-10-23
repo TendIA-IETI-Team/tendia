@@ -8,8 +8,8 @@ import { pesos, soloDigitos } from '@/lib/format';
 const MONTOS = [1_000_000, 2_000_000, 3_000_000, 5_000_000] as const;
 const DESTINOS = [
   'Surtir la tienda',
-  'Comprar una nevera o vitrina',
-  'Arreglos del local',
+  'Pagar el arriendo',
+  'Comprar equipos (nevera, vitrina)',
   'Otro',
 ] as const;
 const PLAZOS = [3, 6, 12] as const;

@@ -61,6 +61,16 @@ export default function Ingreso() {
               loading={cargando}
             />
             <Button
+              testID="reenviar"
+              title="Reenviar código"
+              variant="secondary"
+              onPress={() => {
+                setCodigo('');
+                void pedirCodigo();
+              }}
+              disabled={cargando}
+            />
+            <Button
               title="Cambiar número"
               variant="link"
               onPress={() => {

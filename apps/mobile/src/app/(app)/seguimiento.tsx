@@ -1,8 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
 import { Aviso, Body, Button, Card, Cargando, Input, Label, Screen, Title } from '@/components/ui';
 import { api, solicitudActual, type Solicitud } from '@/lib/api';
+import { ENLACES } from '@/lib/enlaces';
 import { pesos } from '@/lib/format';
 import { colors, font } from '@/lib/theme';
 
@@ -26,6 +27,8 @@ const GARANTIAS: Record<string, { nombre: string; explicacion: string }> = {
 export default function Seguimiento() {
   const [sol, setSol] = useState<Solicitud | null>(null);
   const [respuesta, setRespuesta] = useState('');
+  const [estrellas, setEstrellas] = useState(0);
+  const [comentario, setComentario] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
@@ -105,6 +108,13 @@ export default function Seguimiento() {
         <Card>
           <Label>La entidad te pide: {g.nombre}</Label>
           <Body>{g.explicacion}</Body>
+          {sol.garantia?.tipo === 'FNG' && (
+            <Button
+              title="Ver cómo funciona el Fondo Nacional de Garantías"
+              variant="link"
+              onPress={() => void Linking.openURL(ENLACES.fng)}
+            />
+          )}
           {sol.garantia?.notaAliado && <Aviso>Nota de la entidad: {sol.garantia.notaAliado}</Aviso>}
           <Input
             testID="respuesta"
@@ -160,15 +170,16 @@ export default function Seguimiento() {
                 testID={`estrella-${n}`}
                 accessibilityRole="radio"
                 accessibilityLabel={`${n} de 5`}
-                accessibilityState={{ checked: (sol.satisfaccion ?? 0) === n }}
+                accessibilityState={{ checked: (sol.satisfaccion ?? estrellas) === n }}
                 disabled={Boolean(sol.satisfaccion) || cargando}
-                onPress={() => accion('satisfaccion', { calificacion: n })}
+                onPress={() => setEstrellas(n)}
                 style={{ padding: 6 }}
               >
                 <Text
                   style={{
                     fontSize: 34,
-                    color: n <= (sol.satisfaccion ?? 0) ? colors.orange500 : colors.neutral300,
+                    color:
+                      n <= (sol.satisfaccion ?? estrellas) ? colors.orange500 : colors.neutral300,
                   }}
                 >
                   ★
@@ -176,6 +187,29 @@ export default function Seguimiento() {
               </Pressable>
             ))}
           </View>
+          {!sol.satisfaccion && estrellas > 0 && (
+            <>
+              <Input
+                label="¿Algo que quieras contarnos? (opcional)"
+                value={comentario}
+                onChangeText={setComentario}
+                maxLength={500}
+                multiline
+              />
+              <Button
+                testID="enviar-opinion"
+                title="Enviar mi opinión"
+                variant="secondary"
+                loading={cargando}
+                onPress={() =>
+                  accion('satisfaccion', {
+                    calificacion: estrellas,
+                    comentario: comentario.trim() || undefined,
+                  })
+                }
+              />
+            </>
+          )}
         </Card>
       )}
       {error && <Aviso tono="error">{error}</Aviso>}

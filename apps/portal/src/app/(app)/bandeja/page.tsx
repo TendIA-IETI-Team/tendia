@@ -6,7 +6,7 @@ import { puntos } from '@/components/charts';
 import { PageTitle } from '@/components/Shell';
 import { Alerta, Badge, Card, EstadoBadge, Vacio } from '@/components/ui';
 import { api, type Bandeja } from '@/lib/api';
-import { ESTADOS, fecha, pesos, RECOMENDACIONES } from '@/lib/format';
+import { ESTADOS, fecha, NIVELES, pesos, RECOMENDACIONES } from '@/lib/format';
 
 const FILTROS = [
   { valor: '', texto: 'Todas' },
@@ -20,8 +20,10 @@ const FILTROS = [
 /** A1: bandeja de solicitudes con score explicado (TND-060). */
 export default function BandejaPage() {
   const [filtro, setFiltro] = useState('');
+  const [nivel, setNivel] = useState('');
   const [data, setData] = useState<Bandeja | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const filas = (data?.solicitudes ?? []).filter((s) => !nivel || s.nivel === nivel);
 
   useEffect(() => {
     let vivo = true;
@@ -66,10 +68,28 @@ export default function BandejaPage() {
             </button>
           ))}
         </div>
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <label htmlFor="nivel" className="font-bold text-ink-muted">
+            Nivel del puntaje
+          </label>
+          <select
+            id="nivel"
+            value={nivel}
+            onChange={(e) => setNivel(e.target.value)}
+            className="rounded-lg border border-line bg-white px-2 py-1.5 font-semibold text-brand-700"
+          >
+            <option value="">Todos</option>
+            {NIVELES.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
         {!data ? (
           <Vacio>Cargando…</Vacio>
-        ) : data.solicitudes.length === 0 ? (
-          <Vacio>No hay solicitudes en este estado.</Vacio>
+        ) : filas.length === 0 ? (
+          <Vacio>No hay solicitudes con estos filtros.</Vacio>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] text-left text-sm">
@@ -85,7 +105,7 @@ export default function BandejaPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.solicitudes.map((s) => (
+                {filas.map((s) => (
                   <tr key={s.id} className="border-b border-line last:border-0 hover:bg-brand-50">
                     <td className="py-3 pr-4">
                       <Link

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
+import { ENLACES } from '@/lib/enlaces';
 import { Chips } from '@/components/chips';
 import { Aviso, Body, Button, Card, Cargando, Pasos, Screen, Title } from '@/components/ui';
 import { api, type Consentimiento, type Fuente } from '@/lib/api';
@@ -61,6 +62,7 @@ export default function Autorizar() {
         Con tu permiso leemos cómo vende y paga tu tienda. Entre más fuentes autorices, mejor
         podemos mostrar tu negocio.
       </Body>
+      <Aviso tono="ok">TendIA solo consulta tus datos: no puede mover ni sacar tu dinero.</Aviso>
       {!fuentes && !error && <Cargando texto="Cargando…" />}
       {fuentes?.map((f) => {
         const activa = Boolean(elegidas[f.fuente]);
@@ -124,6 +126,11 @@ export default function Autorizar() {
         Puedes quitar cualquier autorización cuando quieras en “Mis autorizaciones”. Al quitarla,
         borramos esos datos.
       </Aviso>
+      <Button
+        title="Leer cómo cuidamos tus datos"
+        variant="link"
+        onPress={() => void Linking.openURL(ENLACES.politicaDatos)}
+      />
       {fuentes?.some((f) => f.simulado) && (
         <Body muted style={{ fontSize: 13 }}>
           Versión de prueba: las fuentes devuelven datos simulados.

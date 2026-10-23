@@ -6,6 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { API_URL, session, type Usuario } from '@/lib/api';
 
+/** Model card (TND-047) y política de datos (TND-023), publicadas en el repo. */
+const DOCS = 'https://github.com/TendIA-IETI-Team/tendia/blob/main/docs';
+
 const NAV = [
   { href: '/bandeja', label: 'Solicitudes', admin: false },
   { href: '/politica', label: 'Política de riesgo', admin: false },
@@ -67,6 +70,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
             className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500 hover:text-white"
           >
             Documentación API ↗
+          </a>
+          <a
+            href={`${DOCS}/model-card.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500 hover:text-white"
+          >
+            Model card ↗
+          </a>
+          <a
+            href={`${DOCS}/legal/politica-tratamiento-datos.md`}
+            target="_blank"
+            rel="noreferrer"
+            className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-brand-100 hover:bg-brand-500 hover:text-white"
+          >
+            Política de datos ↗
           </a>
         </nav>
         <div className="mt-auto hidden border-t border-brand-500 px-5 py-4 text-sm md:block">

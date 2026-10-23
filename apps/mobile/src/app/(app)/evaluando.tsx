@@ -28,13 +28,19 @@ export default function Evaluando() {
   const [paso, setPaso] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [intento, setIntento] = useState(0);
+  const [demorado, setDemorado] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setPaso((p) => Math.min(p + 1, MENSAJES.length - 1)), 650);
+    // Si tarda más de 30 segundos, un mensaje de calma (TND-051).
+    const calma = setTimeout(() => setDemorado(true), 30_000);
     evaluar()
       .then((ruta) => router.replace(ruta))
       .catch((e: Error) => setError(e.message));
-    return () => clearInterval(t);
+    return () => {
+      clearInterval(t);
+      clearTimeout(calma);
+    };
   }, [intento]);
 
   return (
@@ -70,6 +76,11 @@ export default function Evaluando() {
         </Text>
       ))}
       <Body muted>Esto toma unos segundos. No cierres la app.</Body>
+      {demorado && !error && (
+        <Aviso>
+          Está tardando un poco más de lo normal. Tranquilo, seguimos trabajando en tu puntaje.
+        </Aviso>
+      )}
       {error && <Aviso tono="error">{error}</Aviso>}
     </Screen>
   );

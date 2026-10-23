@@ -1,6 +1,6 @@
 # API de TendIA. Se construye desde la raíz del monorepo:
 #   docker build -f services/api/Dockerfile .
-FROM node:22.12-alpine AS build
+FROM node:26.11-alpine AS build
 RUN npm i -g pnpm@9.15.0
 WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
@@ -11,7 +11,7 @@ RUN pnpm --filter @tendia/api build && pnpm --filter @tendia/api deploy --prod /
     && cp -r services/api/dist services/api/prisma /out/ \
     && cd /out && npx prisma@6.1.0 generate
 
-FROM node:22.12-alpine
+FROM node:26.11-alpine
 RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production

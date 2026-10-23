@@ -225,7 +225,7 @@ export class AliadoService {
     const p = await this.prisma.politica.upsert({
       where: { aliadoId: actor.aliadoId! },
       create: { aliadoId: actor.aliadoId!, ...dto },
-      update: dto,
+      update: { ...dto, version: { increment: 1 } },
     });
     await this.audit.log({
       actorTipo: 'USUARIO',

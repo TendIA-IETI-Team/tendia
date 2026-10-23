@@ -144,6 +144,9 @@ model Usuario {
   rol          RolUsuario @default(ANALISTA)
   totpSecreto  String?
   mfaActivo    Boolean    @default(false)
+  // Bloqueo temporal tras 5 intentos fallidos (TND-011).
+  intentosFallidos Int      @default(0)
+  bloqueadoHasta   DateTime?
   creadoEn     DateTime   @default(now())
 }
 
@@ -154,6 +157,8 @@ model Politica {
   scoreMinAprobar      Int      @default(60)
   scoreMinConGarantia  Int      @default(45)
   montoMaximo          Int      @default(5000000)
+  // Sube en cada cambio; cada recomendación muestra con qué versión se calculó (TND-061).
+  version              Int      @default(1)
   actualizadaEn        DateTime @updatedAt
 }
 

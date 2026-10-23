@@ -20,6 +20,8 @@ const OTP_TTL_MS = 5 * 60_000;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_MAX_PER_WINDOW = 3;
 const OTP_WINDOW_MS = 10 * 60_000;
+const MAX_INTENTOS_ALIADO = 5;
+const BLOQUEO_MS = 15 * 60_000;
 // Hash señuelo para que un correo inexistente tarde lo mismo que una contraseña errada.
 const DUMMY_HASH = bcrypt.hashSync('tendia-hash-senuelo', 10);
 
@@ -106,14 +108,19 @@ export class AuthService {
       entidadId: tendero.id,
     });
     const actor: Actor = { sub: tendero.id, rol: 'TENDERO' };
-    return { accessToken: this.jwt.sign(actor, { expiresIn: '12h' }), nuevo };
+    // La sesión del tendero se mantiene en el celular hasta que cierre sesión (TND-010).
+    return { accessToken: this.jwt.sign(actor, { expiresIn: '90d' }), nuevo };
   }
 
   // --- Analista del aliado: correo + contraseña + TOTP obligatorio (TND-011) -
   async loginAliado(email: string, password: string) {
     const user = await this.prisma.usuario.findUnique({ where: { email: email.toLowerCase() } });
+    if (user) this.exigirNoBloqueado(user.bloqueadoHasta);
     const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
-    if (!user || !ok) throw new UnauthorizedException('Correo o contraseña incorrectos');
+    if (!user || !ok) {
+      if (user) await this.registrarFallo(user.id, user.intentosFallidos);
+      throw new UnauthorizedException('Correo o contraseña incorrectos');
+    }
 
     const mfaToken = this.jwt.sign({ sub: user.id, purpose: 'mfa' }, { expiresIn: '5m' });
     if (user.mfaActivo && user.totpSecreto) return { mfaRequerido: true, mfaToken };
@@ -143,12 +150,15 @@ export class AuthService {
     if (payload.purpose !== 'mfa') throw new UnauthorizedException('Token inválido');
     const user = await this.prisma.usuario.findUnique({ where: { id: payload.sub } });
     if (!user?.totpSecreto) throw new UnauthorizedException('Token inválido');
+    this.exigirNoBloqueado(user.bloqueadoHasta);
     if (!authenticator.check(code, decrypt(user.totpSecreto))) {
+      await this.registrarFallo(user.id, user.intentosFallidos);
       throw new UnauthorizedException('El código de verificación no es correcto');
     }
-    if (!user.mfaActivo) {
-      await this.prisma.usuario.update({ where: { id: user.id }, data: { mfaActivo: true } });
-    }
+    await this.prisma.usuario.update({
+      where: { id: user.id },
+      data: { mfaActivo: true, intentosFallidos: 0, bloqueadoHasta: null },
+    });
     await this.audit.log({
       actorTipo: 'USUARIO',
       actorId: user.id,
@@ -162,6 +172,37 @@ export class AuthService {
       accessToken: this.jwt.sign(actor, { expiresIn: '8h' }),
       usuario: { nombre: user.nombre, email: user.email, rol: user.rol },
     };
+  }
+
+  private exigirNoBloqueado(bloqueadoHasta: Date | null) {
+    if (bloqueadoHasta && bloqueadoHasta > new Date()) {
+      const minutos = Math.ceil((bloqueadoHasta.getTime() - Date.now()) / 60_000);
+      throw new HttpException(
+        `Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ${minutos} minutos.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  /** Tras 5 intentos fallidos (contraseña o código) la cuenta se bloquea 15 minutos. */
+  private async registrarFallo(userId: string, previos: number) {
+    const intentos = previos + 1;
+    const bloquear = intentos >= MAX_INTENTOS_ALIADO;
+    await this.prisma.usuario.update({
+      where: { id: userId },
+      data: bloquear
+        ? { intentosFallidos: 0, bloqueadoHasta: new Date(Date.now() + BLOQUEO_MS) }
+        : { intentosFallidos: intentos },
+    });
+    if (bloquear) {
+      await this.audit.log({
+        actorTipo: 'SISTEMA',
+        actorId: 'auth',
+        accion: 'bloqueo_por_intentos',
+        entidad: 'Usuario',
+        entidadId: userId,
+      });
+    }
   }
 
   private phoneOrFail(raw: string): string {

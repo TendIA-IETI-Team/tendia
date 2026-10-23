@@ -298,5 +298,30 @@ describe('Flujo completo tendero → score → aliado (e2e)', () => {
     await request(http).put('/aliado/politica').set(bearer(analista)).send(p.body).expect(403);
     const audit = await request(http).get('/aliado/auditoria').set(bearer(admin)).expect(200);
     expect(audit.body.some((e: { accion: string }) => e.accion === 'crear_api_key')).toBe(true);
+
+    // La política queda versionada: cada cambio sube la versión.
+    const v2 = await request(http)
+      .put('/aliado/politica')
+      .set(bearer(admin))
+      .send({ scoreMinAprobar: 60, scoreMinConGarantia: 45, montoMaximo: 6_000_000 })
+      .expect(200);
+    expect(v2.body.version).toBe(p.body.version + 1);
+  });
+
+  it('bloquea la cuenta del analista tras 5 intentos fallidos', async () => {
+    const email = 'admin@microdemo.co';
+    for (let i = 0; i < 5; i++) {
+      await request(http)
+        .post('/auth/aliado/login')
+        .send({ email, password: 'contraseña-errada' })
+        .expect(401);
+    }
+    // Incluso con la contraseña correcta, la cuenta queda bloqueada temporalmente.
+    const bloqueada = await request(http)
+      .post('/auth/aliado/login')
+      .send({ email, password: 'TendIA-demo-2026!' })
+      .expect(429);
+    expect(bloqueada.body.message).toMatch(/bloqueada/);
+    expect(await prisma.auditoria.count({ where: { accion: 'bloqueo_por_intentos' } })).toBe(1);
   });
 });

@@ -1,6 +1,6 @@
 # Revisión OWASP API Security Top 10 (2023)
 
-Revisión inicial del MVP, 23 oct 2026 (TND-072). Dependabot y CodeQL están activos en `.github/`.
+Revisión inicial del MVP, 23 oct 2026 (TND-072). Dependabot está activo en `.github/dependabot.yml` y CodeQL corre con la configuración por defecto de GitHub (Settings → Code security).
 
 | Riesgo                                          | Estado    | Cómo se mitiga                                                                                                                                | Acción pendiente                               |
 | ----------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |

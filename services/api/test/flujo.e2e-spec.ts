@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { lastClosedMonth, monthAdd } from '../src/conectores/simulacion';
+import { resetMfa } from '../src/scripts/reset-mfa';
 import { bearer, createApp, loginAliado, loginTendero } from './helpers';
 
 describe('Flujo completo tendero → score → aliado (e2e)', () => {
@@ -306,6 +307,25 @@ describe('Flujo completo tendero → score → aliado (e2e)', () => {
       .send({ scoreMinAprobar: 60, scoreMinConGarantia: 45, montoMaximo: 6_000_000 })
       .expect(200);
     expect(v2.body.version).toBe(p.body.version + 1);
+  });
+
+  it('reiniciar el MFA vuelve a mostrar el QR en el siguiente ingreso', async () => {
+    const email = 'analista@bancodemo.co';
+    await loginAliado(app, email); // queda enrolado
+    const enrolado = await request(http)
+      .post('/auth/aliado/login')
+      .send({ email, password: 'TendIA-demo-2026!' })
+      .expect(200);
+    expect(enrolado.body.secreto).toBeUndefined();
+
+    expect(await resetMfa(prisma, email)).toBe(true);
+    expect(await resetMfa(prisma, 'no-existe@x.co')).toBe(false);
+    const reiniciado = await request(http)
+      .post('/auth/aliado/login')
+      .send({ email, password: 'TendIA-demo-2026!' })
+      .expect(200);
+    expect(reiniciado.body.configurarMfa).toBe(true);
+    expect(reiniciado.body.otpauthUrl).toMatch(/^otpauth:\/\//);
   });
 
   it('bloquea la cuenta del analista tras 5 intentos fallidos', async () => {

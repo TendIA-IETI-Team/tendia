@@ -48,7 +48,12 @@ docker compose up --build
 - `admin@bancodemo.co` (administrador del Banco Demo Popular) y `analista@bancodemo.co`
 - `admin@microdemo.co` (Microcrédito Demo)
 
-El primer ingreso pide activar la verificación en dos pasos: escanea el QR con Google Authenticator o similar.
+El primer ingreso pide activar la verificación en dos pasos: escanea el QR con Google Authenticator o similar. Si la cuenta ya tenía la verificación activada y no tienes el código (por ejemplo, porque las pruebas automáticas la enrolaron, o cambiaste de celular), reiníciala y el siguiente ingreso volverá a mostrar el QR:
+
+```bash
+docker compose exec api node dist/scripts/reset-mfa.js admin@bancodemo.co
+# sin Docker: pnpm --filter @tendia/api mfa:reset admin@bancodemo.co
+```
 
 **Celulares de demostración** para la app (el código OTP aparece en pantalla en modo de prueba):
 

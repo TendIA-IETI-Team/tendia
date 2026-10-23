@@ -1,0 +1,9 @@
+# Responsables de revisión por área (se piden automáticamente en cada PR).
+*                       @AnderssonProgramming
+/services/scoring/      @Krayangel @AnderssonProgramming
+/services/api/          @cris-eci
+/apps/mobile/           @juanLozano-2004
+/apps/portal/           @DASarria
+/packages/tokens/       @juanLozano-2004
+/docs/                  @RaquelSAyala
+/.github/               @AnderssonProgramming

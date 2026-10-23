@@ -1,0 +1,13 @@
+pnpm-lock.yaml
+**/dist
+**/.next
+**/.expo
+**/coverage
+services/scoring
+**/prisma/migrations
+apps/mobile/dist
+apps/mobile/.expo
+apps/mobile/package-lock.json
+**/playwright-report
+**/test-results
+services/scoring/tendia_scoring/model

@@ -1,0 +1,220 @@
+# CI (TND-002): cada PR corre lint y pruebas solo de las piezas que cambiaron.
+# El job "ci-ok" es el check requerido en la protección de main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      scoring: ${{ steps.filter.outputs.scoring }}
+      api: ${{ steps.filter.outputs.api }}
+      portal: ${{ steps.filter.outputs.portal }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+      tokens: ${{ steps.filter.outputs.tokens }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared: &shared
+              - '.github/workflows/ci.yml'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+            tokens:
+              - *shared
+              - 'packages/tokens/**'
+            scoring:
+              - '.github/workflows/ci.yml'
+              - 'services/scoring/**'
+            api:
+              - *shared
+              - 'services/api/**'
+              - 'services/scoring/**'
+            portal:
+              - *shared
+              - 'apps/portal/**'
+              - 'packages/tokens/**'
+            mobile:
+              - '.github/workflows/ci.yml'
+              - 'apps/mobile/**'
+              - 'packages/tokens/**'
+
+  scoring:
+    needs: changes
+    if: needs.changes.outputs.scoring == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/scoring
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: '0.5.11'
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Pruebas (cobertura mínima 70 %)
+        run: uv run pytest
+
+  tokens:
+    needs: changes
+    if: needs.changes.outputs.tokens == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @tendia/tokens
+      - run: pnpm --filter @tendia/tokens typecheck
+      - name: Contraste WCAG de la paleta
+        run: pnpm --filter @tendia/tokens test
+
+  api:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16.6-alpine
+        env:
+          POSTGRES_USER: tendia
+          POSTGRES_PASSWORD: tendia
+          POSTGRES_DB: tendia_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U tendia" --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://tendia:tendia@127.0.0.1:5432/tendia_test
+      SCORING_URL: http://127.0.0.1:8000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: '0.5.11'
+          enable-cache: true
+      - name: Levantar el servicio de scoring (las pruebas de integración lo usan)
+        working-directory: services/scoring
+        run: |
+          uv python install 3.12
+          uv sync --frozen --no-dev
+          nohup uv run uvicorn tendia_scoring.app:app --port 8000 > /tmp/scoring.log 2>&1 &
+      - run: pnpm install --frozen-lockfile --filter @tendia/api...
+      - name: Lint y tipos
+        run: pnpm --filter @tendia/api lint && pnpm --filter @tendia/api typecheck
+      - name: Migraciones
+        working-directory: services/api
+        run: npx prisma migrate deploy
+      - name: Esperar scoring
+        run: for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && exit 0; sleep 1; done; cat /tmp/scoring.log; exit 1
+      - name: Pruebas unitarias, de integración y de contrato (cobertura mínima 70 %)
+        run: pnpm --filter @tendia/api exec jest --runInBand --coverage
+
+  portal:
+    needs: changes
+    if: needs.changes.outputs.portal == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @tendia/portal...
+      - run: pnpm --filter @tendia/portal lint
+      - run: pnpm --filter @tendia/portal typecheck
+      - run: pnpm --filter @tendia/portal test
+      - run: pnpm --filter @tendia/portal build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+
+  mobile:
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - name: Exportar el bundle web (verifica que la app compila)
+        run: npx expo export -p web
+
+  e2e:
+    needs: [changes]
+    if: needs.changes.outputs.api == 'true' || needs.changes.outputs.portal == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Levantar todo con Docker Compose
+        run: docker compose up -d --build --wait
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @tendia/portal...
+      - run: pnpm --filter @tendia/portal exec playwright install --with-deps chromium
+      - name: E2E del flujo feliz del portal (Playwright)
+        run: pnpm --filter @tendia/portal test:e2e
+        env:
+          CI: 'true'
+          API_URL: http://127.0.0.1:4000
+      - if: failure()
+        run: docker compose logs --tail 200
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/portal/playwright-report
+
+  ci-ok:
+    if: always()
+    needs: [changes, scoring, tokens, api, portal, mobile, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Todos los jobs que corrieron pasaron
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e 'to_entries | all(.value.result == "success" or .value.result == "skipped")'

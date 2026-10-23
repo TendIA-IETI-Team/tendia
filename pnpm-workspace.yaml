@@ -1,0 +1,5 @@
+packages:
+  - 'apps/portal'
+  - 'services/api'
+  - 'packages/*'
+# apps/mobile usa npm propio: Metro funciona mejor sin el enlazado aislado de pnpm.

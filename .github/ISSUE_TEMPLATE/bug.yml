@@ -1,0 +1,29 @@
+name: Bug
+description: Algo no funciona como debería
+labels: [bug]
+body:
+  - type: textarea
+    id: que
+    attributes:
+      label: Qué pasó y qué esperabas
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      value: |
+        1.
+        2.
+    validations:
+      required: true
+  - type: dropdown
+    id: pieza
+    attributes:
+      label: Dónde
+      options: [App del tendero, Portal del aliado, API, Scoring, Infraestructura]
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Capturas o logs. Nunca pegues datos personales reales (celulares, cédulas).

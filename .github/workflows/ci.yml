@@ -65,7 +65,7 @@ jobs:
         working-directory: services/scoring
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           version: '0.5.11'
           enable-cache: true
@@ -118,7 +118,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           version: '0.5.11'
           enable-cache: true

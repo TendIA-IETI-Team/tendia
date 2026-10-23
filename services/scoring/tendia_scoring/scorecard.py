@@ -23,7 +23,7 @@ BASE_ODDS = 9.0
 PDO = 10.0
 FACTOR = PDO / math.log(2)
 
-# Cortes calibrados con la distribución del modelo v1 (acumulados ~17/40/68/94 %).
+# Cortes calibrados con la distribución del modelo v1 (acumulados ~18/45/80/96 %).
 # Tasas de incumplimiento por nivel en docs/model-card.md.
 LEVELS = [
     (0, "En construcción"),

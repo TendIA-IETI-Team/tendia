@@ -53,9 +53,14 @@ def main() -> None:
         is_oot.append(d.cohort >= oot_start)
     y = np.array(labels)
     oot = np.array(is_oot)
-    train_rows = [r for r, o in zip(rows, oot, strict=True) if not o]
+    # Dentro del periodo de entrenamiento se reserva un 20 % al azar (out-of-sample).
+    rng = np.random.default_rng(7)
+    oos = (~oot) & (rng.random(len(y)) < 0.2)
+    fit = ~oot & ~oos
+    train_rows = [r for r, f in zip(rows, fit, strict=True) if f]
+    oos_rows = [r for r, o in zip(rows, oos, strict=True) if o]
     test_rows = [r for r, o in zip(rows, oot, strict=True) if o]
-    y_train, y_test = y[~oot], y[oot]
+    y_train, y_oos, y_test = y[fit], y[oos], y[oot]
 
     bins = {f: fit_bins(np.array([r[f] for r in train_rows]), y_train) for f in FEATURES}
     x_train = woe_matrix(train_rows, bins)
@@ -76,6 +81,7 @@ def main() -> None:
         "target": "mora > 30 días dentro de los 90 días siguientes",
         "oot_from_cohort": oot_start,
         "train": evaluate(y_train, lr.predict_proba(x_train)[:, 1]),
+        "oos": evaluate(y_oos, lr.predict_proba(woe_matrix(oos_rows, bins))[:, 1]),
         "oot": baseline_oot,
         "challenger_gradient_boosting_oot": challenger_oot,
         "challenger_adopted": challenger_oot["gini"] > baseline_oot["gini"] + 0.02,

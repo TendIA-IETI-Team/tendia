@@ -24,15 +24,16 @@
 | `purchases_to_sales`  | Compras al distribuidor sobre ventas                                | Cruce de fuentes              |
 | `business_age_months` | Antigüedad del negocio                                              | Tendero                       |
 
-## Desempeño (validación fuera de tiempo)
+## Desempeño
 
-Se entrena con las cohortes de ene 2024 a jun 2025 y se valida con jul a dic 2025.
+Se entrena con las cohortes de ene 2024 a jun 2025, dejando aparte un 20 % al azar de ese periodo (fuera de muestra). La validación fuera de tiempo usa las cohortes de jul a dic 2025.
 
-| Modelo                                       | AUC       | Gini      | KS        | n     |
-| -------------------------------------------- | --------- | --------- | --------- | ----- |
-| **Baseline scorecard (entrenamiento)**       | 0,767     | 0,534     | 0,416     | 9.000 |
-| **Baseline scorecard (fuera de tiempo)**     | **0,756** | **0,511** | **0,412** | 3.000 |
-| Retador: gradient boosting (fuera de tiempo) | 0,750     | 0,499     | 0,393     | 3.000 |
+| Modelo                     | Muestra             | AUC       | Gini      | KS        | n         |
+| -------------------------- | ------------------- | --------- | --------- | --------- | --------- |
+| Baseline scorecard         | Entrenamiento       | 0,758     | 0,516     | 0,395     | 7.186     |
+| Baseline scorecard         | Fuera de muestra    | 0,809     | 0,618     | 0,512     | 1.814     |
+| **Baseline scorecard**     | **Fuera de tiempo** | **0,756** | **0,511** | **0,420** | **3.000** |
+| Retador: gradient boosting | Fuera de tiempo     | 0,753     | 0,505     | 0,387     | 3.000     |
 
 El retador **no se adopta** (TND-046): no supera al baseline fuera de tiempo y es menos interpretable. Una regla de entrenamiento lo adopta solo si supera al baseline por más de 0,02 de Gini.
 
@@ -42,11 +43,11 @@ El retador **no se adopta** (TND-046): no supera al baseline fuera de tiempo y e
 
 | Nivel           | Puntaje | Negocios (muestra sintética de 6.000, semilla 99) | Incumplimiento observado |
 | --------------- | ------- | ------------------------------------------------- | ------------------------ |
-| En construcción | 0-29    | 1.001                                             | 39,9 %                   |
-| Básico          | 30-44   | 1.393                                             | 20,3 %                   |
-| Bueno           | 45-59   | 1.676                                             | 9,0 %                    |
-| Muy bueno       | 60-71   | 1.583                                             | 4,3 %                    |
-| Excelente       | 72-100  | 347                                               | 1,2 %                    |
+| En construcción | 0-29    | 979                                               | 39,8 %                   |
+| Básico          | 30-44   | 1.471                                             | 20,4 %                   |
+| Bueno           | 45-59   | 1.852                                             | 9,0 %                    |
+| Muy bueno       | 60-71   | 1.508                                             | 3,2 %                    |
+| Excelente       | 72-100  | 190                                               | 0,5 %                    |
 
 El incumplimiento baja en cada nivel, así que la escala ordena bien el riesgo.
 

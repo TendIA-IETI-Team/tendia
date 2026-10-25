@@ -156,7 +156,12 @@ export function Aviso({
 /** Pasos del proceso para que el tendero sepa dónde va. */
 export function Pasos({ actual, total = 4 }: { actual: number; total?: number }) {
   return (
-    <View style={s.pasos} accessibilityLabel={`Paso ${actual} de ${total}`}>
+    <View
+      style={s.pasos}
+      accessibilityRole="progressbar"
+      accessibilityLabel="Avance de tu solicitud"
+      accessibilityValue={{ min: 1, max: total, now: actual, text: `Paso ${actual} de ${total}` }}
+    >
       {Array.from({ length: total }, (_, i) => (
         <View
           key={i}
@@ -267,7 +272,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
-  buttonText: { fontFamily: font.bold, fontSize: type.body },
+  buttonText: { fontFamily: font.bold, fontSize: type.body, textAlign: 'center' },
   input: {
     minHeight: 56,
     borderWidth: 1.5,

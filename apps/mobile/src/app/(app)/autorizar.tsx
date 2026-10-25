@@ -79,6 +79,7 @@ export default function Autorizar() {
               testID={`fuente-${f.fuente}`}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: activa }}
+              aria-checked={activa}
               onPress={() =>
                 setElegidas((e) => ({ ...e, [f.fuente]: activa ? null : f.proveedores[0] }))
               }
@@ -136,7 +137,7 @@ export default function Autorizar() {
         onPress={() => void Linking.openURL(ENLACES.politicaDatos)}
       />
       {fuentes?.some((f) => f.simulado) && (
-        <Body muted style={{ fontSize: 13 }}>
+        <Body muted style={{ fontSize: 15 }}>
           Versión de prueba: las fuentes devuelven datos simulados.
         </Body>
       )}

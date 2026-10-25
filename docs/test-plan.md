@@ -15,6 +15,7 @@
 | Contrato    | `services/scoring/tests/test_app.py`              | pytest                                       | Campos exactos de la respuesta `/score` v2 (TND-071)                                                                                                                            |
 | E2E portal  | `apps/portal/e2e`                                 | Playwright                                   | El analista entra con MFA, revisa una solicitud y la aprueba                                                                                                                    |
 | E2E app     | `apps/mobile/.maestro`                            | Maestro                                      | Ingreso con OTP → solicitud → autorización → puntaje → envío                                                                                                                    |
+| Usabilidad  | `apps/portal/scripts/recorrido-usabilidad.js`     | Playwright + axe-core + KLM                  | Las 9 tareas de `docs/usabilidad.md`: pasos, tiempo estimado, accesibilidad y objetivos táctiles                                                                                |
 
 ## Cobertura actual (25 oct 2026)
 

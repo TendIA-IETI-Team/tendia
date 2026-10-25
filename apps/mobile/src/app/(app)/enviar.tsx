@@ -80,6 +80,7 @@ export default function Enviar() {
             testID={`aliado-${a.nombre}`}
             accessibilityRole="radio"
             accessibilityState={{ checked: activo }}
+            aria-checked={activo}
             onPress={() => setElegido(a.id)}
             style={{
               backgroundColor: colors.white,

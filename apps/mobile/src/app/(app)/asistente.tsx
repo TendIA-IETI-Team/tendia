@@ -72,6 +72,7 @@ export default function Asistente() {
           accessibilityLabel="Volver"
           onPress={() => router.back()}
           hitSlop={12}
+          style={s.botonVolver}
         >
           <Text style={s.volver}>‹</Text>
         </Pressable>
@@ -108,6 +109,7 @@ export default function Asistente() {
         </ScrollView>
         <ScrollView
           horizontal
+          style={{ flexGrow: 0 }}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={s.sugerencias}
           keyboardShouldPersistTaps="handled"
@@ -162,6 +164,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
+  botonVolver: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   volver: { color: colors.white, fontSize: 34, lineHeight: 36, fontFamily: font.bold },
   titulo: { color: colors.white, fontFamily: font.extrabold, fontSize: 20 },
   subtitulo: { color: colors.indigo100, fontFamily: font.regular, fontSize: 14 },
@@ -180,12 +183,13 @@ const s = StyleSheet.create({
   chip: {
     borderWidth: 1.5,
     borderColor: colors.indigo300,
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: colors.white,
   },
-  chipTexto: { fontFamily: font.bold, fontSize: 14, color: colors.indigo700 },
+  chipTexto: { fontFamily: font.bold, fontSize: 15, color: colors.indigo700 },
   barra: {
     flexDirection: 'row',
     gap: 8,

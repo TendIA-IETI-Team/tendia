@@ -10,7 +10,7 @@ La paleta sale del logo: **índigo `#362D7C`** (la casa) y **naranja `#F38B54`**
 | `indigo100` / `indigo50`                   | `#EEEBFA` / `#F7F5FC`             | Superficies y fondo                  |
 | `orange500`                                | `#F38B54`                         | Acento: un CTA destacado, logros     |
 | `orange700`                                | `#B4501E`                         | Naranja para texto sobre fondo claro |
-| `success` / `warning` / `danger`           | `#1E7F4F` / `#9A6700` / `#B3261E` | Estados, siempre con texto           |
+| `success` / `warning` / `danger`           | `#1B7346` / `#875A00` / `#B3261E` | Estados, siempre con texto; ≥ 4,5:1 también sobre su fondo claro         |
 | `chart.primary` / `highlight` / `negative` | `#5B4FB0` / `#D06B2C` / `#B5487A` | Gráficos, validados para daltonismo  |
 
 ## Reglas

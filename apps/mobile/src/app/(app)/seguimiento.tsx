@@ -12,7 +12,7 @@ const GARANTIAS: Record<string, { nombre: string; explicacion: string }> = {
   FNG: {
     nombre: 'Respaldo del Fondo Nacional de Garantías',
     explicacion:
-      'Es un fondo del Estado que respalda tu crédito: si no pudieras pagar, el fondo responde por una parte. Puede tener un costo que la entidad te explicará.',
+      'Es como un fiador, pero del Estado: si no pudieras pagar, el Fondo le responde a la entidad por una parte de la deuda. Puede tener un costo que la entidad te explicará.',
   },
   CODEUDOR: {
     nombre: 'Un codeudor',

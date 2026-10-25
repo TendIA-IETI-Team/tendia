@@ -143,6 +143,54 @@ export default function Cuaderno() {
       {aviso && <Aviso tono="ok">{aviso}</Aviso>}
       {error && <Aviso tono="error">{error}</Aviso>}
 
+      {!registros && !error && <Cargando texto="Cargando…" />}
+      {registros && !lectura && !leyendo && (
+        <>
+          <Card>
+            <Label>Tus ventas</Label>
+            <Body>
+              Hoy:{' '}
+              <Text style={{ fontFamily: font.extrabold }}>
+                {registros.ventaHoy ? pesos(registros.ventaHoy) : 'sin anotar'}
+              </Text>
+            </Body>
+            <Body>Esta semana: {pesos(registros.ventasSemana)}</Body>
+            <Body>
+              Este mes: {pesos(registros.ventasMes)} ({registros.diasRegistradosMes} días anotados)
+            </Body>
+            <Body muted style={{ fontSize: 14 }}>
+              Con 7 o más días anotados en un mes, esas ventas cuentan para tu Puntaje TendIA.
+            </Body>
+          </Card>
+          <Card>
+            <Label>Te deben (fiados): {pesos(registros.totalFiado)}</Label>
+            {registros.fiadosPendientes.length === 0 && (
+              <Body muted>No tienes fiados pendientes.</Body>
+            )}
+            {registros.fiadosPendientes.slice(0, 20).map((f) => (
+              <View key={f.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Body style={{ flex: 1 }}>
+                  {f.cliente} · {pesos(f.monto)}
+                </Body>
+                <Pressable
+                  onPress={() => void pagado(f.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${f.cliente} ya pagó`}
+                  hitSlop={8}
+                  style={{
+                    minHeight: 44,
+                    minWidth: 44,
+                    justifyContent: 'center',
+                    paddingHorizontal: 8,
+                  }}
+                >
+                  <Text style={{ color: colors.success, fontFamily: font.bold }}>Ya pagó</Text>
+                </Pressable>
+              </View>
+            ))}
+          </Card>
+        </>
+      )}
       {leyendo ? (
         <Cargando texto="Leyendo tu cuaderno…" />
       ) : lectura ? (
@@ -237,44 +285,6 @@ export default function Cuaderno() {
             disabled={!Number(ventaManual.replace(/\D/g, ''))}
           />
         </Card>
-      )}
-
-      {!registros && !error && <Cargando texto="Cargando…" />}
-      {registros && (
-        <>
-          <Card>
-            <Label>Tus ventas</Label>
-            <Body>
-              Hoy:{' '}
-              <Text style={{ fontFamily: font.extrabold }}>
-                {registros.ventaHoy ? pesos(registros.ventaHoy) : 'sin anotar'}
-              </Text>
-            </Body>
-            <Body>Esta semana: {pesos(registros.ventasSemana)}</Body>
-            <Body>
-              Este mes: {pesos(registros.ventasMes)} ({registros.diasRegistradosMes} días anotados)
-            </Body>
-            <Body muted style={{ fontSize: 14 }}>
-              Con 7 o más días anotados en un mes, esas ventas cuentan para tu Puntaje TendIA.
-            </Body>
-          </Card>
-          <Card>
-            <Label>Te deben (fiados): {pesos(registros.totalFiado)}</Label>
-            {registros.fiadosPendientes.length === 0 && (
-              <Body muted>No tienes fiados pendientes.</Body>
-            )}
-            {registros.fiadosPendientes.slice(0, 20).map((f) => (
-              <View key={f.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Body style={{ flex: 1 }}>
-                  {f.cliente} · {pesos(f.monto)}
-                </Body>
-                <Pressable onPress={() => void pagado(f.id)} accessibilityRole="button">
-                  <Text style={{ color: colors.success, fontFamily: font.bold }}>Ya pagó</Text>
-                </Pressable>
-              </View>
-            ))}
-          </Card>
-        </>
       )}
     </Screen>
   );

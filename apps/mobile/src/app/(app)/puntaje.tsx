@@ -61,6 +61,7 @@ export default function Puntaje() {
             variant="secondary"
             onPress={() => router.push('/justificar')}
           />
+          <Button title="Ir al inicio" variant="link" onPress={() => router.replace('/inicio')} />
         </>
       }
     >

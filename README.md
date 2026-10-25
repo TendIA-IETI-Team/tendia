@@ -66,6 +66,18 @@ docker compose exec api node dist/scripts/reset-mfa.js admin@bancodemo.co
 
 Cualquier otro celular que empiece por 3 genera un negocio simulado distinto pero reproducible.
 
+### Probar con tus servicios reales (Claude, Twilio, Sentry)
+
+1. Copia `.env.example` como `.env` en la raíz y llena solo lo que quieras probar. `docker compose` lo lee para la API; las variables vacías dejan su modo sin proveedor.
+2. `docker compose up --build` y entra a la app (`cd apps/mobile && npm install && npm run web`, o Expo Go en el celular).
+3. Qué probar:
+   - **IA:** con `ANTHROPIC_API_KEY`, la explicación del puntaje dice "IA generativa" en el portal. En la app, **Hablar con Tendi** → "hoy vendí 350 mil" → **Mi cuaderno** muestra la venta. **Mi cuaderno → Tomar foto** lee una hoja del cuaderno.
+   - **SMS:** con `TWILIO_*`, el OTP llega por SMS. Ingresa con tu celular real (en cuenta de prueba de Twilio, solo a números verificados). Los celulares de demostración solo funcionan sin `TWILIO_*`.
+   - **WhatsApp:** expón la API con un túnel (`ngrok http 4000`), pon esa URL en `PUBLIC_API_URL`, y en Twilio → Messaging → _Try it out_ → WhatsApp sandbox configura _When a message comes in_ = `https://<túnel>/whatsapp/webhook` (POST). Únete al sandbox desde un celular registrado como tendero y escríbele "hoy vendí 200 mil" o mándale la foto del cuaderno.
+   - **Sentry:** crea en [sentry.io](https://sentry.io) dos proyectos (Node.js para `tendia-api` y Python/FastAPI para `tendia-scoring`). En cada uno, _Settings → Client Keys (DSN)_ y copia el DSN. Ponlo como `SENTRY_DSN` (y `RELEASE`, por ejemplo el SHA del commit) en `.env` para local o en _Environment_ de cada servicio en Render. `curl -X POST localhost:4000/nada` no genera evento (404); un error 500 sí.
+
+Datos reales del modelo y su procesamiento: [docs/datos.md](docs/datos.md).
+
 ## Desarrollo
 
 Requisitos: Node 22.13+, pnpm 9, Python 3.12+ con [uv](https://docs.astral.sh/uv/), Docker.

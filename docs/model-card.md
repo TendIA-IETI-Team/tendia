@@ -1,65 +1,80 @@
-# Model card: scorecard-v1
+# Model card: tendia-v2
 
-> **Todas las métricas de esta página salen de datos sintéticos.** Sirven para validar el pipeline, no para afirmar el desempeño con tenderos reales. No se deben presentar como resultados reales.
+> **Qué es real y qué no.** El componente de pagos se entrena con **30.000 créditos reales** (UCI #350). La segmentación y las referencias de mercado salen de **microdatos oficiales colombianos** (DANE EMICRON 2024 y Superfinanciera). El componente de negocio todavía se entrena con datos **sintéticos calibrados** con EMICRON, porque no existe un dataset abierto de tenderos con su historia de pago. Las métricas de cada parte se reportan por separado, sin mezclarlas.
 
-|                  |                                                                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Modelo           | Regresión logística sobre WoE (scorecard), 8 variables                                                                                           |
-| Versión          | `scorecard-v1`, entrenado el 23 oct 2026                                                                                                         |
-| Archivo          | [`services/scoring/tendia_scoring/model/scorecard-v1.json`](../services/scoring/tendia_scoring/model/scorecard-v1.json): JSON legible, no pickle |
-| Objetivo         | Mora mayor a 30 días dentro de los 90 días siguientes                                                                                            |
-| Uso previsto     | Apoyar, no reemplazar, la decisión de crédito de un analista para tiendas de barrio en Bogotá                                                    |
-| Fuera de alcance | Decisiones automáticas sin humano; segmentos distintos de tiendas y minimercados                                                                 |
+|                  |                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Modelo           | Dos scorecards (WoE + regresión logística) sumados en ln-odds, más una segmentación KMeans                                                 |
+| Versión          | `tendia-v2` (contrato `/score` v2), entrenado el 25 oct 2026                                                                               |
+| Archivo          | [`services/scoring/tendia_scoring/model/tendia-v2.json`](../services/scoring/tendia_scoring/model/tendia-v2.json): JSON legible, no pickle |
+| Objetivo         | Incumplimiento: mora del mes siguiente (UCI) y mora mayor a 30 días en 90 días (sintéticos)                                                |
+| Uso previsto     | Apoyar, no reemplazar, la decisión de crédito de un analista para tiendas de barrio en Bogotá                                              |
+| Fuera de alcance | Decisiones automáticas sin humano; segmentos distintos de tiendas y minimercados                                                           |
+| Fuentes          | [docs/datos.md](datos.md)                                                                                                                  |
 
-## Variables
+## Cómo se arma el puntaje
 
-| Variable              | Qué mide                                                            | Fuente                        |
-| --------------------- | ------------------------------------------------------------------- | ----------------------------- |
-| `avg_sales`           | Ventas promedio al mes                                              | Datáfono > banco > declaradas |
-| `sales_cv`            | Inestabilidad de ventas (sin meses justificados)                    | Ídem                          |
-| `sales_trend`         | Cambio de los últimos 3 meses frente a los 3 anteriores             | Ídem                          |
-| `low_months_ratio`    | Proporción de meses con ventas por debajo de la mitad de la mediana | Ídem                          |
-| `on_time_ratio`       | Facturas pagadas a tiempo al distribuidor                           | Distribuidor                  |
-| `avg_days_late`       | Días promedio de retraso en facturas tardías                        | Distribuidor                  |
-| `purchases_to_sales`  | Compras al distribuidor sobre ventas                                | Cruce de fuentes              |
-| `business_age_months` | Antigüedad del negocio                                              | Tendero                       |
+```
+ln_odds_buen_pago = l0 + Σ_componentes peso_c · Σ_variables −coef · (WoE − WoE promedio)
+puntaje           = 303 + 142 · ln_odds_buen_pago      (recortado a 0-1000)
+```
+
+`l0 = ln(9)`: un negocio promedio tiene 10 % de probabilidad de incumplir y queda en 615 puntos. Cada componente solo suma si hay datos para él; sin historia de pago con el distribuidor el puntaje se basa en el negocio.
+
+| Componente | Peso | Variables                                                                                              | Entrenado con                          |
+| ---------- | ---- | ------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `pagos`    | 1,0  | meses al día, máximo de meses en mora, proporción pagada, uso del cupo, tendencia de compras (6 meses) | UCI #350, 30.000 créditos reales       |
+| `negocio`  | 0,5  | ventas promedio, inestabilidad, tendencia, meses flojos, compras/ventas, antigüedad                    | Sintéticos calibrados con EMICRON 2024 |
+
+El distribuidor da exactamente lo que UCI mide para una tarjeta: factura del mes, lo que se pagó y el cupo. Por eso el componente de pagos se puede entrenar con datos reales y aplicar a los tenderos con la misma definición de variable.
 
 ## Desempeño
 
-Se entrena con las cohortes de ene 2024 a jun 2025, dejando aparte un 20 % al azar de ese periodo (fuera de muestra). La validación fuera de tiempo usa las cohortes de jul a dic 2025.
+| Parte                       | Datos                 | Muestra                       | AUC           | Gini      | KS    |
+| --------------------------- | --------------------- | ----------------------------- | ------------- | --------- | ----- |
+| **Pagos (scorecard)**       | **UCI, reales**       | **holdout 30 % (9.000)**      | **0,741**     | **0,482** | 0,407 |
+| Pagos (scorecard)           | UCI, reales           | validación cruzada 5 pliegues | 0,743 ± 0,007 |           |       |
+| Retador: stacking LR+HGB+RF | UCI, reales           | holdout 30 %                  | 0,763         | 0,526     | 0,418 |
+| Negocio (scorecard)         | Sintéticos calibrados | fuera de tiempo (3.000)       | 0,734         | 0,468     | 0,365 |
+| Combinado                   | Sintéticos            | 12.000                        | 0,746         | 0,492     | 0,377 |
 
-| Modelo                     | Muestra             | AUC       | Gini      | KS        | n         |
-| -------------------------- | ------------------- | --------- | --------- | --------- | --------- |
-| Baseline scorecard         | Entrenamiento       | 0,758     | 0,516     | 0,395     | 7.186     |
-| Baseline scorecard         | Fuera de muestra    | 0,809     | 0,618     | 0,512     | 1.814     |
-| **Baseline scorecard**     | **Fuera de tiempo** | **0,756** | **0,511** | **0,420** | **3.000** |
-| Retador: gradient boosting | Fuera de tiempo     | 0,753     | 0,505     | 0,387     | 3.000     |
+El retador de stacking gana 0,04 de Gini pero **no se adopta** (TND-046): no se puede explicar variable por variable, y el tendero y el analista tienen que ver por qué salió su puntaje (requisito SARC de la Superfinanciera).
 
-El retador **no se adopta** (TND-046): no supera al baseline fuera de tiempo y es menos interpretable. Una regla de entrenamiento lo adopta solo si supera al baseline por más de 0,02 de Gini.
+## Franjas (0-1000)
 
-## Escala del Puntaje TendIA
+En la prueba de usabilidad doña Gloria entendió mejor tres franjas con color que cinco niveles; la escala 0-1000 se acompaña siempre del nombre de la franja para no confundirla con DataCrédito.
 
-50 puntos equivalen a odds de pago de 9:1 (10 % de incumplimiento), y cada vez que se duplican las odds se suman 10 puntos. Rango de 0 a 100.
+| Franja | Puntaje  | Incumplimiento esperado | Negocios (sintéticos) | Incumplimiento observado (sintéticos) |
+| ------ | -------- | ----------------------- | --------------------- | ------------------------------------- |
+| Bajo   | 0-499    | más de 20 %             | 24 %                  | 32 %                                  |
+| Medio  | 500-649  | 8 % a 20 %              | 24 %                  | 15 %                                  |
+| Bueno  | 650-1000 | menos de 8 %            | 52 %                  | 6 %                                   |
 
-| Nivel           | Puntaje | Negocios (muestra sintética de 6.000, semilla 99) | Incumplimiento observado |
-| --------------- | ------- | ------------------------------------------------- | ------------------------ |
-| En construcción | 0-29    | 979                                               | 39,8 %                   |
-| Básico          | 30-44   | 1.471                                             | 20,4 %                   |
-| Bueno           | 45-59   | 1.852                                             | 9,0 %                    |
-| Muy bueno       | 60-71   | 1.508                                             | 3,2 %                    |
-| Excelente       | 72-100  | 190                                               | 0,5 %                    |
+La política por defecto de un aliado aprueba desde 650 y pide garantía entre 500 y 649.
 
-El incumplimiento baja en cada nivel, así que la escala ordena bien el riesgo.
+## Segmentación (datos reales)
 
-La escala no se parece a la de DataCrédito (150-950) a propósito: en la prueba de usabilidad, doña Gloria confundió un "720" con su puntaje de DataCrédito.
+KMeans (k = 4) sobre 20.488 micronegocios de comercio de EMICRON 2024 (ventas, antigüedad, registros, pagos digitales, local fijo; las binarias pesan la mitad). Cada segmento muestra estadísticas reales, no del modelo:
+
+| Segmento     | Negocios | Ventas típicas/mes | Antigüedad típica | Pidió crédito | Acudió al gota a gota |
+| ------------ | -------- | ------------------ | ----------------- | ------------- | --------------------- |
+| Consolidada  | 22,9 %   | $7.500.000         | 12 años           | 25,2 %        | 4,0 %                 |
+| Tradicional  | 31,9 %   | $1.400.000         | 14 años           | 13,8 %        | 5,1 %                 |
+| Joven        | 26,3 %   | $2.700.000         | 2,4 años          | 17,7 %        | 2,7 %                 |
+| Subsistencia | 18,8 %   | $600.000           | 2 años            | 8,8 %         | 2,4 %                 |
+
+El segmento contextualiza; **no entra al puntaje**.
 
 ## Explicabilidad
 
-Cada variable aporta `−(10/ln 2) · coef · (WoE − WoE promedio)` puntos frente a un negocio promedio. La suma de los aportes más la base da el puntaje, así que la explicación es exacta, no aproximada. La IA generativa solo pone esos aportes en palabras sencillas y nunca calcula ni cambia el puntaje.
+Cada variable aporta `142 · peso_c · −coef · (WoE − WoE promedio)` puntos frente a un negocio promedio, y la respuesta dice de qué componente viene. La suma de los aportes más la base da el puntaje: la explicación es exacta. La IA generativa (Claude) solo pone esos aportes en palabras sencillas; nunca calcula ni cambia el puntaje, y si no está disponible se usa una plantilla.
 
 ## Riesgos y límites
 
-- **Datos sintéticos:** el siguiente paso es recalibrar con historia real de un distribuidor aliado.
-- **Sesgo:** el modelo no usa género, edad ni ubicación exacta. Hay que medir con datos reales si alguna variable actúa como sustituto de ellas.
-- **Variaciones justificadas:** el tendero puede excluir meses de la estabilidad. El aliado ve los dos puntajes y el motivo, y una justificación abusiva queda a la vista.
-- **Deriva:** recalcular las métricas fuera de tiempo cada trimestre; reentrenar si el Gini baja más de 0,05.
+- **Transferencia de dominio:** UCI son tarjetas de crédito en Taiwán (2005). La definición de variable es la misma, pero la relación con la mora puede cambiar en tenderos de Bogotá. El primer piloto con un distribuidor debe recalibrar con su historia real.
+- **Componente de negocio sintético:** las distribuciones vienen de EMICRON, pero la relación ventas → mora es un supuesto. Por eso pesa la mitad.
+- **Sesgo:** el modelo no usa género, edad ni ubicación exacta. EMICRON trae sexo del propietario: con datos reales hay que medir si alguna variable actúa como sustituto.
+- **Variaciones justificadas:** el tendero puede excluir meses de la estabilidad. El aliado ve los dos puntajes y el motivo.
+- **Deriva:** recalcular las métricas cada trimestre; reentrenar si el Gini baja más de 0,05.
+
+Reentrenar: `cd services/scoring && uv run python -m tendia_scoring.datos.preparar && uv run python -m tendia_scoring.train`.

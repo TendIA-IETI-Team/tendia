@@ -16,7 +16,8 @@ Ningún secreto vive en el repo: van en GitHub Secrets, en el panel de Render o 
    - `DATA_ENCRYPTION_KEY`: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. Guárdala también en un gestor de contraseñas: perderla deja ilegibles los datos cifrados.
    - `CORS_ORIGINS`: URL del portal en Render.
    - `NEXT_PUBLIC_API_URL` (portal): URL pública de `tendia-api`.
-   - Opcionales: `ANTHROPIC_API_KEY` (explicación con IA), `SENTRY_DSN`, `TWILIO_*` (SMS reales; al configurarlos, pon `OTP_DEV_MODE=false`).
+   - Opcionales: `ANTHROPIC_API_KEY` (explicación, asistente Tendi y lectura del cuaderno con IA), `SENTRY_DSN` y `RELEASE` (en `tendia-api` y `tendia-scoring`), `TWILIO_*` (SMS reales; al configurarlos, pon `OTP_DEV_MODE=false`) y `PUBLIC_API_URL` (URL pública de `tendia-api`, para WhatsApp).
+   - WhatsApp: en Twilio, el webhook de mensajes entrantes es `POST <PUBLIC_API_URL>/whatsapp/webhook`.
 3. **Migraciones:** la imagen de la API corre `prisma migrate deploy` al arrancar.
 4. **App:** `cd apps/mobile && npx eas-cli@latest build --profile preview --platform android` con `EXPO_PUBLIC_API_URL` apuntando a la API de staging.
 

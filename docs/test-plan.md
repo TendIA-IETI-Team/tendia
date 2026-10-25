@@ -10,16 +10,16 @@
 | Unitarias   | `services/api/src/**/*.spec.ts`                   | Jest                                         | Cifrado, recomendación por política, conectores simulados, explicación con IA (cliente simulado)   |
 | Unitarias   | `apps/portal/src/**/*.test.ts`, `packages/tokens` | Vitest, `node:test`                          | Formatos y contraste WCAG de la paleta                                                             |
 | Integración | `services/api/test/flujo.e2e-spec.ts`             | Jest + Supertest + Postgres + scoring reales | Flujo T1 → T13, aislamiento entre aliados y tenderos, revocación (Ley 1581), API pública y consumo |
-| Contrato    | `services/scoring/tests/test_app.py`              | pytest                                       | Campos exactos de la respuesta `/score` v1 (TND-071)                                               |
+| Contrato    | `services/scoring/tests/test_app.py`              | pytest                                       | Campos exactos de la respuesta `/score` v2 (TND-071)                                               |
 | E2E portal  | `apps/portal/e2e`                                 | Playwright                                   | El analista entra con MFA, revisa una solicitud y la aprueba                                       |
 | E2E app     | `apps/mobile/.maestro`                            | Maestro                                      | Ingreso con OTP → solicitud → autorización → puntaje → envío                                       |
 
-## Cobertura actual (23 oct 2026)
+## Cobertura actual (25 oct 2026)
 
 | Pieza   | Pruebas | Cobertura      |
 | ------- | ------- | -------------- |
-| Scoring | 25      | 98 % de líneas |
-| API     | 32      | 93 % de líneas |
+| Scoring | 38      | 91 % de líneas |
+| API     | 75      | 88 % de líneas |
 
 ## Casos que no se pueden romper
 

@@ -3,11 +3,7 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export type Estado =
-  | 'ENVIADA'
-  | 'GARANTIA_SOLICITADA'
-  | 'GARANTIA_ENVIADA'
-  | 'APROBADA'
-  | 'RECHAZADA';
+  'ENVIADA' | 'GARANTIA_SOLICITADA' | 'GARANTIA_ENVIADA' | 'APROBADA' | 'RECHAZADA';
 
 export type Recomendacion = 'APROBAR' | 'PEDIR_GARANTIA' | 'RECHAZAR';
 
@@ -153,6 +149,11 @@ const USER = 'tendia.usuario';
 export const session = {
   get token() {
     return typeof window === 'undefined' ? null : sessionStorage.getItem(TOKEN);
+  },
+  /** JSON del usuario tal como está guardado (texto estable para useSyncExternalStore). */
+  get usuarioGuardado(): string | null {
+    if (typeof window === 'undefined' || !sessionStorage.getItem(TOKEN)) return null;
+    return sessionStorage.getItem(USER);
   },
   get usuario(): Usuario | null {
     if (typeof window === 'undefined') return null;

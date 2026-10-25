@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { API_URL, session, type Usuario } from '@/lib/api';
 
 /** Model card (TND-047) y política de datos (TND-023), publicadas en el repo. */
@@ -16,16 +16,22 @@ const NAV = [
   { href: '/auditoria', label: 'Auditoría', admin: true },
 ];
 
+const sinSuscripcion = () => () => undefined;
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const path = usePathname();
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  // La sesión vive en sessionStorage: en el servidor no hay sesión y el cliente la lee al hidratar.
+  const raw = useSyncExternalStore(
+    sinSuscripcion,
+    () => session.usuarioGuardado,
+    () => undefined,
+  );
+  const usuario = useMemo<Usuario | null>(() => (raw ? JSON.parse(raw) : null), [raw]);
 
   useEffect(() => {
-    const u = session.usuario;
-    if (!session.token || !u) router.replace('/login');
-    else setUsuario(u);
-  }, [router]);
+    if (raw === null) router.replace('/login');
+  }, [raw, router]);
 
   if (!usuario) return null;
 

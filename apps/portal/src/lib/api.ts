@@ -49,6 +49,25 @@ export interface Mercado {
   entidades?: { entidad: string; creditos: number; tasa_promedio_ponderada: number }[];
 }
 
+/** Indicadores descriptivos del negocio (TND-042): contextualizan, no entran al puntaje. */
+export interface Indicadores {
+  avg_ticket: number | null;
+  repurchase_regularity: number | null;
+  days_between_purchases: number | null;
+  sales_per_peso_purchased: number | null;
+  seasonality: number | null;
+}
+
+/** Evidencia de una variación (T8) o documento de la garantía (T10). */
+export interface Adjunto {
+  id: string;
+  proposito: 'variacion' | 'garantia';
+  mes: string | null;
+  nombre: string;
+  tipo: string;
+  tamano: number;
+}
+
 export interface ScoreView {
   version: number;
   puntaje: number;
@@ -61,6 +80,7 @@ export interface ScoreView {
   explicacion: { resumen: string; fortalezas: string[]; aMejorar: string[] };
   explicacionFuente: 'ia' | 'plantilla';
   contribuciones: Contribucion[];
+  indicadores: Indicadores | null;
 }
 
 export interface FilaBandeja {
@@ -113,7 +133,8 @@ export interface DetalleSolicitud {
   } | null;
   score: ScoreView | null;
   scoreOriginal: ScoreView | null;
-  variaciones: { mes: string; motivo: string }[];
+  variaciones: { mes: string; motivo: string; evidencia: Adjunto | null }[];
+  documentoGarantia: Adjunto | null;
   calidadDatos: { issues: { code: string; message: string }[] } | null;
   garantia: {
     tipo: string;
@@ -140,8 +161,13 @@ export interface DetalleSolicitud {
 export interface Usuario {
   nombre: string;
   email: string;
-  rol: 'ANALISTA' | 'ADMIN_ALIADO';
+  rol: Rol;
 }
+
+export type Rol = 'ANALISTA' | 'ADMIN_ALIADO' | 'ADMIN_TENDIA';
+
+/** A dónde entra cada rol después del login. */
+export const inicioDe = (rol: Rol) => (rol === 'ADMIN_TENDIA' ? '/admin' : '/bandeja');
 
 const TOKEN = 'tendia.token';
 const USER = 'tendia.usuario';
@@ -177,6 +203,22 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+}
+
+/** Abre un adjunto protegido (necesita el token, así que no sirve un enlace directo). */
+export async function abrirArchivo(path: string): Promise<void> {
+  const ventana = window.open('', '_blank');
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { Authorization: `Bearer ${session.token}` },
+  });
+  if (!res.ok) {
+    ventana?.close();
+    throw new ApiError(res.status, 'No pudimos abrir el archivo.');
+  }
+  const url = URL.createObjectURL(await res.blob());
+  if (ventana) ventana.location.href = url;
+  else window.location.href = url;
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {

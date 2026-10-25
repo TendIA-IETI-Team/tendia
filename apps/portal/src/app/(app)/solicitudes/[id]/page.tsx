@@ -16,7 +16,15 @@ import {
   Vacio,
 } from '@/components/ui';
 import { puntos } from '@/components/charts';
-import { api, type DetalleSolicitud, type Mercado, type Segmento } from '@/lib/api';
+import {
+  abrirArchivo,
+  type Adjunto,
+  api,
+  type DetalleSolicitud,
+  type Indicadores,
+  type Mercado,
+  type Segmento,
+} from '@/lib/api';
 import { fecha, GARANTIAS, mesCorto, pesos, porcentaje, RECOMENDACIONES } from '@/lib/format';
 
 const PRIORIDAD_VENTAS = ['DATAFONO', 'OPEN_FINANCE', 'MANUAL'];
@@ -143,7 +151,8 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
                     className="flex gap-3 rounded-lg border border-accent-100 bg-accent-100/40 p-3"
                   >
                     <span className="font-bold text-accent-700">{mesCorto(v.mes)}</span>
-                    <span>{v.motivo}</span>
+                    <span className="flex-1">{v.motivo}</span>
+                    {v.evidencia && <ArchivoBoton solicitudId={d.id} adjunto={v.evidencia} />}
                   </li>
                 ))}
               </ul>
@@ -208,6 +217,7 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
             </dl>
           </Card>
           <Decision d={d} onCambio={setD} />
+          {s?.indicadores && <IndicadoresCard indicadores={s.indicadores} />}
           {s?.segmento && <SegmentoCard segmento={s.segmento} />}
           {d.mercado && <MercadoCard mercado={d.mercado} franja={s?.franjaNombre ?? ''} />}
           {(d.calidadDatos?.issues?.length ?? 0) > 0 && (
@@ -228,6 +238,80 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
 }
 
 /** Segmento del negocio, con lo que muestran los datos reales de EMICRON 2024 (DANE). */
+/** Abre la evidencia (T8) o el documento de la garantía (T10). La descarga queda en la bitácora. */
+function ArchivoBoton({ solicitudId, adjunto }: { solicitudId: string; adjunto: Adjunto }) {
+  const [error, setError] = useState(false);
+  const kb = Math.max(1, Math.round(adjunto.tamano / 1024));
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        abrirArchivo(`/aliado/solicitudes/${solicitudId}/adjuntos/${adjunto.id}`).catch(() =>
+          setError(true),
+        )
+      }
+      className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-2 py-1 text-xs font-bold text-brand-700 hover:bg-brand-50"
+      title={`Abrir ${adjunto.nombre}`}
+    >
+      {adjunto.tipo === 'application/pdf' ? 'PDF' : 'Foto'} · {adjunto.nombre} ({kb} KB)
+      {error && <span className="text-danger"> · no se pudo abrir</span>}
+    </button>
+  );
+}
+
+/** Indicadores del negocio calculados por el motor (TND-042). No entran al puntaje. */
+function IndicadoresCard({ indicadores: i }: { indicadores: Indicadores }) {
+  const filas: [string, string | null, string][] = [
+    [
+      'Ticket promedio',
+      i.avg_ticket !== null ? pesos(i.avg_ticket) : null,
+      'Lo que deja cada venta con datáfono',
+    ],
+    [
+      'Regularidad de recompra',
+      i.repurchase_regularity !== null ? porcentaje(i.repurchase_regularity) : null,
+      'Meses en que le compró al proveedor',
+    ],
+    [
+      'Días entre compras',
+      i.days_between_purchases !== null
+        ? `${i.days_between_purchases.toLocaleString('es-CO')} días`
+        : null,
+      'Cada cuánto vuelve a surtir',
+    ],
+    [
+      'Rotación',
+      i.sales_per_peso_purchased !== null
+        ? `${i.sales_per_peso_purchased.toLocaleString('es-CO')} × lo comprado`
+        : null,
+      'Ventas por cada peso que compra',
+    ],
+    [
+      'Estacionalidad',
+      i.seasonality !== null ? porcentaje(i.seasonality) : null,
+      'Cuánto cae el mes más flojo frente a uno normal',
+    ],
+  ];
+  return (
+    <Card title="Indicadores del negocio">
+      <dl className="space-y-2 text-sm">
+        {filas.map(([label, valor, ayuda]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3">
+            <dt>
+              <div className="font-semibold text-brand-900">{label}</div>
+              <div className="text-xs text-ink-muted">{ayuda}</div>
+            </dt>
+            <dd className="tabular font-bold text-brand-700">{valor ?? '—'}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs text-ink-muted">
+        Contexto para el analista: no cambian el puntaje.
+      </p>
+    </Card>
+  );
+}
+
 function SegmentoCard({ segmento: g }: { segmento: Segmento }) {
   return (
     <Card title="Tipo de negocio">
@@ -485,6 +569,14 @@ function Decision({
             </span>
             <p className="rounded-lg bg-brand-50 p-3">{d.garantia.respuesta}</p>
           </div>
+          {d.documentoGarantia && (
+            <div>
+              <span className="text-xs font-bold uppercase text-ink-muted">Documento adjunto</span>
+              <div className="mt-1">
+                <ArchivoBoton solicitudId={d.id} adjunto={d.documentoGarantia} />
+              </div>
+            </div>
+          )}
         </div>
         <div className="space-y-3">
           {notaInput}

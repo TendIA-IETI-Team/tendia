@@ -4,17 +4,28 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { API_URL, session, type Usuario } from '@/lib/api';
+import { API_URL, session, type Rol, type Usuario } from '@/lib/api';
 
 /** Model card (TND-047) y política de datos (TND-023), publicadas en el repo. */
 const DOCS = 'https://github.com/TendIA-IETI-Team/tendia/blob/main/docs';
 
-const NAV = [
-  { href: '/bandeja', label: 'Solicitudes', admin: false },
-  { href: '/politica', label: 'Política de riesgo', admin: false },
-  { href: '/integraciones', label: 'API y consumo', admin: false },
-  { href: '/auditoria', label: 'Auditoría', admin: true },
+const ALIADO: Rol[] = ['ANALISTA', 'ADMIN_ALIADO'];
+
+const NAV: { href: string; label: string; roles: Rol[] }[] = [
+  { href: '/bandeja', label: 'Solicitudes', roles: ALIADO },
+  { href: '/politica', label: 'Política de riesgo', roles: ALIADO },
+  { href: '/integraciones', label: 'API y consumo', roles: ALIADO },
+  { href: '/satisfaccion', label: 'Satisfacción', roles: ALIADO },
+  { href: '/equipo', label: 'Equipo', roles: ['ADMIN_ALIADO'] },
+  { href: '/auditoria', label: 'Auditoría', roles: ['ADMIN_ALIADO'] },
+  { href: '/admin', label: 'Bitácora por tendero', roles: ['ADMIN_TENDIA'] },
 ];
+
+const ROLES: Record<Rol, string> = {
+  ANALISTA: 'Analista',
+  ADMIN_ALIADO: 'Administrador',
+  ADMIN_TENDIA: 'Equipo TendIA',
+};
 
 const sinSuscripcion = () => () => undefined;
 
@@ -33,6 +44,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (raw === null) router.replace('/login');
   }, [raw, router]);
 
+  // Cada rol solo ve sus pantallas: el equipo de TendIA no entra a la bandeja de un aliado.
+  useEffect(() => {
+    if (!usuario) return;
+    const enAdmin = path.startsWith('/admin');
+    if (usuario.rol === 'ADMIN_TENDIA' && !enAdmin) router.replace('/admin');
+    if (usuario.rol !== 'ADMIN_TENDIA' && enAdmin) router.replace('/bandeja');
+  }, [usuario, path, router]);
+
   if (!usuario) return null;
 
   return (
@@ -44,14 +63,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <div className="text-lg font-extrabold leading-none">TendIA</div>
-            <div className="text-xs text-brand-100">Portal del aliado</div>
+            <div className="text-xs text-brand-100">
+              {usuario.rol === 'ADMIN_TENDIA' ? 'Administración' : 'Portal del aliado'}
+            </div>
           </div>
         </div>
         <nav
           className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:pb-0"
           aria-label="Principal"
         >
-          {NAV.filter((n) => !n.admin || usuario.rol === 'ADMIN_ALIADO').map((n) => {
+          {NAV.filter((n) => n.roles.includes(usuario.rol)).map((n) => {
             const active =
               path.startsWith(n.href) || (n.href === '/bandeja' && path.startsWith('/solicitudes'));
             return (
@@ -96,9 +117,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="mt-auto hidden border-t border-brand-500 px-5 py-4 text-sm md:block">
           <div className="font-bold">{usuario.nombre}</div>
-          <div className="text-xs text-brand-100">
-            {usuario.rol === 'ADMIN_ALIADO' ? 'Administrador' : 'Analista'}
-          </div>
+          <div className="text-xs text-brand-100">{ROLES[usuario.rol]}</div>
           <button
             className="mt-3 text-xs font-bold text-white underline"
             onClick={() => {

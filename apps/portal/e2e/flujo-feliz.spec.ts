@@ -6,7 +6,8 @@ const PASSWORD = 'TendIA-demo-2026!';
 
 /** Crea por API una solicitud enviada al Banco Demo, como lo haría la app del tendero. */
 async function solicitudEnviada(request: import('@playwright/test').APIRequestContext) {
-  const celular = `310${Math.floor(1_000_000 + Math.random() * 8_999_999)}`;
+  // Rango de pruebas (300 000 0100 a 0999): nunca recibe SMS reales aunque Twilio esté configurado.
+  const celular = `3000000${Math.floor(100 + Math.random() * 900)}`;
   const otp = await (await request.post(`${API}/auth/tendero/otp`, { data: { celular } })).json();
   const { accessToken } = await (
     await request.post(`${API}/auth/tendero/verificar`, {

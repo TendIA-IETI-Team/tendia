@@ -5,7 +5,7 @@ import { ConsumoChart } from '@/components/charts';
 import { PageTitle } from '@/components/Shell';
 import { Alerta, Badge, Button, Card, Field, inputClass, Vacio } from '@/components/ui';
 import { api, API_URL, session } from '@/lib/api';
-import { fecha } from '@/lib/format';
+import { fecha, mesCorto } from '@/lib/format';
 
 interface Llave {
   id: string;
@@ -20,6 +20,7 @@ interface Consumo {
   total: number;
   exitosas: number;
   porDia: { dia: string; consultas: number; exitosas: number }[];
+  porMes: { mes: string; consultas: number; exitosas: number }[];
 }
 
 /** Credenciales de API (TND-013), documentación (TND-064) y consumo (TND-065). */
@@ -103,6 +104,31 @@ export default function IntegracionesPage() {
                 <ConsumoChart porDia={consumo.porDia} />
               ) : (
                 <Vacio>Todavía no hay consultas.</Vacio>
+              )}
+              {consumo.porMes.length > 0 && (
+                <div className="mt-5 overflow-x-auto">
+                  <h3 className="mb-2 text-xs font-bold uppercase text-ink-muted">
+                    Consultas por mes (lo que se factura)
+                  </h3>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-line text-left text-xs uppercase text-ink-muted">
+                        <th className="py-2">Mes</th>
+                        <th className="py-2 text-right">Consultas</th>
+                        <th className="py-2 text-right">Exitosas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {consumo.porMes.map((m) => (
+                        <tr key={m.mes} className="tabular border-b border-line last:border-0">
+                          <td className="py-1.5">{mesCorto(m.mes)}</td>
+                          <td className="py-1.5 text-right">{m.consultas}</td>
+                          <td className="py-1.5 text-right">{m.exitosas}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </>
           )}

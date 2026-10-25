@@ -63,8 +63,13 @@ test('el analista ingresa con MFA, revisa una solicitud y la aprueba', async ({
   await expect(page.getByRole('heading', { name: 'Solicitudes' })).toBeVisible();
   await page.getByRole('link', { name: 'Tienda E2E' }).first().click();
   await expect(page.getByText('Qué pesó en el puntaje')).toBeVisible();
-  await expect(page.getByText('de 100', { exact: true })).toBeVisible();
+  await expect(page.getByText('de 1000', { exact: true })).toBeVisible();
 
+  // A4: la tasa arranca en la referencia real del mercado (Superfinanciera); el analista fija el plazo.
+  await expect(page.getByText('Referencia del mercado')).toBeVisible();
+  await expect(page.getByLabel('Tasa E.A. %')).not.toHaveValue('');
+  await page.getByLabel('Plazo (meses)').fill('8');
   await page.getByRole('button', { name: 'Aprobar crédito' }).click();
   await expect(page.getByText('Crédito aprobado.')).toBeVisible();
+  await expect(page.getByText(/\$\s?2\.000\.000 a 8 meses/)).toBeVisible();
 });

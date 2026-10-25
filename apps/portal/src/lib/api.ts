@@ -11,19 +11,55 @@ export type Estado =
 
 export type Recomendacion = 'APROBAR' | 'PEDIR_GARANTIA' | 'RECHAZAR';
 
+export type Franja = 'bajo' | 'medio' | 'bueno';
+
 export interface Contribucion {
   feature: string;
+  component: 'pagos' | 'negocio';
   label: string;
   value: number;
   display_value: string;
   points: number;
 }
 
+/** Segmento del negocio con datos reales de EMICRON 2024 (DANE). */
+export interface Segmento {
+  code: string;
+  name: string;
+  description: string;
+  share_of_businesses: number;
+  median_monthly_sales: number;
+  median_age_months: number;
+  requested_credit: number;
+  obtained_credit: number;
+  used_loan_sharks: number;
+  n_sample: number;
+}
+
+export interface Componente {
+  name: 'pagos' | 'negocio';
+  label: string;
+  points: number;
+  trained_on: string;
+}
+
+/** Tasa real del mercado (Superfinanciera) para la franja del tendero. */
+export interface Mercado {
+  tasaEfectivaAnual: number;
+  rango: { desde: number; hasta: number };
+  creditos: number;
+  periodo: { desde: string; hasta: string };
+  fuente: string;
+  entidades?: { entidad: string; creditos: number; tasa_promedio_ponderada: number }[];
+}
+
 export interface ScoreView {
   version: number;
   puntaje: number;
-  nivel: string;
-  nivelIndice: number;
+  franja: Franja;
+  franjaNombre: string;
+  segmento: Segmento | null;
+  componentes: Componente[];
   conVariaciones: boolean;
   modeloVersion: string;
   explicacion: { resumen: string; fortalezas: string[]; aMejorar: string[] };
@@ -40,7 +76,8 @@ export interface FilaBandeja {
   estado: Estado;
   enviadaEn: string;
   puntaje: number | null;
-  nivel: string | null;
+  franja: Franja | null;
+  segmento: string | null;
   conVariaciones: boolean;
   principalesFactores: { label: string; points: number }[];
   recomendacion?: Recomendacion;
@@ -56,6 +93,7 @@ export interface Politica {
   scoreMinAprobar: number;
   scoreMinConGarantia: number;
   montoMaximo: number;
+  version?: number;
 }
 
 export interface DetalleSolicitud {
@@ -66,6 +104,8 @@ export interface DetalleSolicitud {
   estado: Estado;
   enviadaEn: string;
   notaDecision: string | null;
+  aprobado: { monto: number; plazoMeses: number; tasaEfectivaAnual: number | null } | false;
+  mercado: Mercado | null;
   negocio: {
     nombre: string | null;
     propietario: string | null;
@@ -93,6 +133,8 @@ export interface DetalleSolicitud {
     facturas: number | null;
     pagadasATiempo: number | null;
     diasRetrasoPromedio: number | null;
+    pagado: number | null;
+    cupo: number | null;
   }[];
   politica: Politica;
   recomendacion?: Recomendacion;

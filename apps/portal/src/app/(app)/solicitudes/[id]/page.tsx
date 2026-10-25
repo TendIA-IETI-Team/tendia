@@ -15,8 +15,9 @@ import {
   ScoreHero,
   Vacio,
 } from '@/components/ui';
-import { api, type DetalleSolicitud } from '@/lib/api';
-import { fecha, GARANTIAS, mesCorto, pesos, RECOMENDACIONES } from '@/lib/format';
+import { puntos } from '@/components/charts';
+import { api, type DetalleSolicitud, type Mercado, type Segmento } from '@/lib/api';
+import { fecha, GARANTIAS, mesCorto, pesos, porcentaje, RECOMENDACIONES } from '@/lib/format';
 
 const PRIORIDAD_VENTAS = ['DATAFONO', 'OPEN_FINANCE', 'MANUAL'];
 
@@ -76,7 +77,24 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
             {s ? (
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
-                  <ScoreHero puntaje={s.puntaje} nivel={s.nivel} />
+                  <ScoreHero puntaje={s.puntaje} />
+                  {s.componentes.length > 0 && (
+                    <ul className="mt-4 space-y-1 text-sm">
+                      {s.componentes.map((c) => (
+                        <li key={c.name} className="flex justify-between gap-3">
+                          <span>
+                            {c.label}
+                            <span className="block text-[11px] text-ink-muted">{c.trained_on}</span>
+                          </span>
+                          <span
+                            className={`tabular font-bold ${c.points >= 0 ? 'text-brand-700' : 'text-[#8E3560]'}`}
+                          >
+                            {puntos(c.points, 0)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {d.scoreOriginal && (
                     <p className="mt-4 text-sm text-ink-muted">
                       Puntaje antes de las justificaciones:{' '}
@@ -147,7 +165,9 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
                   <thead>
                     <tr className="border-b border-line text-left text-xs uppercase text-ink-muted">
                       <th className="py-2">Mes</th>
-                      <th className="py-2 text-right">Compras</th>
+                      <th className="py-2 text-right">Compras fiadas</th>
+                      <th className="py-2 text-right">Pagado</th>
+                      <th className="py-2 text-right">Cupo</th>
                       <th className="py-2 text-right">Facturas a tiempo</th>
                       <th className="py-2 text-right">Días de retraso</th>
                     </tr>
@@ -157,6 +177,8 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
                       <tr key={r.mes} className="tabular border-b border-line last:border-0">
                         <td className="py-1.5">{mesCorto(r.mes)}</td>
                         <td className="py-1.5 text-right">{pesos(r.compras ?? 0)}</td>
+                        <td className="py-1.5 text-right">{r.pagado ? pesos(r.pagado) : '—'}</td>
+                        <td className="py-1.5 text-right">{r.cupo ? pesos(r.cupo) : '—'}</td>
                         <td className="py-1.5 text-right">
                           {r.pagadasATiempo}/{r.facturas}
                         </td>
@@ -186,6 +208,8 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
             </dl>
           </Card>
           <Decision d={d} onCambio={setD} />
+          {s?.segmento && <SegmentoCard segmento={s.segmento} />}
+          {d.mercado && <MercadoCard mercado={d.mercado} franja={s?.franjaNombre ?? ''} />}
           {(d.calidadDatos?.issues?.length ?? 0) > 0 && (
             <Card title="Alertas de datos">
               <ul className="space-y-2 text-sm">
@@ -200,6 +224,67 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
     </>
+  );
+}
+
+/** Segmento del negocio, con lo que muestran los datos reales de EMICRON 2024 (DANE). */
+function SegmentoCard({ segmento: g }: { segmento: Segmento }) {
+  return (
+    <Card title="Tipo de negocio">
+      <div className="text-lg font-extrabold text-brand-700">{g.name}</div>
+      <p className="mb-3 text-sm text-ink-muted">{g.description}</p>
+      <dl className="grid grid-cols-2 gap-3 text-sm">
+        <Dato label="Ventas típicas" valor={pesos(g.median_monthly_sales)} />
+        <Dato label="Antigüedad típica" valor={`${Math.round(g.median_age_months / 12)} años`} />
+        <Dato label="Pidieron crédito" valor={porcentaje(g.requested_credit)} />
+        <Dato label="Acudieron al gota a gota" valor={porcentaje(g.used_loan_sharks)} />
+      </dl>
+      <p className="mt-3 text-[11px] text-ink-muted">
+        Micronegocios de comercio con este perfil en Colombia ({porcentaje(g.share_of_businesses)}{' '}
+        del total). Fuente: DANE, EMICRON 2024, {g.n_sample.toLocaleString('es-CO')} encuestados.
+      </p>
+    </Card>
+  );
+}
+
+/** Tasas reales cobradas a tiendas de Bogotá (Superfinanciera), como referencia para decidir. */
+function MercadoCard({ mercado: m, franja }: { mercado: Mercado; franja: string }) {
+  return (
+    <Card title="Referencia del mercado">
+      <div className="flex items-baseline gap-2">
+        <span className="tabular text-3xl font-extrabold text-brand-700">
+          {m.tasaEfectivaAnual.toLocaleString('es-CO')} %
+        </span>
+        <span className="text-sm text-ink-muted">E.A. para franja {franja.toLowerCase()}</span>
+      </div>
+      <p className="mt-1 text-xs text-ink-muted">
+        La mitad de los créditos productivos a tiendas en Bogotá estuvo entre{' '}
+        {m.rango.desde.toLocaleString('es-CO')} % y {m.rango.hasta.toLocaleString('es-CO')} % E.A. (
+        {m.creditos.toLocaleString('es-CO')} créditos, {fecha(m.periodo.desde)} a{' '}
+        {fecha(m.periodo.hasta)}).
+      </p>
+      {m.entidades && m.entidades.length > 0 && (
+        <table className="mt-3 w-full text-xs">
+          <thead>
+            <tr className="text-left uppercase text-ink-muted">
+              <th className="py-1">Entidad</th>
+              <th className="py-1 text-right">Créditos</th>
+              <th className="py-1 text-right">Tasa E.A.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {m.entidades.slice(0, 6).map((e) => (
+              <tr key={e.entidad} className="tabular border-t border-line">
+                <td className="py-1">{e.entidad}</td>
+                <td className="py-1 text-right">{e.creditos.toLocaleString('es-CO')}</td>
+                <td className="py-1 text-right">{e.tasa_promedio_ponderada} %</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="mt-2 text-[11px] text-ink-muted">Fuente: {m.fuente}.</p>
+    </Card>
   );
 }
 
@@ -225,6 +310,52 @@ function Decision({
   const [pidiendo, setPidiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // A4: condiciones de aprobación. La tasa arranca en la referencia real del mercado.
+  const [monto, setMonto] = useState(String(d.monto));
+  const [plazo, setPlazo] = useState(String(d.plazoMeses));
+  const [tasa, setTasa] = useState(d.mercado ? String(d.mercado.tasaEfectivaAnual) : '');
+  const condiciones = {
+    montoAprobado: Number(monto) || undefined,
+    plazoAprobado: Number(plazo) || undefined,
+    tasaAprobada: tasa ? Number(tasa) : undefined,
+  };
+
+  const condicionesInput = (
+    <fieldset className="grid grid-cols-3 gap-2">
+      <legend className="mb-1 text-sm font-bold text-brand-900">Condiciones si se aprueba</legend>
+      <Field label="Monto">
+        <input
+          className={inputClass}
+          type="number"
+          min={100000}
+          step={50000}
+          value={monto}
+          onChange={(e) => setMonto(e.target.value)}
+        />
+      </Field>
+      <Field label="Plazo (meses)">
+        <input
+          className={inputClass}
+          type="number"
+          min={1}
+          max={60}
+          value={plazo}
+          onChange={(e) => setPlazo(e.target.value)}
+        />
+      </Field>
+      <Field label="Tasa E.A. %">
+        <input
+          className={inputClass}
+          type="number"
+          min={0}
+          max={150}
+          step={0.1}
+          value={tasa}
+          onChange={(e) => setTasa(e.target.value)}
+        />
+      </Field>
+    </fieldset>
+  );
 
   async function enviar(path: string, body: object) {
     setEnviando(true);
@@ -307,9 +438,16 @@ function Decision({
             </>
           ) : (
             <div className="grid gap-2">
+              {condicionesInput}
               <Button
                 disabled={enviando}
-                onClick={() => enviar('decision', { decision: 'APROBAR', nota: nota || undefined })}
+                onClick={() =>
+                  enviar('decision', {
+                    decision: 'APROBAR',
+                    nota: nota || undefined,
+                    ...condiciones,
+                  })
+                }
               >
                 Aprobar crédito
               </Button>
@@ -351,9 +489,12 @@ function Decision({
         <div className="space-y-3">
           {notaInput}
           <div className="grid gap-2">
+            {condicionesInput}
             <Button
               disabled={enviando}
-              onClick={() => enviar('garantia', { aceptar: true, nota: nota || undefined })}
+              onClick={() =>
+                enviar('garantia', { aceptar: true, nota: nota || undefined, ...condiciones })
+              }
             >
               Aceptar garantía y aprobar
             </Button>
@@ -378,7 +519,17 @@ function Decision({
         <Alerta tono="info">Esperando que el tendero responda la solicitud de garantía.</Alerta>
       )}
       {d.estado === 'APROBADA' && (
-        <Alerta tono="success">Crédito aprobado. {d.notaDecision}</Alerta>
+        <Alerta tono="success">
+          <span className="block font-bold">Crédito aprobado.</span>
+          {d.aprobado && (
+            <span className="tabular block">
+              {pesos(d.aprobado.monto)} a {d.aprobado.plazoMeses} meses
+              {d.aprobado.tasaEfectivaAnual !== null &&
+                `, ${d.aprobado.tasaEfectivaAnual.toLocaleString('es-CO')} % E.A.`}
+            </span>
+          )}
+          {d.notaDecision}
+        </Alerta>
       )}
       {d.estado === 'RECHAZADA' && (
         <Alerta tono="warning">

@@ -65,6 +65,10 @@ KMeans (k = 4) sobre 20.488 micronegocios de comercio de EMICRON 2024 (ventas, a
 
 El segmento contextualiza; **no entra al puntaje**.
 
+## Indicadores del negocio
+
+La respuesta de `/score` trae también `indicators` (adición compatible del contrato v2): ticket promedio, regularidad de recompra, días entre compras, rotación (ventas por peso comprado) y estacionalidad. Se calculan con el mismo código en entrenamiento y servicio (`compute_indicators`), contextualizan al analista y **no entran al puntaje**. El ticket promedio de los conectores simulados asume entre $7.000 y $16.000 por venta en una tienda de barrio; con datáfono real sale del número de transacciones. Definiciones en el [diccionario de variables](diccionario-variables.md).
+
 ## Explicabilidad
 
 Cada variable aporta `142 · peso_c · −coef · (WoE − WoE promedio)` puntos frente a un negocio promedio, y la respuesta dice de qué componente viene. La suma de los aportes más la base da el puntaje: la explicación es exacta. La IA generativa (Claude) solo pone esos aportes en palabras sencillas; nunca calcula ni cambia el puntaje, y si no está disponible se usa una plantilla.

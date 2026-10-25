@@ -29,8 +29,14 @@ Puedes, en cualquier momento y sin costo:
 2. **Actualizar y rectificar** tus datos (pantalla "Completar información").
 3. **Revocar** una autorización desde "Mis autorizaciones". Al revocarla, **borramos los datos de esa fuente** y dejamos de consultarla.
 4. **Pedir que suprimamos** tus datos, salvo los que la ley nos obligue a conservar.
-5. **Pedir prueba** de la autorización que nos diste: guardamos la fecha, la fuente y la versión del texto que aceptaste.
+5. **Pedir prueba** de la autorización que nos diste: guardamos la fecha, la fuente, la finalidad y la versión del texto que aceptaste.
 6. **Presentar quejas** ante la Superintendencia de Industria y Comercio.
+
+**Cómo ejercerlos:**
+
+- En la app: "Mis autorizaciones" (ver y revocar cada fuente) y "Completar información" (actualizar).
+- Por correo a [definir correo de privacidad], desde el celular registrado o con tu cédula.
+- El equipo de TendIA consulta la bitácora de tu cuenta (quién vio tus datos, cuándo y para qué) para responderte.
 
 Respondemos consultas en un máximo de 10 días hábiles y reclamos en un máximo de 15 días hábiles.
 
@@ -39,7 +45,8 @@ Respondemos consultas en un máximo de 10 días hábiles y reclamos en un máxim
 - Celular y cédula cifrados en reposo (AES-256-GCM).
 - Acceso de las entidades con contraseña y segundo factor obligatorio.
 - Cada entidad ve solo las solicitudes que le enviaste.
-- Bitácora de quién consultó qué y cuándo.
+- Bitácora de quién consultó qué, cuándo y para qué. Nadie puede editarla ni borrarla.
+- Postgres impide que una entidad lea solicitudes de otra (Row Level Security).
 - Los registros técnicos no contienen datos personales.
 - La explicación con inteligencia artificial recibe solo el puntaje y sus factores, nunca datos que te identifiquen.
 

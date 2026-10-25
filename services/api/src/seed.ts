@@ -12,7 +12,7 @@ const ALIADOS = [
     slug: 'banco-demo',
     nombre: 'Banco Demo Popular',
     tipo: TipoAliado.BANCO,
-    politica: { scoreMinAprobar: 60, scoreMinConGarantia: 45, montoMaximo: 8_000_000 },
+    politica: { scoreMinAprobar: 650, scoreMinConGarantia: 500, montoMaximo: 8_000_000 },
     usuarios: [
       { email: 'admin@bancodemo.co', nombre: 'Laura Admin', rol: RolUsuario.ADMIN_ALIADO },
       { email: 'analista@bancodemo.co', nombre: 'Andrés Analista', rol: RolUsuario.ANALISTA },
@@ -22,7 +22,7 @@ const ALIADOS = [
     slug: 'microcredito-demo',
     nombre: 'Microcrédito Demo',
     tipo: TipoAliado.MICROFINANCIERA,
-    politica: { scoreMinAprobar: 55, scoreMinConGarantia: 40, montoMaximo: 5_000_000 },
+    politica: { scoreMinAprobar: 620, scoreMinConGarantia: 480, montoMaximo: 5_000_000 },
     usuarios: [
       { email: 'admin@microdemo.co', nombre: 'Camila Admin', rol: RolUsuario.ADMIN_ALIADO },
     ],

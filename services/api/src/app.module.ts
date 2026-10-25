@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AliadoModule } from './aliado/aliado.controller';
+import { AsistenteModule } from './asistente/asistente.controller';
 import { AuthModule } from './auth/auth.controller';
 import { AuditModule } from './common/audit.service';
 import { AuthGuard } from './common/auth';
@@ -48,6 +49,7 @@ import { TenderoModule } from './tendero/tendero.controller';
     TenderoModule,
     AliadoModule,
     PublicApiModule,
+    AsistenteModule,
     HealthModule,
   ],
   providers: [

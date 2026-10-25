@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Actor, CurrentActor, Roles } from '../common/auth';
+import { ScoringClient } from '../scoring/scoring.client';
 import { AliadoService } from './aliado.service';
 import {
   CrearApiKeyDto,
@@ -100,5 +101,5 @@ export class AliadoController {
   }
 }
 
-@Module({ controllers: [AliadoController], providers: [AliadoService] })
+@Module({ controllers: [AliadoController], providers: [AliadoService, ScoringClient] })
 export class AliadoModule {}

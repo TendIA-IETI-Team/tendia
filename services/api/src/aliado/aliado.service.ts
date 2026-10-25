@@ -8,8 +8,9 @@ import { EstadoSolicitud, Prisma } from '@prisma/client';
 import { AuditService } from '../common/audit.service';
 import type { Actor } from '../common/auth';
 import { randomToken, sha256 } from '../common/crypto';
-import { recomendar, scoreView, scoreVigente } from '../common/vistas';
+import { recomendar, scoreView, scoreVigente, tasaReferencia } from '../common/vistas';
 import { PrismaService } from '../prisma.service';
+import { ScoringClient } from '../scoring/scoring.client';
 import { CrearApiKeyDto, DecisionDto, EvaluarGarantiaDto, PoliticaDto } from './dto';
 
 /** Estados que el aliado puede ver: solo lo que el tendero decidió compartir. */
@@ -22,9 +23,10 @@ const VISIBLES: EstadoSolicitud[] = [
 ];
 
 const POLITICA_POR_DEFECTO = {
-  scoreMinAprobar: 60,
-  scoreMinConGarantia: 45,
+  scoreMinAprobar: 650,
+  scoreMinConGarantia: 500,
   montoMaximo: 5_000_000,
+  version: 0,
 };
 
 @Injectable()
@@ -32,7 +34,16 @@ export class AliadoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly scoring: ScoringClient,
   ) {}
+
+  /** Tasas reales del mercado; si el scoring no responde, la pantalla sigue sin ellas. */
+  private async referenciaTasas() {
+    return this.scoring
+      .referencias()
+      .then((r) => r.tasas)
+      .catch(() => null);
+  }
 
   async politica(aliadoId: string) {
     return (
@@ -75,13 +86,14 @@ export class AliadoService {
           estado: s.estado,
           enviadaEn: s.enviadaEn,
           puntaje: view?.puntaje ?? null,
-          nivel: view?.nivel ?? null,
+          franja: view?.franja ?? null,
+          segmento: view?.segmento?.name ?? null,
           conVariaciones: s.variaciones.length > 0,
           principalesFactores: view
             ? [
-                // El factor que más suma y el que más resta, si mueven al menos medio punto.
-                ...view.contribuciones.filter((c) => c.points >= 0.5).slice(0, 1),
-                ...view.contribuciones.filter((c) => c.points <= -0.5).slice(-1),
+                // El factor que más suma y el que más resta, si mueven al menos 5 puntos.
+                ...view.contribuciones.filter((c) => c.points >= 5).slice(0, 1),
+                ...view.contribuciones.filter((c) => c.points <= -5).slice(-1),
               ].map((c) => ({ label: c.label, points: c.points }))
             : [],
           ...(view ? recomendar(view.puntaje, s.monto, politica) : {}),
@@ -108,9 +120,13 @@ export class AliadoService {
             facturas: true,
             pagadasATiempo: true,
             diasRetrasoPromedio: true,
+            pagado: true,
+            cupo: true,
           },
         })
       : [];
+    const tasas = await this.referenciaTasas();
+    const view = vigente ? scoreView(vigente) : null;
     await this.audit.log({
       actorTipo: 'USUARIO',
       actorId: actor.sub,
@@ -127,6 +143,11 @@ export class AliadoService {
       estado: s.estado,
       enviadaEn: s.enviadaEn,
       notaDecision: s.notaDecision,
+      aprobado: s.estado === 'APROBADA' && {
+        monto: s.montoAprobado ?? s.monto,
+        plazoMeses: s.plazoAprobado ?? s.plazoMeses,
+        tasaEfectivaAnual: s.tasaAprobada,
+      },
       negocio: negocio && {
         nombre: negocio.nombre,
         propietario: s.tendero.nombre,
@@ -136,13 +157,18 @@ export class AliadoService {
         antiguedadMeses: negocio.antiguedadMeses,
         ventasMensualesDeclaradas: negocio.ventasMensualesDeclaradas,
       },
-      score: vigente ? scoreView(vigente) : null,
+      score: view,
       scoreOriginal: original && vigente && vigente.version !== 1 ? scoreView(original) : null,
       variaciones: s.variaciones.map((v) => ({ mes: v.mes, motivo: v.motivo })),
       calidadDatos: s.calidadDatos,
       garantia: s.garantia,
       datos,
       politica,
+      // Referencia real del mercado (Superfinanciera) para la franja del tendero.
+      mercado:
+        view && tasas
+          ? { ...tasaReferencia(view.franja, tasas), entidades: tasas.entidades }
+          : null,
       ...(vigente ? recomendar(vigente.puntaje, s.monto, politica) : {}),
     };
   }
@@ -169,6 +195,7 @@ export class AliadoService {
           notaDecision: dto.nota ?? null,
           decididaEn: new Date(),
           decididaPor: actor.sub,
+          ...(dto.decision === 'APROBAR' ? this.condiciones(dto, s) : {}),
         },
       });
     }
@@ -201,6 +228,7 @@ export class AliadoService {
           notaDecision: dto.nota ?? null,
           decididaEn: new Date(),
           decididaPor: actor.sub,
+          ...(dto.aceptar ? this.condiciones(dto, s) : {}),
         },
       }),
     ]);
@@ -213,6 +241,18 @@ export class AliadoService {
       entidadId: id,
     });
     return this.detalle(actor, id);
+  }
+
+  /** A4: condiciones de aprobación. Si el analista no las cambia, se aprueba lo pedido. */
+  private condiciones(
+    dto: { montoAprobado?: number; plazoAprobado?: number; tasaAprobada?: number },
+    s: { monto: number; plazoMeses: number },
+  ) {
+    return {
+      montoAprobado: dto.montoAprobado ?? s.monto,
+      plazoAprobado: dto.plazoAprobado ?? s.plazoMeses,
+      tasaAprobada: dto.tasaAprobada ?? null,
+    };
   }
 
   /** Configurar la política de riesgo (TND-061). */

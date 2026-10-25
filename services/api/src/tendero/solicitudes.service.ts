@@ -1,8 +1,15 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EstadoSolicitud, Prisma } from '@prisma/client';
 import { AuditService } from '../common/audit.service';
-import { comoMejorar, estadoTexto, scoreView, scoreVigente } from '../common/vistas';
+import {
+  comoMejorar,
+  estadoTexto,
+  scoreView,
+  scoreVigente,
+  tasaReferencia,
+} from '../common/vistas';
 import { PrismaService } from '../prisma.service';
+import { Referencias, ScoringClient } from '../scoring/scoring.client';
 import { CrearSolicitudDto, RespuestaGarantiaDto, SatisfaccionDto, VariacionDto } from './dto';
 import { EvaluacionService } from './evaluacion.service';
 import { TenderoService } from './tendero.service';
@@ -25,6 +32,7 @@ export class SolicitudesService {
     private readonly evaluacion: EvaluacionService,
     private readonly tendero: TenderoService,
     private readonly audit: AuditService,
+    private readonly scoring: ScoringClient,
   ) {}
 
   /** T1: solicitar crédito con monto y destino (TND-050). */
@@ -50,11 +58,13 @@ export class SolicitudesService {
       include: incluir,
       orderBy: { creadaEn: 'desc' },
     });
-    return lista.map((s) => this.vista(s));
+    const tasas = await this.tasas();
+    return lista.map((s) => this.vista(s, tasas));
   }
 
   async detalle(tenderoId: string, id: string) {
-    return this.vista(await this.cargar(tenderoId, id));
+    const [s, tasas] = await Promise.all([this.cargar(tenderoId, id), this.tasas()]);
+    return this.vista(s, tasas);
   }
 
   /**
@@ -178,9 +188,17 @@ export class SolicitudesService {
     }
   }
 
-  vista(s: SolicitudCompleta) {
+  private tasas(): Promise<Referencias['tasas'] | null> {
+    return this.scoring
+      .referencias()
+      .then((r) => r.tasas)
+      .catch(() => null);
+  }
+
+  vista(s: SolicitudCompleta, tasas: Referencias['tasas'] | null = null) {
     const original = s.scores.find((x) => x.version === 1);
     const vigente = scoreVigente(s.scores);
+    const view = vigente ? scoreView(vigente) : null;
     return {
       id: s.id,
       monto: s.monto,
@@ -192,8 +210,19 @@ export class SolicitudesService {
       creadaEn: s.creadaEn,
       enviadaEn: s.enviadaEn,
       calidadDatos: s.calidadDatos,
-      score: vigente ? scoreView(vigente) : null,
+      score: view,
       scoreOriginal: original && vigente && vigente.version !== 1 ? scoreView(original) : null,
+      // Tasa de referencia real del mercado para su franja (Superfinanciera). No es una oferta.
+      mercado: view && tasas ? tasaReferencia(view.franja, tasas) : null,
+      // T11-T13: condiciones con que la entidad aprobó.
+      aprobado:
+        s.estado === 'APROBADA'
+          ? {
+              monto: s.montoAprobado ?? s.monto,
+              plazoMeses: s.plazoAprobado ?? s.plazoMeses,
+              tasaEfectivaAnual: s.tasaAprobada,
+            }
+          : null,
       variaciones: s.variaciones.map((v) => ({ mes: v.mes, motivo: v.motivo })),
       garantia: s.garantia && {
         tipo: s.garantia.tipo,

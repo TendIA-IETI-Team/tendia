@@ -27,6 +27,8 @@ const schema = z.object({
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_FROM: z.string().optional(),
+  // URL pública de la API (la configurada en Twilio): valida la firma del webhook de WhatsApp.
+  PUBLIC_API_URL: z.string().url().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-opus-5-5'),
   SENTRY_DSN: z.string().optional(),

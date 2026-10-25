@@ -24,13 +24,17 @@ export class DistribuidorSimulado implements Conector {
     // El distribuidor conoce un mes menos de historia en negocios nuevos (empezó a venderles después).
     const data = simularNegocio(n, meses, hasta);
     const visibles = data.length < 6 ? data.slice(1) : data;
-    return visibles.map(({ mes, compras, facturas, pagadasATiempo, diasRetrasoPromedio }) => ({
-      mes,
-      compras,
-      facturas,
-      pagadasATiempo,
-      diasRetrasoPromedio,
-    }));
+    return visibles.map(
+      ({ mes, compras, facturas, pagadasATiempo, diasRetrasoPromedio, pagado, cupo }) => ({
+        mes,
+        compras,
+        facturas,
+        pagadasATiempo,
+        diasRetrasoPromedio,
+        pagado: pagado ?? undefined,
+        cupo,
+      }),
+    );
   }
 }
 

@@ -1,8 +1,8 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { config } from '../config';
 
-/** Contrato v1 del servicio de scoring (ver services/scoring/tendia_scoring/schemas.py). */
-export interface ScoreRequestV1 {
+/** Contrato v2 del servicio de scoring (ver services/scoring/tendia_scoring/schemas.py). */
+export interface ScoreRequest {
   business: {
     business_age_months: number;
     business_type?: string;
@@ -15,43 +15,95 @@ export interface ScoreRequestV1 {
     invoices: number;
     paid_on_time: number;
     avg_days_late: number;
+    paid_amount?: number | null;
+    credit_limit?: number | null;
   }[];
   adjustments: { month: string; reason: string }[];
 }
 
-export interface ContributionV1 {
+export interface Contribution {
   feature: string;
+  component: 'pagos' | 'negocio';
   label: string;
   value: number;
   display_value: string;
   points: number;
 }
 
-export interface DataQualityV1 {
+export interface DataQuality {
   sufficient: boolean;
   months_of_sales: number;
   months_of_distributor: number;
   issues: { code: string; message: string }[];
 }
 
-export interface ScoreResponseV1 {
+export type FranjaCodigo = 'bajo' | 'medio' | 'bueno';
+
+export interface Band {
+  code: FranjaCodigo;
+  name: string;
+  min_score: number;
+  max_score: number;
+}
+
+/** Segmento del negocio con datos reales de EMICRON 2024 (DANE). */
+export interface Segment {
+  code: string;
+  name: string;
+  description: string;
+  share_of_businesses: number;
+  median_monthly_sales: number;
+  median_age_months: number;
+  requested_credit: number;
+  obtained_credit: number;
+  used_loan_sharks: number;
+  n_sample: number;
+}
+
+export interface ComponentScore {
+  name: 'pagos' | 'negocio';
+  label: string;
+  points: number;
+  trained_on: string;
+}
+
+export interface ScoreResponse {
+  contract_version: string;
   model_version: string;
   request_id: string;
   probability_default: number | null;
   score: number | null;
-  level: { index: number; name: string } | null;
-  contributions: ContributionV1[];
-  top_positive: ContributionV1[];
-  top_negative: ContributionV1[];
+  band: Band | null;
+  segment: Segment | null;
+  components: ComponentScore[];
+  contributions: Contribution[];
+  top_positive: Contribution[];
+  top_negative: Contribution[];
   adjusted_months: string[];
-  data_quality: DataQualityV1;
+  data_quality: DataQuality;
+}
+
+/** Datos reales de mercado que publica el servicio de scoring (EMICRON y Superfinanciera). */
+export interface Referencias {
+  emicron: Record<string, unknown>;
+  tasas: {
+    fuente: string;
+    filtro: string;
+    desde: string;
+    hasta: string;
+    creditos: number;
+    tasa_efectiva_anual: { p25: number; p50: number; p75: number };
+    con_garantia_fng: { p25: number; p50: number; p75: number } | null;
+    sin_garantia_fng: { p25: number; p50: number; p75: number } | null;
+    entidades: { entidad: string; creditos: number; tasa_promedio_ponderada: number }[];
+  };
 }
 
 @Injectable()
 export class ScoringClient {
   private readonly logger = new Logger(ScoringClient.name);
 
-  async score(body: ScoreRequestV1, requestId?: string): Promise<ScoreResponseV1> {
+  async score(body: ScoreRequest, requestId?: string): Promise<ScoreResponse> {
     let res: Response;
     try {
       res = await fetch(`${config().SCORING_URL}/score`, {
@@ -71,7 +123,7 @@ export class ScoringClient {
       this.logger.error(`Scoring respondió ${res.status}`);
       throw new ServiceUnavailableException('El motor de scoring no pudo calcular el puntaje');
     }
-    return (await res.json()) as ScoreResponseV1;
+    return (await res.json()) as ScoreResponse;
   }
 
   /** Para la API pública: devuelve también los errores de validación del motor (422). */
@@ -87,6 +139,27 @@ export class ScoringClient {
     } catch (err) {
       this.logger.error(`Scoring no disponible: ${(err as Error).message}`);
       throw new ServiceUnavailableException('El motor de scoring no está disponible');
+    }
+  }
+
+  private referenciasCache?: { valor: Referencias; hasta: number };
+
+  /** Referencias de mercado reales; se guardan en memoria una hora (cambian con cada reentrenamiento). */
+  async referencias(): Promise<Referencias> {
+    if (this.referenciasCache && this.referenciasCache.hasta > Date.now()) {
+      return this.referenciasCache.valor;
+    }
+    try {
+      const res = await fetch(`${config().SCORING_URL}/referencias`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const valor = (await res.json()) as Referencias;
+      this.referenciasCache = { valor, hasta: Date.now() + 3_600_000 };
+      return valor;
+    } catch (err) {
+      this.logger.error(`Referencias no disponibles: ${(err as Error).message}`);
+      throw new ServiceUnavailableException('Las referencias de mercado no están disponibles');
     }
   }
 

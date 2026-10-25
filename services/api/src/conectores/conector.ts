@@ -8,6 +8,8 @@ export interface RegistroMensual {
   facturas?: number;
   pagadasATiempo?: number;
   diasRetrasoPromedio?: number;
+  pagado?: number; // lo pagado al proveedor ese mes
+  cupo?: number; // cupo de crédito con el proveedor
 }
 
 export interface NegocioRef {

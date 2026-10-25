@@ -72,9 +72,17 @@ describe('Flujo completo tendero → score → aliado (e2e)', () => {
       .set(bearer(token))
       .expect(200);
     expect(evaluada.body.estado).toBe('SCORE_LISTO');
-    expect(evaluada.body.score.puntaje).toBeGreaterThanOrEqual(0);
-    expect(evaluada.body.score.explicacion.resumen).toContain('Puntaje TendIA');
-    expect(evaluada.body.score.explicacionFuente).toBe('plantilla');
+    const s = evaluada.body.score;
+    expect(s.puntaje).toBeGreaterThanOrEqual(0);
+    expect(s.puntaje).toBeLessThanOrEqual(1000);
+    expect(['bajo', 'medio', 'bueno']).toContain(s.franja);
+    expect(s.segmento.name).toBeTruthy(); // segmento entrenado con EMICRON (DANE)
+    expect(s.componentes.map((c: { name: string }) => c.name).sort()).toEqual(['negocio', 'pagos']);
+    expect(s.explicacion.resumen).toContain('Puntaje TendIA');
+    expect(s.explicacionFuente).toBe('plantilla');
+    // Referencia real de tasas (Superfinanciera) según la franja.
+    expect(evaluada.body.mercado.tasaEfectivaAnual).toBeGreaterThan(0);
+    expect(evaluada.body.mercado.fuente).toContain('Superintendencia');
     const original = evaluada.body.score.puntaje as number;
 
     // T8: enero tuvo obras en la calle.
@@ -138,9 +146,21 @@ describe('Flujo completo tendero → score → aliado (e2e)', () => {
     const cerrada = await request(http)
       .post(`/aliado/solicitudes/${solicitudId}/garantia`)
       .set(bearer(analista))
-      .send({ aceptar: true, nota: 'Garantía aceptada' })
+      .send({ aceptar: true, nota: 'Garantía aceptada', plazoAprobado: 8, tasaAprobada: 52.5 })
       .expect(200);
     expect(cerrada.body.estado).toBe('APROBADA');
+    // A4: condiciones aprobadas (el monto se mantiene si no se cambia).
+    expect(cerrada.body.aprobado).toEqual({
+      monto: 3_000_000,
+      plazoMeses: 8,
+      tasaEfectivaAnual: 52.5,
+    });
+    expect(cerrada.body.mercado.entidades.length).toBeGreaterThan(0);
+    const tenderoVe = await request(http)
+      .get(`/solicitudes/${solicitudId}`)
+      .set(bearer(token))
+      .expect(200);
+    expect(tenderoVe.body.aprobado.tasaEfectivaAnual).toBe(52.5);
 
     // T11-T13 + satisfacción.
     const fin = await request(http)

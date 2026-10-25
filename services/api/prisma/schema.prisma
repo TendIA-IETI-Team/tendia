@@ -64,6 +64,8 @@ model Tendero {
   negocio           Negocio?
   consentimientos   Consentimiento[]
   solicitudes       Solicitud[]
+  mensajes          MensajeAsistente[]
+  extracciones      ExtraccionCuaderno[]
 }
 
 model OtpCodigo {
@@ -91,6 +93,63 @@ model Negocio {
   // Solo para demos y pruebas: fija el perfil que devuelven los conectores simulados.
   perfilSimulado         String?
   datos                  DatoMensual[]
+  ventasDiarias          VentaDiaria[]
+  fiados                 Fiado[]
+}
+
+// Ventas del día que el tendero registra por la app, el asistente o WhatsApp (RF-04).
+// Se agregan por mes como fuente MANUAL ("lo que tú nos cuentas").
+model VentaDiaria {
+  id        String   @id @default(uuid())
+  negocioId String
+  negocio   Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  fecha     String // YYYY-MM-DD
+  monto     Int
+  canal     String // app | asistente | whatsapp | cuaderno
+  creadoEn  DateTime @default(now())
+
+  @@unique([negocioId, fecha])
+}
+
+// El cuaderno de fiado: lo que los clientes le deben al tendero.
+model Fiado {
+  id        String    @id @default(uuid())
+  negocioId String
+  negocio   Negocio   @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  cliente   String
+  monto     Int
+  fecha     String // YYYY-MM-DD
+  pagadoEn  DateTime?
+  canal     String
+  creadoEn  DateTime  @default(now())
+
+  @@index([negocioId, pagadoEn])
+}
+
+// Historial del asistente TendIA (app y WhatsApp). Solo texto; sin datos de terceros.
+model MensajeAsistente {
+  id        String   @id @default(uuid())
+  tenderoId String
+  tendero   Tendero  @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  rol       String // user | assistant
+  contenido String
+  canal     String // app | whatsapp
+  creadoEn  DateTime @default(now())
+
+  @@index([tenderoId, creadoEn])
+}
+
+// Lo que la IA leyó de una foto del cuaderno, pendiente de que el tendero lo confirme (TND-035).
+model ExtraccionCuaderno {
+  id        String   @id @default(uuid())
+  tenderoId String
+  tendero   Tendero  @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  datos     Json
+  estado    String   @default("pendiente") // pendiente | confirmada | descartada
+  canal     String
+  creadoEn  DateTime @default(now())
+
+  @@index([tenderoId, estado])
 }
 
 model Consentimiento {
@@ -117,6 +176,8 @@ model DatoMensual {
   facturas     Int?
   pagadasATiempo Int?
   diasRetrasoPromedio Float?
+  pagado       Int? // lo que pagó al proveedor ese mes
+  cupo         Int? // cupo de crédito que le da el proveedor
   creadoEn     DateTime   @default(now())
 
   @@unique([negocioId, fuente, mes])
@@ -154,8 +215,9 @@ model Politica {
   id                   String   @id @default(uuid())
   aliadoId             String   @unique
   aliado               Aliado   @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
-  scoreMinAprobar      Int      @default(60)
-  scoreMinConGarantia  Int      @default(45)
+  // Escala 0-1000 (modelo tendia-v2).
+  scoreMinAprobar      Int      @default(650)
+  scoreMinConGarantia  Int      @default(500)
   montoMaximo          Int      @default(5000000)
   // Sube en cada cambio; cada recomendación muestra con qué versión se calculó (TND-061).
   version              Int      @default(1)
@@ -174,6 +236,10 @@ model Solicitud {
   estado        EstadoSolicitud @default(BORRADOR)
   calidadDatos  Json?
   notaDecision  String?
+  // Condiciones con que el aliado aprueba (A4): pueden diferir de lo pedido.
+  montoAprobado Int?
+  plazoAprobado Int?
+  tasaAprobada  Float? // tasa efectiva anual en %
   decididaEn    DateTime?
   decididaPor   String?
   enviadaEn     DateTime?
@@ -194,10 +260,12 @@ model Score {
   solicitudId        String
   solicitud          Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
   version            Int // 1 = original, 2+ = con variaciones justificadas
-  puntaje            Int
+  puntaje            Int // 0-1000
   probabilidadIncumplimiento Float
-  nivel              String
+  nivel              String // franja: bajo | medio | bueno
   modeloVersion      String
+  segmento           Json? // segmento del negocio (EMICRON) con sus datos reales
+  componentes        Json? // puntos por componente: pagos y negocio
   contribuciones     Json
   calidadDatos       Json
   explicacion        Json // { resumen, fortalezas[], aMejorar[] }

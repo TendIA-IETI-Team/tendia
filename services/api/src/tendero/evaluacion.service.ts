@@ -4,7 +4,8 @@ import { ConectoresService } from '../conectores/conectores.service';
 import { lastClosedMonth } from '../conectores/simulacion';
 import { ExplicacionService } from '../explicacion/explicacion.service';
 import { PrismaService } from '../prisma.service';
-import { ScoreRequestV1, ScoreResponseV1, ScoringClient } from '../scoring/scoring.client';
+import { ventasMensualesDesdeDiarias } from '../registros/agregacion';
+import { ScoreRequest, ScoreResponse, ScoringClient } from '../scoring/scoring.client';
 
 const VENTANA_MESES = 12;
 
@@ -40,6 +41,8 @@ export class EvaluacionService {
           facturas: r.facturas ?? null,
           pagadasATiempo: r.pagadasATiempo ?? null,
           diasRetrasoPromedio: r.diasRetrasoPromedio ?? null,
+          pagado: r.pagado ?? null,
+          cupo: r.cupo ?? null,
         };
         await this.prisma.datoMensual.upsert({
           where: { negocioId_fuente_mes: { negocioId: negocio.id, fuente, mes: r.mes } },
@@ -54,7 +57,7 @@ export class EvaluacionService {
     negocio: Negocio,
     fuentes: FuenteTipo[],
     variaciones: Pick<Variacion, 'mes' | 'motivo'>[],
-  ): Promise<ScoreRequestV1> {
+  ): Promise<ScoreRequest> {
     const permitidas = [...fuentes, FuenteTipo.MANUAL];
     const datos = await this.prisma.datoMensual.findMany({
       where: { negocioId: negocio.id, fuente: { in: permitidas } },
@@ -65,6 +68,15 @@ export class EvaluacionService {
       OPEN_FINANCE: 'open_finance',
       MANUAL: 'declarado',
     } as const;
+    // Las ventas del día (app, asistente, WhatsApp, cuaderno) se suman por mes como "declarado"
+    // cuando no hay un total mensual escrito por el tendero para ese mes.
+    const diarias = await this.prisma.ventaDiaria.findMany({ where: { negocioId: negocio.id } });
+    const mesesManuales = new Set(
+      datos.filter((d) => d.fuente === FuenteTipo.MANUAL).map((d) => d.mes),
+    );
+    const desdeDiarias = ventasMensualesDesdeDiarias(diarias).filter(
+      (m) => !mesesManuales.has(m.mes),
+    );
     return {
       business: {
         business_age_months: negocio.antiguedadMeses ?? 0,
@@ -77,7 +89,14 @@ export class EvaluacionService {
           month: d.mes,
           amount: d.ventas!,
           source: sourceMap[d.fuente as keyof typeof sourceMap],
-        })),
+        }))
+        .concat(
+          desdeDiarias.map((m) => ({
+            month: m.mes,
+            amount: m.ventas,
+            source: 'declarado' as const,
+          })),
+        ),
       distributor: datos
         .filter((d) => d.fuente === FuenteTipo.DISTRIBUIDOR)
         .map((d) => ({
@@ -86,6 +105,8 @@ export class EvaluacionService {
           invoices: d.facturas ?? 0,
           paid_on_time: d.pagadasATiempo ?? 0,
           avg_days_late: d.diasRetrasoPromedio ?? 0,
+          paid_amount: d.pagado,
+          credit_limit: d.cupo,
         })),
       adjustments: variaciones.map((v) => ({ month: v.mes, reason: v.motivo })),
     };
@@ -95,7 +116,7 @@ export class EvaluacionService {
    * Calcula y guarda un score para la solicitud. Devuelve el resultado del motor.
    * version 1 = original; version 2 = recalculado con las variaciones justificadas (TND-045).
    */
-  async calcular(solicitud: Solicitud, negocio: Negocio, version: 1 | 2): Promise<ScoreResponseV1> {
+  async calcular(solicitud: Solicitud, negocio: Negocio, version: 1 | 2): Promise<ScoreResponse> {
     const fuentes = await this.fuentesConsentidas(solicitud.tenderoId);
     const variaciones =
       version === 2
@@ -117,8 +138,10 @@ export class EvaluacionService {
     const data = {
       puntaje: res.score,
       probabilidadIncumplimiento: res.probability_default!,
-      nivel: res.level!.name,
+      nivel: res.band!.code,
       modeloVersion: res.model_version,
+      segmento: res.segment as unknown as Prisma.InputJsonValue,
+      componentes: res.components as unknown as Prisma.InputJsonValue,
       contribuciones: res.contributions as unknown as Prisma.InputJsonValue,
       calidadDatos: res.data_quality as unknown as Prisma.InputJsonValue,
       explicacion: explicacion as unknown as Prisma.InputJsonValue,

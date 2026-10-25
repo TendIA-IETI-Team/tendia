@@ -165,8 +165,24 @@ export class SolicitudesController {
   }
 }
 
+/**
+ * Datos reales de mercado para cualquier usuario autenticado: tasas de crédito productivo para
+ * tiendas en Bogotá (Superfinanciera) y el perfil de los micronegocios de comercio (EMICRON, DANE).
+ */
+@ApiTags('referencias')
+@ApiBearerAuth()
+@Controller('referencias')
+export class ReferenciasController {
+  constructor(private readonly scoring: ScoringClient) {}
+
+  @Get()
+  referencias() {
+    return this.scoring.referencias();
+  }
+}
+
 @Module({
-  controllers: [TenderoController, SolicitudesController],
+  controllers: [TenderoController, SolicitudesController, ReferenciasController],
   providers: [
     TenderoService,
     SolicitudesService,

@@ -29,7 +29,15 @@
       "expo-status-bar",
       "expo-secure-store",
       "expo-font",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TendIA usa tus fotos para leer tu cuaderno de ventas y fiados.",
+          "cameraPermission": "TendIA usa la cámara para tomarle foto a tu cuaderno de ventas y fiados.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

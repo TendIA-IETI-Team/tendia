@@ -135,6 +135,16 @@ export default function Seguimiento() {
       {sol.estado === 'APROBADA' && (
         <Card>
           <Aviso tono="ok">¡Felicitaciones! {sol.aliado?.nombre} aprobó tu crédito.</Aviso>
+          {sol.aprobado && (
+            <View style={{ gap: 4 }}>
+              <Label>Detalle del crédito</Label>
+              <Body>Monto: {pesos(sol.aprobado.monto)}</Body>
+              <Body>Plazo: {sol.aprobado.plazoMeses} meses</Body>
+              {sol.aprobado.tasaEfectivaAnual !== null && (
+                <Body>Tasa: {sol.aprobado.tasaEfectivaAnual} % efectivo anual</Body>
+              )}
+            </View>
+          )}
           <Body>
             La entidad te contactará para firmar y hacer el desembolso. Revisa bien la tasa y las
             cuotas antes de firmar.

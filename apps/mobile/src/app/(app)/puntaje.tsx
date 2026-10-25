@@ -8,13 +8,14 @@ import {
   Card,
   Cargando,
   EscalaPuntaje,
+  Franja,
   Label,
   Pasos,
   Screen,
   Title,
 } from '@/components/ui';
 import { solicitudActual, type Solicitud } from '@/lib/api';
-import { mesLargo } from '@/lib/format';
+import { mesLargo, porcentaje } from '@/lib/format';
 import { colors, font, type } from '@/lib/theme';
 
 /** T7: ver mi score con su escala y su explicación en lenguaje simple (TND-052, TND-053). */
@@ -79,10 +80,11 @@ export default function Puntaje() {
             {s.puntaje}
           </Text>
           <Text style={{ fontFamily: font.semibold, fontSize: 20, color: colors.neutral600 }}>
-            de 100
+            de 1000
           </Text>
         </View>
-        <EscalaPuntaje puntaje={s.puntaje} nivelIndice={s.nivelIndice} />
+        <Franja franja={s.franja} />
+        <EscalaPuntaje puntaje={s.puntaje} />
         {sol.scoreOriginal && (
           <Aviso tono="ok">
             Con tu justificación tu puntaje{' '}
@@ -110,6 +112,33 @@ export default function Puntaje() {
           {s.explicacion.aMejorar.map((f) => (
             <Body key={f}>→ {f}</Body>
           ))}
+        </Card>
+      )}
+      {s.segmento && (
+        <Card>
+          <Label>Tu negocio se parece a: {s.segmento.name}</Label>
+          <Body muted style={{ fontSize: 15 }}>
+            {s.segmento.description} En Colombia, de los negocios así,{' '}
+            {porcentaje(s.segmento.requested_credit)} pidió crédito el último año y{' '}
+            {porcentaje(s.segmento.used_loan_sharks)} acudió al gota a gota. (DANE, 2024)
+          </Body>
+        </Card>
+      )}
+      {sol.mercado && (
+        <Card>
+          <Label>¿Cuánto cobran las entidades?</Label>
+          <Body>
+            A tiendas como la tuya en Bogotá les prestan con tasas de{' '}
+            <Text style={{ fontFamily: font.extrabold }}>
+              {sol.mercado.rango.desde} % a {sol.mercado.rango.hasta} % al año
+            </Text>
+            . Para tu franja, una referencia es {sol.mercado.tasaEfectivaAnual} % al año.
+          </Body>
+          <Body muted style={{ fontSize: 14 }}>
+            Datos reales de la Superintendencia Financiera ({sol.mercado.creditos} créditos). No es
+            una oferta: la entidad que elijas define tu tasa. El gota a gota cobra más de 380 % al
+            año.
+          </Body>
         </Card>
       )}
       {sol.variaciones.length > 0 && (

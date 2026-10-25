@@ -12,8 +12,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CORTES_NIVEL, NIVELES } from '@/lib/format';
-import { colors, font, scoreLevelColors, type } from '@/lib/theme';
+import { type Banda, bandaDe, bandas, colors, font, type } from '@/lib/theme';
 
 export function Screen({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   return (
@@ -169,35 +168,64 @@ export function Pasos({ actual, total = 4 }: { actual: number; total?: number })
 }
 
 /**
- * Escala del Puntaje TendIA: 0-100 en 5 niveles con nombre. Rampa de índigo, nunca rojo:
- * un puntaje bajo es "En construcción", algo que se puede mejorar.
+ * Escala del Puntaje TendIA: 0-1000 en tres franjas (bajo, medio, bueno), como se validó con
+ * doña Gloria. Cada franja lleva su nombre escrito: el color nunca es la única señal.
  */
-export function EscalaPuntaje({ puntaje, nivelIndice }: { puntaje: number; nivelIndice: number }) {
+export function EscalaPuntaje({ puntaje }: { puntaje: number }) {
+  const actual = bandaDe(puntaje);
+  const claves = Object.keys(bandas) as Banda[];
   return (
     <View
       style={{ gap: 8 }}
-      accessibilityLabel={`Puntaje ${puntaje} de 100, nivel ${NIVELES[nivelIndice]}`}
+      accessibilityLabel={`Puntaje ${puntaje} de 1000, franja ${bandas[actual].nombre}`}
     >
       <View style={s.escala}>
-        {NIVELES.map((n, i) => (
+        {claves.map((k) => (
           <View
-            key={n}
+            key={k}
             style={{
-              flex: CORTES_NIVEL[i + 1] - CORTES_NIVEL[i],
-              backgroundColor: scoreLevelColors[i],
-              opacity: i === nivelIndice ? 1 : 0.35,
+              flex: bandas[k].max - bandas[k].min + 1,
+              backgroundColor: bandas[k].color,
+              opacity: k === actual ? 1 : 0.3,
             }}
           />
         ))}
-        <View style={[s.marcador, { left: `${Math.min(98, Math.max(1, puntaje))}%` }]} />
+        <View style={[s.marcador, { left: `${Math.min(98, Math.max(1, puntaje / 10))}%` }]} />
       </View>
       <View style={s.escalaTextos}>
-        <Text style={s.hint}>0</Text>
-        <Text style={[s.hint, { fontFamily: font.bold, color: colors.indigo700 }]}>
-          {NIVELES[nivelIndice]}
-        </Text>
-        <Text style={s.hint}>100</Text>
+        {claves.map((k) => (
+          <Text
+            key={k}
+            style={[
+              s.hint,
+              { flex: bandas[k].max - bandas[k].min + 1 },
+              k === actual && { fontFamily: font.extrabold, color: bandas[k].color },
+            ]}
+          >
+            {bandas[k].nombre}
+          </Text>
+        ))}
       </View>
+    </View>
+  );
+}
+
+/** Insignia de la franja con su color de estado y su nombre. */
+export function Franja({ franja }: { franja: Banda }) {
+  const b = bandas[franja];
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        backgroundColor: b.fondo,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+      }}
+    >
+      <Text style={{ fontFamily: font.extrabold, fontSize: 15, color: b.color }}>
+        Franja {b.nombre.toLowerCase()}
+      </Text>
     </View>
   );
 }

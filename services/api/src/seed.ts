@@ -59,6 +59,17 @@ async function seedWith(prisma: PrismaClient): Promise<void> {
       });
     }
   }
+  // Equipo de TendIA: consulta la bitácora de cualquier tendero (TND-022).
+  await prisma.usuario.upsert({
+    where: { email: 'admin@tendia.co' },
+    create: {
+      email: 'admin@tendia.co',
+      nombre: 'Equipo TendIA',
+      rol: 'ADMIN_TENDIA',
+      passwordHash,
+    },
+    update: {},
+  });
 }
 
 if (require.main === module) {

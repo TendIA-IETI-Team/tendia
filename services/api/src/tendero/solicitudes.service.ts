@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EstadoSolicitud, Prisma } from '@prisma/client';
+import { leerArchivo } from '../common/archivos';
 import { AuditService } from '../common/audit.service';
 import {
   comoMejorar,
@@ -19,11 +20,17 @@ const incluir = {
   scores: true,
   variaciones: { orderBy: { mes: 'asc' } },
   garantia: true,
+  adjuntos: {
+    select: { id: true, proposito: true, mes: true, nombre: true, tipo: true, tamano: true },
+    orderBy: { creadoEn: 'asc' },
+  },
 } satisfies Prisma.SolicitudInclude;
 
 type SolicitudCompleta = Prisma.SolicitudGetPayload<{ include: typeof incluir }>;
 
 const EDITABLES: EstadoSolicitud[] = ['BORRADOR', 'DATOS_INCOMPLETOS', 'SCORE_LISTO'];
+// Cambios que decide la entidad: la app avisa al tendero hasta que los vea (TND-057).
+const CON_AVISO: EstadoSolicitud[] = ['GARANTIA_SOLICITADA', 'APROBADA', 'RECHAZADA'];
 
 @Injectable()
 export class SolicitudesService {
@@ -98,9 +105,26 @@ export class SolicitudesService {
     this.exigirEstado(s, ['SCORE_LISTO']);
     await this.prisma.variacion.upsert({
       where: { solicitudId_mes: { solicitudId: id, mes: dto.mes } },
-      create: { solicitudId: id, ...dto },
+      create: { solicitudId: id, mes: dto.mes, motivo: dto.motivo },
       update: { motivo: dto.motivo },
     });
+    if (dto.evidencia) {
+      const archivo = leerArchivo(dto.evidencia);
+      await this.prisma.$transaction([
+        this.prisma.adjunto.deleteMany({
+          where: { solicitudId: id, proposito: 'variacion', mes: dto.mes },
+        }),
+        this.prisma.adjunto.create({
+          data: {
+            solicitudId: id,
+            proposito: 'variacion',
+            mes: dto.mes,
+            ...archivo,
+            tamano: archivo.datos.length,
+          },
+        }),
+      ]);
+    }
     const negocio = await this.tendero.negocioDe(tenderoId);
     await this.evaluacion.calcular(s, negocio, 2);
     return this.detalle(tenderoId, id);
@@ -109,7 +133,10 @@ export class SolicitudesService {
   async quitarVariacion(tenderoId: string, id: string, mes: string) {
     const s = await this.cargar(tenderoId, id);
     this.exigirEstado(s, ['SCORE_LISTO']);
-    await this.prisma.variacion.deleteMany({ where: { solicitudId: id, mes } });
+    await this.prisma.$transaction([
+      this.prisma.variacion.deleteMany({ where: { solicitudId: id, mes } }),
+      this.prisma.adjunto.deleteMany({ where: { solicitudId: id, proposito: 'variacion', mes } }),
+    ]);
     const quedan = await this.prisma.variacion.count({ where: { solicitudId: id } });
     if (quedan === 0) {
       await this.prisma.score.deleteMany({ where: { solicitudId: id, version: 2 } });
@@ -144,7 +171,20 @@ export class SolicitudesService {
   async responderGarantia(tenderoId: string, id: string, dto: RespuestaGarantiaDto) {
     const s = await this.cargar(tenderoId, id);
     this.exigirEstado(s, ['GARANTIA_SOLICITADA']);
+    const archivo = dto.documento && leerArchivo(dto.documento);
     await this.prisma.$transaction([
+      ...(archivo
+        ? [
+            this.prisma.adjunto.create({
+              data: {
+                solicitudId: id,
+                proposito: 'garantia',
+                ...archivo,
+                tamano: archivo.datos.length,
+              },
+            }),
+          ]
+        : []),
       this.prisma.garantia.update({
         where: { solicitudId: id },
         data: { respuesta: dto.respuesta, estado: 'ENVIADA' },
@@ -163,6 +203,13 @@ export class SolicitudesService {
       data: { satisfaccion: dto.calificacion, comentarioSatisfaccion: dto.comentario ?? null },
     });
     return this.detalle(tenderoId, id);
+  }
+
+  /** El tendero ya vio el último cambio de estado: la app deja de avisarle. */
+  async marcarVisto(tenderoId: string, id: string) {
+    const s = await this.cargar(tenderoId, id);
+    await this.prisma.solicitud.update({ where: { id }, data: { estadoVisto: s.estado } });
+    return { visto: s.estado };
   }
 
   async cancelar(tenderoId: string, id: string) {
@@ -223,7 +270,14 @@ export class SolicitudesService {
               tasaEfectivaAnual: s.tasaAprobada,
             }
           : null,
-      variaciones: s.variaciones.map((v) => ({ mes: v.mes, motivo: v.motivo })),
+      // T11-T13: hay una decisión nueva de la entidad que el tendero no ha visto.
+      novedad: CON_AVISO.includes(s.estado) && s.estadoVisto !== s.estado,
+      variaciones: s.variaciones.map((v) => ({
+        mes: v.mes,
+        motivo: v.motivo,
+        evidencia: s.adjuntos.find((a) => a.proposito === 'variacion' && a.mes === v.mes) ?? null,
+      })),
+      documentoGarantia: s.adjuntos.find((a) => a.proposito === 'garantia') ?? null,
       garantia: s.garantia && {
         tipo: s.garantia.tipo,
         notaAliado: s.garantia.notaAliado,

@@ -1,4 +1,4 @@
-import { AsistenteService } from './asistente.service';
+import { AsistenteService, conGuardado } from './asistente.service';
 
 /** Prisma y registros mínimos en memoria para probar el asistente sin base de datos. */
 function montar() {
@@ -68,6 +68,43 @@ describe('AsistenteService', () => {
     expect(r.respuesta).toContain('Don Pedro');
     expect(registros.registrarVenta).toHaveBeenCalledWith('t1', 350000, 'whatsapp', undefined);
     expect(r.acciones.map((a) => a.tipo)).toEqual(['venta', 'fiado']);
+  });
+
+  it('le recuerda a Claude lo que ya guardó para que no lo anote dos veces', async () => {
+    const { svc, prisma, mensajes } = montar();
+    prisma.mensajeAsistente.findMany.mockResolvedValueOnce([
+      {
+        rol: 'assistant',
+        contenido: 'Ya te anoté la venta y el fiado.',
+        canal: 'app',
+        creadoEn: new Date(2),
+        acciones: [
+          { tipo: 'venta', detalle: 'venta de $350.000 el 2026-10-25' },
+          { tipo: 'fiado', detalle: 'fiado de $20.000 a Don Pedro' },
+        ],
+      },
+      { rol: 'user', contenido: 'hoy vendí 350 mil', canal: 'app', creadoEn: new Date(1) },
+    ] as never);
+    let enviado: { messages: { role: string; content: string }[]; system: string } | undefined;
+    const toolRunner = jest.fn(async (params: typeof enviado) => {
+      enviado = params;
+      return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Vas muy bien.' }] };
+    });
+    Object.defineProperty(svc, 'client', { value: { beta: { messages: { toolRunner } } } });
+
+    await svc.responder('t1', '¿cómo voy?', 'whatsapp');
+    expect(enviado!.messages.map((m) => m.role)).toEqual(['user', 'assistant', 'user']);
+    expect(enviado!.messages[1].content).toContain(
+      '[Ya guardado en ese turno: venta de $350.000 el 2026-10-25; fiado de $20.000 a Don Pedro]',
+    );
+    expect(enviado!.system).toContain('nunca vuelvas a anotar');
+    expect(enviado!.system).toContain('Hoy llevas $350.000');
+    // Las consultas no se guardan como acciones.
+    expect(mensajes.at(-1)).toMatchObject({ rol: 'assistant', acciones: [] });
+  });
+
+  it('una respuesta sin acciones queda igual en el historial', () => {
+    expect(conGuardado({ contenido: 'Hola', acciones: [] })).toBe('Hola');
   });
 
   it('si Claude falla después de anotar, no repite la acción y lo cuenta', async () => {

@@ -4,6 +4,7 @@ import type { FuenteTipo } from '@prisma/client';
 export interface RegistroMensual {
   mes: string; // YYYY-MM
   ventas?: number;
+  transacciones?: number; // número de ventas del mes (datáfono)
   compras?: number;
   facturas?: number;
   pagadasATiempo?: number;
@@ -17,13 +18,25 @@ export interface NegocioRef {
   perfilSimulado: string | null;
 }
 
+export interface EstadoConector {
+  disponible: boolean;
+  simulado: boolean;
+  mensaje: string;
+}
+
 /**
  * Interfaz común de conectores (TND-030). Cada fuente real (Bold, Treinta, Belvo, un distribuidor)
- * implementa esta interfaz; la API solo llama a las fuentes con consentimiento vigente.
+ * implementa estas tres operaciones; la API solo llama a las fuentes con consentimiento vigente y
+ * el motor de scoring nunca sabe de qué proveedor vino el dato.
  */
 export interface Conector {
   readonly fuente: FuenteTipo;
   readonly proveedores: readonly string[];
   readonly simulado: boolean;
-  obtenerHistorial(negocio: NegocioRef, meses: number, hasta: string): Promise<RegistroMensual[]>;
+  /** Abre el acceso de solo lectura tras el consentimiento (en una integración real, OAuth). */
+  autorizar(negocio: NegocioRef, proveedor: string): Promise<{ referencia: string }>;
+  /** Trae el historial mensual hasta el mes `hasta` (YYYY-MM). */
+  recolectar(negocio: NegocioRef, meses: number, hasta: string): Promise<RegistroMensual[]>;
+  /** Si la fuente responde. */
+  estado(): Promise<EstadoConector>;
 }

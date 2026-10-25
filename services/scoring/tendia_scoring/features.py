@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from statistics import mean, median, pstdev
 
 from .pagos import ETIQUETAS_PAGO, VARIABLES_PAGO, MesPago, mora_en_meses, variables_pago
-from .schemas import DataIssue, DataQuality, ScoreRequest
+from .schemas import DataIssue, DataQuality, Indicators, ScoreRequest
 
 MIN_SALES_MONTHS = 6
 MIN_DISTRIBUTOR_MONTHS = 3
@@ -97,6 +97,37 @@ def historial_pagos(req: ScoreRequest) -> list[MesPago]:
             )
         )
     return out
+
+
+def compute_indicators(req: ScoreRequest) -> Indicators:
+    """Mismo código para entrenamiento y servicio. Si falta el dato, el indicador queda en None."""
+    sales, _ = _monthly_sales(req)
+    dist = sorted(req.distributor, key=lambda d: d.month)[-WINDOW_MONTHS:]
+    con_tx = [s for s in req.sales if s.source == "datafono" and s.transactions]
+    tx = sum(s.transactions or 0 for s in con_tx)
+    avg_ticket = sum(s.amount for s in con_tx) / tx if tx else None
+
+    meses_dist = len(dist)
+    con_compras = sum(1 for d in dist if d.purchases > 0)
+    facturas = sum(d.invoices for d in dist)
+    compras = sum(d.purchases for d in dist if d.month in sales)
+    ventas_cruce = sum(v for m, v in sales.items() if m in {d.month for d in dist})
+
+    estacionalidad = None
+    if len(sales) >= 6:
+        med = median(sales.values())
+        estacionalidad = max(0.0, 1 - min(sales.values()) / med) if med > 0 else None
+
+    def r(x: float | None, n: int) -> float | None:
+        return round(x, n) if x is not None else None
+
+    return Indicators(
+        avg_ticket=r(avg_ticket, 0),
+        repurchase_regularity=r(con_compras / meses_dist, 3) if meses_dist else None,
+        days_between_purchases=r(30 * meses_dist / facturas, 1) if facturas else None,
+        sales_per_peso_purchased=r(ventas_cruce / compras, 2) if compras else None,
+        seasonality=r(estacionalidad, 3),
+    )
 
 
 def compute_features(req: ScoreRequest) -> FeatureResult:

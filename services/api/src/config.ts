@@ -26,13 +26,23 @@ const schema = z.object({
     .transform((v) => v === 'true'),
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
-  TWILIO_FROM: z.string().optional(),
+  // Servicio de Twilio Verify para el OTP. Si falta, la API busca o crea uno llamado "TendIA"
+  // con la misma cuenta: no hace falta comprar un número.
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
+  // Remitente de los avisos por WhatsApp. Por defecto, el número del sandbox de Twilio.
+  TWILIO_WHATSAPP_FROM: z.string().default('whatsapp:+14155238886'),
+  // URL del portal: los enlaces de invitación a analistas apuntan aquí.
+  PORTAL_URL: z.string().url().default('http://localhost:3000'),
   // URL pública de la API (la configurada en Twilio): valida la firma del webhook de WhatsApp.
   PUBLIC_API_URL: z.string().url().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-opus-5-5'),
   SENTRY_DSN: z.string().optional(),
-  RELEASE: z.string().default('dev'),
+  // Versión desplegada: RELEASE explícito, o el commit que Render despliega (RENDER_GIT_COMMIT).
+  RELEASE: z
+    .string()
+    .optional()
+    .transform((v) => v || process.env.RENDER_GIT_COMMIT || 'dev'),
   SEED_ON_START: z
     .enum(['true', 'false'])
     .default('false')

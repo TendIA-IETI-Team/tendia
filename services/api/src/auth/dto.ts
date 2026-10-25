@@ -41,3 +41,12 @@ export class MfaDto {
   @Length(6, 6)
   codigo: string;
 }
+
+export class AceptarInvitacionDto {
+  @ApiProperty({ description: 'Mínimo 12 caracteres, con letras y números' })
+  @IsString()
+  @MinLength(12, { message: 'La contraseña debe tener al menos 12 caracteres' })
+  @MaxLength(200)
+  @Matches(/(?=.*\p{L})(?=.*\d)/u, { message: 'La contraseña debe tener letras y números' })
+  password: string;
+}

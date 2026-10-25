@@ -9,6 +9,9 @@ import { ConsentimientoDto, NegocioDto, VentaManualDto } from './dto';
 
 /** Versión del texto de autorización que vio el tendero (Ley 1581). Cambiarla exige nuevo consentimiento. */
 export const VERSION_TEXTO_CONSENTIMIENTO = '2026-10-v1';
+// Finalidad que se le explica al tendero en T2 y queda guardada con cada autorización (TND-020).
+export const FINALIDAD_CONSENTIMIENTO =
+  'Calcular tu Puntaje TendIA y compartirlo solo con la entidad que tú elijas para pedir crédito';
 
 @Injectable()
 export class TenderoService {
@@ -112,12 +115,15 @@ export class TenderoService {
       where: { tenderoId, fuente: dto.fuente, revocadoEn: null },
     });
     if (vigente) return vigente;
+    const { referencia } = await conector.autorizar(await this.negocioDe(tenderoId), dto.proveedor);
     const c = await this.prisma.consentimiento.create({
       data: {
         tenderoId,
         fuente: dto.fuente,
         proveedor: dto.proveedor,
         versionTexto: VERSION_TEXTO_CONSENTIMIENTO,
+        finalidad: FINALIDAD_CONSENTIMIENTO,
+        referencia,
       },
     });
     await this.audit.log({
@@ -126,6 +132,7 @@ export class TenderoService {
       accion: 'autorizar_fuente',
       entidad: 'Consentimiento',
       entidadId: c.id,
+      finalidad: 'evaluar_credito',
       detalle: { fuente: dto.fuente, versionTexto: VERSION_TEXTO_CONSENTIMIENTO },
     });
     return c;

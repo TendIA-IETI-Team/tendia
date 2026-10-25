@@ -110,6 +110,7 @@ export class PublicApiController {
       accion: 'consulta_score_api',
       entidad: 'ConsumoApi',
       entidadId: requestId,
+      finalidad: 'consulta_api',
     });
     if (res.status === 422) {
       throw new BadRequestException({ message: 'Datos inválidos', detalle: res.body });

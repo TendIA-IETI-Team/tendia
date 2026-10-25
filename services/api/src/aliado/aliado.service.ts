@@ -8,10 +8,13 @@ import { EstadoSolicitud, Prisma } from '@prisma/client';
 import { AuditService } from '../common/audit.service';
 import type { Actor } from '../common/auth';
 import { randomToken, sha256 } from '../common/crypto';
+import { resumenSatisfaccion } from '../common/satisfaccion';
+import { config } from '../config';
+import { NotificadorService } from '../notificaciones/notificador.service';
 import { recomendar, scoreView, scoreVigente, tasaReferencia } from '../common/vistas';
 import { PrismaService } from '../prisma.service';
 import { ScoringClient } from '../scoring/scoring.client';
-import { CrearApiKeyDto, DecisionDto, EvaluarGarantiaDto, PoliticaDto } from './dto';
+import { CrearApiKeyDto, DecisionDto, EvaluarGarantiaDto, InvitacionDto, PoliticaDto } from './dto';
 
 /** Estados que el aliado puede ver: solo lo que el tendero decidió compartir. */
 const VISIBLES: EstadoSolicitud[] = [
@@ -21,6 +24,8 @@ const VISIBLES: EstadoSolicitud[] = [
   'APROBADA',
   'RECHAZADA',
 ];
+
+const INVITACION_DIAS = 7;
 
 const POLITICA_POR_DEFECTO = {
   scoreMinAprobar: 650,
@@ -35,6 +40,7 @@ export class AliadoService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly scoring: ScoringClient,
+    private readonly notificador: NotificadorService,
   ) {}
 
   /** Tasas reales del mercado; si el scoring no responde, la pantalla sigue sin ellas. */
@@ -58,12 +64,15 @@ export class AliadoService {
   async bandeja(actor: Actor, estado?: EstadoSolicitud) {
     const aliadoId = actor.aliadoId!;
     const politica = await this.politica(aliadoId);
-    const lista = await this.prisma.solicitud.findMany({
-      // Aislamiento por aliado (TND-012): el filtro sale del token, nunca del cliente.
-      where: { aliadoId, estado: estado ? estado : { in: VISIBLES } },
-      include: { scores: true, tendero: { include: { negocio: true } }, variaciones: true },
-      orderBy: { enviadaEn: 'desc' },
-    });
+    // Aislamiento por aliado (TND-012): el filtro sale del token, nunca del cliente, y además
+    // Postgres lo impone con RLS dentro de comoAliado.
+    const lista = await this.prisma.comoAliado(aliadoId, (tx) =>
+      tx.solicitud.findMany({
+        where: { aliadoId, estado: estado ? estado : { in: VISIBLES } },
+        include: { scores: true, tendero: { include: { negocio: true } }, variaciones: true },
+        orderBy: { enviadaEn: 'desc' },
+      }),
+    );
     const pendientes = lista.filter(
       (s) => s.estado === 'ENVIADA' || s.estado === 'GARANTIA_ENVIADA',
     );
@@ -109,21 +118,23 @@ export class AliadoService {
     const vigente = scoreVigente(s.scores);
     const negocio = s.tendero.negocio;
     const datos = negocio
-      ? await this.prisma.datoMensual.findMany({
-          where: { negocioId: negocio.id },
-          orderBy: { mes: 'asc' },
-          select: {
-            fuente: true,
-            mes: true,
-            ventas: true,
-            compras: true,
-            facturas: true,
-            pagadasATiempo: true,
-            diasRetrasoPromedio: true,
-            pagado: true,
-            cupo: true,
-          },
-        })
+      ? await this.prisma.comoAliado(actor.aliadoId!, (tx) =>
+          tx.datoMensual.findMany({
+            where: { negocioId: negocio.id },
+            orderBy: { mes: 'asc' },
+            select: {
+              fuente: true,
+              mes: true,
+              ventas: true,
+              compras: true,
+              facturas: true,
+              pagadasATiempo: true,
+              diasRetrasoPromedio: true,
+              pagado: true,
+              cupo: true,
+            },
+          }),
+        )
       : [];
     const tasas = await this.referenciaTasas();
     const view = vigente ? scoreView(vigente) : null;
@@ -134,6 +145,7 @@ export class AliadoService {
       accion: 'ver_solicitud',
       entidad: 'Solicitud',
       entidadId: id,
+      finalidad: 'evaluar_credito',
     });
     return {
       id: s.id,
@@ -159,9 +171,14 @@ export class AliadoService {
       },
       score: view,
       scoreOriginal: original && vigente && vigente.version !== 1 ? scoreView(original) : null,
-      variaciones: s.variaciones.map((v) => ({ mes: v.mes, motivo: v.motivo })),
+      variaciones: s.variaciones.map((v) => ({
+        mes: v.mes,
+        motivo: v.motivo,
+        evidencia: s.adjuntos.find((a) => a.proposito === 'variacion' && a.mes === v.mes) ?? null,
+      })),
       calidadDatos: s.calidadDatos,
       garantia: s.garantia,
+      documentoGarantia: s.adjuntos.find((a) => a.proposito === 'garantia') ?? null,
       datos,
       politica,
       // Referencia real del mercado (Superfinanciera) para la franja del tendero.
@@ -206,7 +223,9 @@ export class AliadoService {
       accion: `decision_${dto.decision.toLowerCase()}`,
       entidad: 'Solicitud',
       entidadId: id,
+      finalidad: 'decidir_credito',
     });
+    await this.notificador.cambioDeEstado(id);
     return this.detalle(actor, id);
   }
 
@@ -239,7 +258,9 @@ export class AliadoService {
       accion: dto.aceptar ? 'garantia_aceptada' : 'garantia_rechazada',
       entidad: 'Solicitud',
       entidadId: id,
+      finalidad: 'decidir_credito',
     });
+    await this.notificador.cambioDeEstado(id);
     return this.detalle(actor, id);
   }
 
@@ -343,12 +364,126 @@ export class AliadoService {
       consultas: Number(r.consultas),
       exitosas: Number(r.exitosas),
     }));
+    // Lo que se factura: consultas por mes de los últimos 12 meses (TND-065).
+    const meses = await this.prisma.$queryRaw<
+      { mes: string; consultas: bigint; exitosas: bigint }[]
+    >(
+      Prisma.sql`SELECT to_char(date_trunc('month', "creadoEn"), 'YYYY-MM') AS mes,
+                        count(*) AS consultas,
+                        count(*) FILTER (WHERE estado < 400) AS exitosas
+                 FROM "ConsumoApi"
+                 WHERE "aliadoId" = ${actor.aliadoId}
+                   AND "creadoEn" >= date_trunc('month', now()) - interval '11 months'
+                 GROUP BY 1 ORDER BY 1`,
+    );
     return {
       dias,
       total: porDia.reduce((a, r) => a + r.consultas, 0),
       exitosas: porDia.reduce((a, r) => a + r.exitosas, 0),
       porDia,
+      porMes: meses.map((m) => ({
+        mes: m.mes,
+        consultas: Number(m.consultas),
+        exitosas: Number(m.exitosas),
+      })),
     };
+  }
+
+  // --- Equipo: invitar analistas (TND-011) ----------------------------------
+  async equipo(actor: Actor) {
+    const [usuarios, invitaciones] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where: { aliadoId: actor.aliadoId! },
+        select: { id: true, nombre: true, email: true, rol: true, mfaActivo: true, creadoEn: true },
+        orderBy: { creadoEn: 'asc' },
+      }),
+      this.prisma.invitacion.findMany({
+        where: { aliadoId: actor.aliadoId!, usadaEn: null, expiraEn: { gt: new Date() } },
+        select: { id: true, nombre: true, email: true, rol: true, expiraEn: true, creadaEn: true },
+        orderBy: { creadaEn: 'desc' },
+      }),
+    ]);
+    return { usuarios, invitaciones };
+  }
+
+  /** El enlace se muestra una sola vez (solo se guarda su hash) y vence en 7 días. */
+  async invitar(actor: Actor, dto: InvitacionDto) {
+    const email = dto.email.toLowerCase();
+    if (await this.prisma.usuario.findUnique({ where: { email } })) {
+      throw new ConflictException('Ya existe un usuario con ese correo');
+    }
+    const token = randomToken(32);
+    const inv = await this.prisma.invitacion.create({
+      data: {
+        aliadoId: actor.aliadoId!,
+        email,
+        nombre: dto.nombre,
+        rol: dto.rol ?? 'ANALISTA',
+        tokenHash: sha256(token),
+        expiraEn: new Date(Date.now() + INVITACION_DIAS * 86_400_000),
+        creadaPor: actor.sub,
+      },
+      include: { aliado: { select: { nombre: true } } },
+    });
+    await this.audit.log({
+      actorTipo: 'USUARIO',
+      actorId: actor.sub,
+      aliadoId: actor.aliadoId,
+      accion: 'invitar_usuario',
+      entidad: 'Invitacion',
+      entidadId: inv.id,
+      finalidad: 'administrar_cuenta',
+    });
+    const enlace = `${config().PORTAL_URL}/invitacion/${token}`;
+    const asunto = `Te invitaron al portal de TendIA de ${inv.aliado.nombre}`;
+    const cuerpo = [
+      `Hola ${inv.nombre}:`,
+      '',
+      `Te invitaron a revisar solicitudes de crédito en TendIA. Crea tu contraseña aquí (vence en ${INVITACION_DIAS} días):`,
+      enlace,
+      '',
+      'Al entrar te pediremos activar la verificación en dos pasos.',
+    ].join('\n');
+    return {
+      id: inv.id,
+      email,
+      expiraEn: inv.expiraEn,
+      enlace,
+      // Abre el correo del administrador con la invitación lista para enviar.
+      mailto: `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`,
+    };
+  }
+
+  async revocarInvitacion(actor: Actor, id: string) {
+    const inv = await this.prisma.invitacion.findFirst({
+      where: { id, aliadoId: actor.aliadoId!, usadaEn: null },
+    });
+    if (!inv) throw new NotFoundException('No encontramos esa invitación');
+    await this.prisma.invitacion.update({ where: { id }, data: { expiraEn: new Date() } });
+    return { revocada: true };
+  }
+
+  // --- Satisfacción de los tenderos (TND-081) ---------------------------------
+  satisfaccion(actor: Actor) {
+    return resumenSatisfaccion(this.prisma, { aliadoId: actor.aliadoId! });
+  }
+
+  // --- Evidencias y documentos de garantía (T8, T10) --------------------------
+  async adjunto(actor: Actor, solicitudId: string, adjuntoId: string) {
+    const a = await this.prisma.comoAliado(actor.aliadoId!, (tx) =>
+      tx.adjunto.findFirst({ where: { id: adjuntoId, solicitudId } }),
+    );
+    if (!a) throw new NotFoundException('No encontramos ese archivo');
+    await this.audit.log({
+      actorTipo: 'USUARIO',
+      actorId: actor.sub,
+      aliadoId: actor.aliadoId,
+      accion: 'ver_adjunto',
+      entidad: 'Solicitud',
+      entidadId: solicitudId,
+      finalidad: 'revisar_documento',
+    });
+    return a;
   }
 
   async auditoria(actor: Actor) {
@@ -363,21 +498,35 @@ export class AliadoService {
         accion: true,
         entidad: true,
         entidadId: true,
+        finalidad: true,
         creadoEn: true,
       },
     });
   }
 
   private async cargar(actor: Actor, id: string) {
-    const s = await this.prisma.solicitud.findFirst({
-      where: { id, aliadoId: actor.aliadoId!, estado: { in: VISIBLES } },
-      include: {
-        scores: true,
-        variaciones: { orderBy: { mes: 'asc' } },
-        garantia: true,
-        tendero: { include: { negocio: true } },
-      },
-    });
+    const s = await this.prisma.comoAliado(actor.aliadoId!, (tx) =>
+      tx.solicitud.findFirst({
+        where: { id, aliadoId: actor.aliadoId!, estado: { in: VISIBLES } },
+        include: {
+          scores: true,
+          variaciones: { orderBy: { mes: 'asc' } },
+          garantia: true,
+          adjuntos: {
+            select: {
+              id: true,
+              proposito: true,
+              mes: true,
+              nombre: true,
+              tipo: true,
+              tamano: true,
+            },
+            orderBy: { creadoEn: 'asc' },
+          },
+          tendero: { include: { negocio: true } },
+        },
+      }),
+    );
     // 404 (no 403) para no revelar que la solicitud existe en otro aliado.
     if (!s) throw new NotFoundException('No encontramos esa solicitud');
     return s;

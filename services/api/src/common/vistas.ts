@@ -4,6 +4,7 @@ import type {
   ComponentScore,
   Contribution,
   FranjaCodigo,
+  Indicators,
   Referencias,
   Segment,
 } from '../scoring/scoring.client';
@@ -34,6 +35,7 @@ export function scoreView(s: Score) {
     explicacion: s.explicacion as unknown as Explicacion,
     explicacionFuente: s.explicacionFuente,
     contribuciones: [...contribuciones].sort((a, b) => b.points - a.points),
+    indicadores: (s.indicadores as unknown as Indicators | null) ?? null,
     creadoEn: s.creadoEn,
   };
 }

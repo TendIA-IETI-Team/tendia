@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { ReportarErroresFilter } from './common/errores.filter';
 import { config } from './config';
 
 /** Configuración compartida por main.ts y las pruebas e2e. */
@@ -17,6 +18,7 @@ export function configureApp(app: INestApplication): void {
       .map((o) => o.trim()),
     credentials: false,
   });
+  app.useGlobalFilters(new ReportarErroresFilter(app.getHttpAdapter()));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

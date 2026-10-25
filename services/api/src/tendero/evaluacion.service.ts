@@ -33,7 +33,7 @@ export class EvaluacionService {
     for (const fuente of fuentes) {
       const conector = this.conectores.porFuente(fuente);
       if (!conector) continue;
-      const registros = await conector.obtenerHistorial(negocio, VENTANA_MESES, hasta);
+      const registros = await conector.recolectar(negocio, VENTANA_MESES, hasta);
       for (const r of registros) {
         const data = {
           ventas: r.ventas ?? null,
@@ -43,6 +43,7 @@ export class EvaluacionService {
           diasRetrasoPromedio: r.diasRetrasoPromedio ?? null,
           pagado: r.pagado ?? null,
           cupo: r.cupo ?? null,
+          transacciones: r.transacciones ?? null,
         };
         await this.prisma.datoMensual.upsert({
           where: { negocioId_fuente_mes: { negocioId: negocio.id, fuente, mes: r.mes } },
@@ -89,12 +90,14 @@ export class EvaluacionService {
           month: d.mes,
           amount: d.ventas!,
           source: sourceMap[d.fuente as keyof typeof sourceMap],
+          transactions: d.transacciones,
         }))
         .concat(
           desdeDiarias.map((m) => ({
             month: m.mes,
             amount: m.ventas,
             source: 'declarado' as const,
+            transactions: null,
           })),
         ),
       distributor: datos
@@ -143,6 +146,7 @@ export class EvaluacionService {
       segmento: res.segment as unknown as Prisma.InputJsonValue,
       componentes: res.components as unknown as Prisma.InputJsonValue,
       contribuciones: res.contributions as unknown as Prisma.InputJsonValue,
+      indicadores: (res.indicators ?? undefined) as unknown as Prisma.InputJsonValue | undefined,
       calidadDatos: res.data_quality as unknown as Prisma.InputJsonValue,
       explicacion: explicacion as unknown as Prisma.InputJsonValue,
       explicacionFuente: fuente,

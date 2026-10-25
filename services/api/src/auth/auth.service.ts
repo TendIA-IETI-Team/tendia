@@ -9,12 +9,14 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomInt } from 'node:crypto';
 import { authenticator } from 'otplib';
-import { config, isProduction } from '../config';
+import { isProduction } from '../config';
 import { AuditService } from '../common/audit.service';
 import type { Actor } from '../common/auth';
 import { decrypt, encrypt, lookupHash, normalizePhone, sha256 } from '../common/crypto';
 import { PrismaService } from '../prisma.service';
-import { OtpSender } from './otp-sender';
+import { DEMO_PROFILES, OtpSender } from './otp-sender';
+
+export { DEMO_PROFILES };
 
 const OTP_TTL_MS = 5 * 60_000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -25,13 +27,8 @@ const BLOQUEO_MS = 15 * 60_000;
 // Hash señuelo para que un correo inexistente tarde lo mismo que una contraseña errada.
 const DUMMY_HASH = bcrypt.hashSync('tendia-hash-senuelo', 10);
 
-/** Celulares de demostración: fijan el perfil de los conectores simulados (nunca en producción). */
-export const DEMO_PROFILES: Record<string, string> = {
-  '3000000001': 'bueno',
-  '3000000002': 'estacional',
-  '3000000003': 'riesgoso',
-  '3000000004': 'nuevo',
-};
+// Marca del OTP que genera y valida Twilio Verify: no es un sha256, así que no choca con un código.
+const OTP_EN_TWILIO = 'twilio-verify';
 
 @Injectable()
 export class AuthService {
@@ -55,17 +52,21 @@ export class AuthService {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
-    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const canal = this.otp.canal(phone);
+    let code: string | undefined;
+    if (canal === 'twilio') {
+      await this.otp.enviar(phone);
+    } else {
+      code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    }
     await this.prisma.otpCodigo.create({
       data: {
         celularHash,
-        codigoHash: sha256(`${code}:${celularHash}`),
+        codigoHash: code ? sha256(`${code}:${celularHash}`) : OTP_EN_TWILIO,
         expiraEn: new Date(Date.now() + OTP_TTL_MS),
       },
     });
-    await this.otp.send(phone, code);
-    const devMode = config().OTP_DEV_MODE && !this.otp.hasProvider;
-    return devMode ? { enviado: true, codigoDev: code } : { enviado: true };
+    return code ? { enviado: true, codigoDev: code } : { enviado: true };
   }
 
   async verifyOtp(rawPhone: string, code: string) {
@@ -78,7 +79,11 @@ export class AuthService {
     if (!otp || otp.intentos >= OTP_MAX_ATTEMPTS) {
       throw new UnauthorizedException('El código venció. Pide uno nuevo.');
     }
-    if (otp.codigoHash !== sha256(`${code}:${celularHash}`)) {
+    const correcto =
+      otp.codigoHash === OTP_EN_TWILIO
+        ? await this.otp.verificar(phone, code)
+        : otp.codigoHash === sha256(`${code}:${celularHash}`);
+    if (!correcto) {
       await this.prisma.otpCodigo.update({
         where: { id: otp.id },
         data: { intentos: { increment: 1 } },
@@ -110,6 +115,54 @@ export class AuthService {
     const actor: Actor = { sub: tendero.id, rol: 'TENDERO' };
     // La sesión del tendero se mantiene en el celular hasta que cierre sesión (TND-010).
     return { accessToken: this.jwt.sign(actor, { expiresIn: '90d' }), nuevo };
+  }
+
+  // --- Invitación de un analista (TND-011) ---------------------------------
+  private async invitacionVigente(token: string) {
+    const inv = await this.prisma.invitacion.findUnique({
+      where: { tokenHash: sha256(token) },
+      include: { aliado: { select: { nombre: true } } },
+    });
+    if (!inv || inv.usadaEn || inv.expiraEn <= new Date()) {
+      throw new BadRequestException('La invitación venció o ya se usó. Pide una nueva.');
+    }
+    return inv;
+  }
+
+  async verInvitacion(token: string) {
+    const inv = await this.invitacionVigente(token);
+    return { email: inv.email, nombre: inv.nombre, rol: inv.rol, aliado: inv.aliado.nombre };
+  }
+
+  /** Crea la cuenta del analista. El primer ingreso le pide activar la verificación en dos pasos. */
+  async aceptarInvitacion(token: string, password: string) {
+    const inv = await this.invitacionVigente(token);
+    if (await this.prisma.usuario.findUnique({ where: { email: inv.email } })) {
+      throw new BadRequestException('Ya existe una cuenta con ese correo. Ingresa con ella.');
+    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    const [user] = await this.prisma.$transaction([
+      this.prisma.usuario.create({
+        data: {
+          aliadoId: inv.aliadoId,
+          email: inv.email,
+          nombre: inv.nombre,
+          rol: inv.rol,
+          passwordHash,
+        },
+      }),
+      this.prisma.invitacion.update({ where: { id: inv.id }, data: { usadaEn: new Date() } }),
+    ]);
+    await this.audit.log({
+      actorTipo: 'USUARIO',
+      actorId: user.id,
+      aliadoId: inv.aliadoId,
+      accion: 'aceptar_invitacion',
+      entidad: 'Usuario',
+      entidadId: user.id,
+      finalidad: 'administrar_cuenta',
+    });
+    return { creado: true, email: user.email };
   }
 
   // --- Analista del aliado: correo + contraseña + TOTP obligatorio (TND-011) -
@@ -167,7 +220,7 @@ export class AuthService {
       entidad: 'Usuario',
       entidadId: user.id,
     });
-    const actor: Actor = { sub: user.id, rol: user.rol, aliadoId: user.aliadoId };
+    const actor: Actor = { sub: user.id, rol: user.rol, aliadoId: user.aliadoId ?? undefined };
     return {
       accessToken: this.jwt.sign(actor, { expiresIn: '8h' }),
       usuario: { nombre: user.nombre, email: user.email, rol: user.rol },

@@ -13,7 +13,7 @@ import structlog
 from fastapi import FastAPI, Header
 
 from . import __version__
-from .features import compute_features
+from .features import compute_features, compute_indicators
 from .schemas import CONTRACT_VERSION, ScoreRequest, ScoreResponse, Segment
 from .scorecard import ModeloTendIA, band_for
 from .segmentos import Segmentacion, vector
@@ -28,10 +28,13 @@ structlog.configure(
 )
 log = structlog.get_logger("scoring")
 
+# Versión desplegada: RELEASE explícito, o el commit que Render despliega, o la del paquete.
+RELEASE = os.getenv("RELEASE") or os.getenv("RENDER_GIT_COMMIT") or __version__
+
 if os.getenv("SENTRY_DSN"):
     sentry_sdk.init(
         dsn=os.environ["SENTRY_DSN"],
-        release=os.getenv("RELEASE", __version__),
+        release=RELEASE,
         environment=os.getenv("APP_ENV", "dev"),
         send_default_pii=False,
     )
@@ -48,7 +51,12 @@ app = FastAPI(title="TendIA Scoring", version=__version__)
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "model_version": model.version, "contract_version": CONTRACT_VERSION}
+    return {
+        "status": "ok",
+        "model_version": model.version,
+        "contract_version": CONTRACT_VERSION,
+        "release": RELEASE,
+    }
 
 
 @app.get("/model")
@@ -72,6 +80,7 @@ def score(req: ScoreRequest, x_request_id: str | None = Header(default=None)) ->
         "request_id": request_id,
         "adjusted_months": fr.adjusted_months,
         "data_quality": fr.quality,
+        "indicators": compute_indicators(req),
     }
     if not fr.quality.sufficient:
         log.info("score_insufficient_data", request_id=request_id, issues=len(fr.quality.issues))

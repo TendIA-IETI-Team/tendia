@@ -16,6 +16,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { ArchivoDto } from '../common/archivos';
 
 const MES = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -121,6 +122,12 @@ export class VariacionDto {
   @MinLength(3)
   @MaxLength(280)
   motivo: string;
+
+  @ApiPropertyOptional({ type: ArchivoDto, description: 'Evidencia opcional: foto o PDF' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ArchivoDto)
+  evidencia?: ArchivoDto;
 }
 
 export class EnviarDto {
@@ -135,6 +142,12 @@ export class RespuestaGarantiaDto {
   @MinLength(3)
   @MaxLength(1000)
   respuesta: string;
+
+  @ApiPropertyOptional({ type: ArchivoDto, description: 'Documento de la garantía: foto o PDF' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ArchivoDto)
+  documento?: ArchivoDto;
 }
 
 export class SatisfaccionDto {

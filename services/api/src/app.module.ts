@@ -9,7 +9,9 @@ import { AuthModule } from './auth/auth.controller';
 import { AuditModule } from './common/audit.service';
 import { AuthGuard } from './common/auth';
 import { config } from './config';
+import { AdminModule } from './admin/admin.controller';
 import { HealthModule } from './health.controller';
+import { NotificacionesModule } from './notificaciones/notificador.service';
 import { PrismaModule } from './prisma.service';
 import { PublicApiModule } from './public-api/public-api.controller';
 import { TenderoModule } from './tendero/tendero.controller';
@@ -45,6 +47,8 @@ import { TenderoModule } from './tendero/tendero.controller';
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuditModule,
+    NotificacionesModule,
+    AdminModule,
     AuthModule,
     TenderoModule,
     AliadoModule,

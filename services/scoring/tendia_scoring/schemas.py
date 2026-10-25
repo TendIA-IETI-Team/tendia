@@ -35,6 +35,9 @@ class SalesMonth(BaseModel):
     month: str
     amount: float = Field(ge=0)
     source: Literal["datafono", "declarado", "open_finance"] = "datafono"
+    transactions: int | None = Field(
+        default=None, ge=0, description="Número de ventas del mes (datáfono): ticket promedio"
+    )
 
     _month = field_validator("month")(_check_month)
 
@@ -127,6 +130,24 @@ class ComponentScore(BaseModel):
     trained_on: str
 
 
+class Indicators(BaseModel):
+    """Indicadores descriptivos del negocio (TND-042). Contextualizan; no entran al puntaje."""
+
+    avg_ticket: float | None = Field(description="Ticket promedio por venta (datáfono)")
+    repurchase_regularity: float | None = Field(
+        description="Proporción de meses con compras al proveedor (0 a 1)"
+    )
+    days_between_purchases: float | None = Field(
+        description="Días promedio entre facturas del proveedor"
+    )
+    sales_per_peso_purchased: float | None = Field(
+        description="Rotación: ventas por cada peso que compra al proveedor"
+    )
+    seasonality: float | None = Field(
+        description="Estacionalidad: caída del mes más flojo frente a la mediana (0 a 1)"
+    )
+
+
 class ScoreResponse(BaseModel):
     contract_version: str
     model_version: str
@@ -141,3 +162,4 @@ class ScoreResponse(BaseModel):
     top_negative: list[Contribution]
     adjusted_months: list[str]
     data_quality: DataQuality
+    indicators: Indicators | None = None

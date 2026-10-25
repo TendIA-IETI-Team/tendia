@@ -154,6 +154,12 @@ export class SolicitudesController {
     return this.solicitudes.responderGarantia(a.sub, id, dto);
   }
 
+  @Post(':id/visto')
+  @HttpCode(200)
+  visto(@CurrentActor() a: Actor, @Param('id', ParseUUIDPipe) id: string) {
+    return this.solicitudes.marcarVisto(a.sub, id);
+  }
+
   @Post(':id/satisfaccion')
   @HttpCode(200)
   satisfaccion(

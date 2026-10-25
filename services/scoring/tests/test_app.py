@@ -19,6 +19,14 @@ RESPONSE_FIELDS = {
     "top_negative",
     "adjusted_months",
     "data_quality",
+    "indicators",  # adición compatible de v2 (TND-042): campo nuevo, opcional para el cliente
+}
+INDICATOR_FIELDS = {
+    "avg_ticket",
+    "repurchase_regularity",
+    "days_between_purchases",
+    "sales_per_peso_purchased",
+    "seasonality",
 }
 CONTRIBUTION_FIELDS = {"feature", "component", "label", "value", "display_value", "points"}
 BAND_FIELDS = {"code", "name", "min_score", "max_score"}
@@ -39,7 +47,27 @@ SEGMENT_FIELDS = {
 def test_health():
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok", "model_version": "tendia-v2", "contract_version": "2"}
+    body = r.json()
+    assert body["status"] == "ok"
+    assert body["model_version"] == "tendia-v2"
+    assert body["contract_version"] == "2"
+    assert body["release"]
+
+
+def test_release_usa_el_commit_de_render(monkeypatch):
+    import importlib
+
+    import tendia_scoring.app as app_mod
+
+    monkeypatch.delenv("RELEASE", raising=False)
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "abc1234")
+    try:
+        assert importlib.reload(app_mod).RELEASE == "abc1234"
+        monkeypatch.setenv("RELEASE", "v-explicita")
+        assert importlib.reload(app_mod).RELEASE == "v-explicita"
+    finally:
+        monkeypatch.undo()
+        importlib.reload(app_mod)
 
 
 def test_model_info_has_real_data_metrics():
@@ -67,6 +95,7 @@ def test_score_contract(good_request):
     assert set(body["segment"]) == SEGMENT_FIELDS
     assert {c["name"] for c in body["components"]} == {"pagos", "negocio"}
     assert set(body["contributions"][0]) == CONTRIBUTION_FIELDS
+    assert set(body["indicators"]) == INDICATOR_FIELDS
     assert len(body["top_positive"]) <= 3
     assert all(c["points"] > 0 for c in body["top_positive"])
     assert all(c["points"] < 0 for c in body["top_negative"])
@@ -94,3 +123,24 @@ def test_insufficient_data_returns_null_score():
 def test_rejects_unknown_fields():
     r = client.post("/score", json={"business": {"business_age_months": 3}, "cedula": "123"})
     assert r.status_code == 422
+
+
+def test_indicadores_del_negocio(good_request):
+    req = good_request.model_dump()
+    for s in req["sales"]:
+        s["transactions"] = round(s["amount"] / 10_000)
+    ind = client.post("/score", json=req).json()["indicators"]
+    assert 9_000 <= ind["avg_ticket"] <= 11_000
+    assert 0 < ind["repurchase_regularity"] <= 1
+    assert ind["days_between_purchases"] > 0
+    assert ind["sales_per_peso_purchased"] > 0
+    assert 0 <= ind["seasonality"] <= 1
+
+
+def test_indicadores_sin_datos_quedan_vacios():
+    body = client.post(
+        "/score",
+        json={"business": {"business_age_months": 3}, "sales": [], "distributor": []},
+    ).json()
+    assert body["score"] is None
+    assert body["indicators"] == {k: None for k in INDICATOR_FIELDS}

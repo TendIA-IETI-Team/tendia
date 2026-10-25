@@ -10,7 +10,9 @@ import {
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Actor, CurrentActor, Roles } from '../common/auth';
 import { ScoringClient } from '../scoring/scoring.client';
@@ -20,6 +22,7 @@ import {
   DecisionDto,
   EvaluarGarantiaDto,
   FiltroBandejaDto,
+  InvitacionDto,
   PoliticaDto,
 } from './dto';
 
@@ -60,6 +63,22 @@ export class AliadoController {
     return this.aliado.evaluarGarantia(a, id, dto);
   }
 
+  /** Evidencia de una variación (T8) o documento de la garantía (T10). */
+  @Get('solicitudes/:id/adjuntos/:adjuntoId')
+  async adjunto(
+    @CurrentActor() a: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('adjuntoId', ParseUUIDPipe) adjuntoId: string,
+    @Res() res: Response,
+  ) {
+    const archivo = await this.aliado.adjunto(a, id, adjuntoId);
+    res
+      .type(archivo.tipo)
+      .set('Content-Disposition', `inline; filename="${encodeURIComponent(archivo.nombre)}"`)
+      .set('Cache-Control', 'private, no-store')
+      .send(Buffer.from(archivo.datos));
+  }
+
   @Get('politica')
   politica(@CurrentActor() a: Actor) {
     return this.aliado.politica(a.aliadoId!);
@@ -92,6 +111,29 @@ export class AliadoController {
   @Get('consumo')
   consumo(@CurrentActor() a: Actor) {
     return this.aliado.consumo(a);
+  }
+
+  @Get('satisfaccion')
+  satisfaccion(@CurrentActor() a: Actor) {
+    return this.aliado.satisfaccion(a);
+  }
+
+  @Get('equipo')
+  @Roles('ADMIN_ALIADO')
+  equipo(@CurrentActor() a: Actor) {
+    return this.aliado.equipo(a);
+  }
+
+  @Post('equipo/invitaciones')
+  @Roles('ADMIN_ALIADO')
+  invitar(@CurrentActor() a: Actor, @Body() dto: InvitacionDto) {
+    return this.aliado.invitar(a, dto);
+  }
+
+  @Delete('equipo/invitaciones/:id')
+  @Roles('ADMIN_ALIADO')
+  revocarInvitacion(@CurrentActor() a: Actor, @Param('id', ParseUUIDPipe) id: string) {
+    return this.aliado.revocarInvitacion(a, id);
   }
 
   @Get('auditoria')

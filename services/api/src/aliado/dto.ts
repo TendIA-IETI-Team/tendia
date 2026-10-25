@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoSolicitud, TipoGarantia } from '@prisma/client';
 import {
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsIn,
   IsInt,
@@ -100,4 +101,22 @@ export class CrearApiKeyDto {
   @MinLength(3)
   @MaxLength(60)
   nombre: string;
+}
+
+export class InvitacionDto {
+  @ApiProperty({ example: 'analista.nueva@bancodemo.co' })
+  @IsEmail({}, { message: 'Escribe un correo válido' })
+  @MaxLength(160)
+  email: string;
+
+  @ApiProperty({ example: 'Laura Gómez' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(80)
+  nombre: string;
+
+  @ApiPropertyOptional({ enum: ['ANALISTA', 'ADMIN_ALIADO'], default: 'ANALISTA' })
+  @IsOptional()
+  @IsIn(['ANALISTA', 'ADMIN_ALIADO'])
+  rol?: 'ANALISTA' | 'ADMIN_ALIADO';
 }

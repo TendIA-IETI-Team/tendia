@@ -8,6 +8,7 @@ import type { NegocioRef } from './conector';
 export interface MesSimulado {
   mes: string;
   ventas: number;
+  transacciones: number; // ventas con datáfono en el mes (para el ticket promedio)
   compras: number;
   facturas: number;
   pagadasATiempo: number;
@@ -100,6 +101,10 @@ export function simularNegocio(negocio: NegocioRef, meses: number, hasta: string
   const pagoATiempo = sigmoid(4.3 + 1.6 * q);
   const margen = Math.min(1.4, Math.max(0.35, 0.72 + 0.05 * r.gauss() - 0.06 * q));
   const cupo = base * margen * (1.8 + 2.2 * r.next()) * Math.exp(0.2 * q);
+  // Ticket promedio de una tienda de barrio ($7.000 a $16.000). Generador aparte para no cambiar
+  // el resto del historial de los negocios que ya existían.
+  const rt = rng(hashSeed(`ticket:${negocio.id}`));
+  const ticket = 7_000 + 9_000 * rt.next();
 
   const n = Math.min(meses, perfil.mesesHistoria);
   const out: MesSimulado[] = [];
@@ -122,6 +127,7 @@ export function simularNegocio(negocio: NegocioRef, meses: number, hasta: string
     out.push({
       mes,
       ventas: Math.round(ventas / 1000) * 1000,
+      transacciones: Math.max(1, Math.round(ventas / (ticket * (0.92 + 0.16 * rt.next())))),
       compras,
       facturas,
       pagadasATiempo: pagadas,

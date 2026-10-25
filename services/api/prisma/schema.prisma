@@ -31,6 +31,8 @@ enum EstadoSolicitud {
 enum RolUsuario {
   ANALISTA
   ADMIN_ALIADO
+  // Equipo de TendIA: consulta la bitácora de cualquier tendero (TND-022). No pertenece a un aliado.
+  ADMIN_TENDIA
 }
 
 enum TipoAliado {
@@ -134,6 +136,8 @@ model MensajeAsistente {
   rol       String // user | assistant
   contenido String
   canal     String // app | whatsapp
+  // Lo que el asistente guardó en ese turno: se le recuerda a Claude para que no lo repita.
+  acciones  Json?
   creadoEn  DateTime @default(now())
 
   @@index([tenderoId, creadoEn])
@@ -159,6 +163,9 @@ model Consentimiento {
   fuente       FuenteTipo
   proveedor    String
   versionTexto String
+  // Para qué autorizó el tendero y la referencia que devolvió el conector al autorizar (TND-020).
+  finalidad    String?
+  referencia   String?
   otorgadoEn   DateTime   @default(now())
   revocadoEn   DateTime?
 
@@ -172,6 +179,7 @@ model DatoMensual {
   fuente       FuenteTipo
   mes          String // YYYY-MM
   ventas       Int?
+  transacciones Int? // número de ventas del mes (datáfono): ticket promedio
   compras      Int?
   facturas     Int?
   pagadasATiempo Int?
@@ -189,6 +197,7 @@ model Aliado {
   slug        String      @unique
   tipo        TipoAliado
   usuarios    Usuario[]
+  invitaciones Invitacion[]
   politica    Politica?
   solicitudes Solicitud[]
   apiKeys     ApiKey[]
@@ -197,8 +206,8 @@ model Aliado {
 
 model Usuario {
   id           String     @id @default(uuid())
-  aliadoId     String
-  aliado       Aliado     @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  aliadoId     String? // null solo para ADMIN_TENDIA
+  aliado       Aliado?    @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
   email        String     @unique
   nombre       String
   passwordHash String
@@ -209,6 +218,23 @@ model Usuario {
   intentosFallidos Int      @default(0)
   bloqueadoHasta   DateTime?
   creadoEn     DateTime   @default(now())
+}
+
+// Invitación de un administrador del aliado a un analista (TND-011). El enlace se usa una vez.
+model Invitacion {
+  id        String     @id @default(uuid())
+  aliadoId  String
+  aliado    Aliado     @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  email     String
+  nombre    String
+  rol       RolUsuario @default(ANALISTA)
+  tokenHash String     @unique
+  expiraEn  DateTime
+  usadaEn   DateTime?
+  creadaPor String
+  creadaEn  DateTime   @default(now())
+
+  @@index([aliadoId, creadaEn])
 }
 
 model Politica {
@@ -245,11 +271,14 @@ model Solicitud {
   enviadaEn     DateTime?
   satisfaccion  Int?
   comentarioSatisfaccion String?
+  // Último estado que el tendero vio en la app: si cambia, la app le avisa (TND-057).
+  estadoVisto   EstadoSolicitud?
   creadaEn      DateTime        @default(now())
   actualizadaEn DateTime        @updatedAt
   scores        Score[]
   variaciones   Variacion[]
   garantia      Garantia?
+  adjuntos      Adjunto[]
 
   @@index([aliadoId, estado])
   @@index([tenderoId])
@@ -267,6 +296,7 @@ model Score {
   segmento           Json? // segmento del negocio (EMICRON) con sus datos reales
   componentes        Json? // puntos por componente: pagos y negocio
   contribuciones     Json
+  indicadores        Json? // ticket promedio, regularidad de recompra, rotación (TND-042)
   calidadDatos       Json
   explicacion        Json // { resumen, fortalezas[], aMejorar[] }
   explicacionFuente  String // "ia" | "plantilla"
@@ -297,6 +327,22 @@ model Garantia {
   estado        EstadoGarantia @default(SOLICITADA)
   creadaEn      DateTime       @default(now())
   actualizadaEn DateTime       @updatedAt
+}
+
+// Evidencia de una variación (T8) o documento de la garantía (T10). Máximo 5 MB.
+model Adjunto {
+  id          String    @id @default(uuid())
+  solicitudId String
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  proposito   String // variacion | garantia
+  mes         String? // mes de la variación, si aplica
+  nombre      String
+  tipo        String // tipo MIME
+  tamano      Int
+  datos       Bytes
+  creadoEn    DateTime  @default(now())
+
+  @@index([solicitudId])
 }
 
 model ApiKey {
@@ -333,6 +379,8 @@ model Auditoria {
   accion    String
   entidad   String
   entidadId String?
+  // Para qué se leyó o cambió el dato (Ley 1581): evaluar_credito, decidir_credito, etc.
+  finalidad String?
   detalle   Json?
   creadoEn  DateTime @default(now())
 

@@ -8,7 +8,12 @@ export interface ScoreRequest {
     business_type?: string;
     declared_monthly_sales?: number | null;
   };
-  sales: { month: string; amount: number; source: 'datafono' | 'declarado' | 'open_finance' }[];
+  sales: {
+    month: string;
+    amount: number;
+    source: 'datafono' | 'declarado' | 'open_finance';
+    transactions?: number | null;
+  }[];
   distributor: {
     month: string;
     purchases: number;
@@ -67,6 +72,15 @@ export interface ComponentScore {
   trained_on: string;
 }
 
+/** Indicadores descriptivos del negocio (TND-042): contextualizan, no entran al puntaje. */
+export interface Indicators {
+  avg_ticket: number | null;
+  repurchase_regularity: number | null;
+  days_between_purchases: number | null;
+  sales_per_peso_purchased: number | null;
+  seasonality: number | null;
+}
+
 export interface ScoreResponse {
   contract_version: string;
   model_version: string;
@@ -81,6 +95,7 @@ export interface ScoreResponse {
   top_negative: Contribution[];
   adjusted_months: string[];
   data_quality: DataQuality;
+  indicators?: Indicators | null;
 }
 
 /** Datos reales de mercado que publica el servicio de scoring (EMICRON y Superfinanciera). */

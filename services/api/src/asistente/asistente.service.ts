@@ -31,7 +31,16 @@ Reglas:
 - El Puntaje TendIA no es el de DataCrédito.
 - Si un monto o un nombre no es claro, pregunta antes de anotar. No inventes cifras.
 - No des asesoría de inversión, impuestos ni legal; sugiere hablar con la entidad o un asesor.
-- Nunca le pidas contraseñas, códigos ni datos de tarjetas.`;
+- Nunca le pidas contraseñas, códigos ni datos de tarjetas.
+- Los mensajes anteriores ya se atendieron: lo que se anotó entonces ya está guardado (lo ves en "Ya guardado"). Actúa solo sobre el último mensaje del tendero y nunca vuelvas a anotar una venta o un fiado de un mensaje anterior.`;
+
+/** Respuesta anterior del asistente con lo que de verdad se guardó en ese turno. */
+export function conGuardado(m: { contenido: string; acciones: Accion[] }): string {
+  if (!m.acciones.length) return m.contenido;
+  return `${m.contenido}
+
+[Ya guardado en ese turno: ${m.acciones.map((a) => a.detalle).join('; ')}]`;
+}
 
 @Injectable()
 export class AsistenteService {
@@ -49,9 +58,13 @@ export class AsistenteService {
       orderBy: { creadoEn: 'desc' },
       take: limite,
     });
-    return msgs
-      .reverse()
-      .map((m) => ({ rol: m.rol, contenido: m.contenido, canal: m.canal, creadoEn: m.creadoEn }));
+    return msgs.reverse().map((m) => ({
+      rol: m.rol,
+      contenido: m.contenido,
+      canal: m.canal,
+      creadoEn: m.creadoEn,
+      acciones: (m.acciones ?? []) as unknown as Accion[],
+    }));
   }
 
   /** Atiende un mensaje del tendero desde la app o WhatsApp. */
@@ -72,7 +85,13 @@ export class AsistenteService {
     resultado ??= await this.conReglas(tenderoId, texto, canalRegistro);
 
     await this.prisma.mensajeAsistente.create({
-      data: { tenderoId, rol: 'assistant', contenido: resultado.respuesta, canal },
+      data: {
+        tenderoId,
+        rol: 'assistant',
+        contenido: resultado.respuesta,
+        canal,
+        acciones: resultado.acciones.filter((a) => a.tipo !== 'consulta') as object[],
+      },
     });
     return resultado;
   }
@@ -81,7 +100,7 @@ export class AsistenteService {
   private async conIA(
     tenderoId: string,
     texto: string,
-    previos: { rol: string; contenido: string }[],
+    previos: { rol: string; contenido: string; acciones: Accion[] }[],
     canal: Canal,
   ): Promise<RespuestaAsistente | null> {
     const acciones: Accion[] = [];
@@ -91,7 +110,7 @@ export class AsistenteService {
     for (const m of previos) {
       const role = m.rol === 'assistant' ? 'assistant' : 'user';
       if (!messages.length && role === 'assistant') continue; // el historial debe empezar por el tendero
-      messages.push({ role, content: m.contenido });
+      messages.push({ role, content: role === 'assistant' ? conGuardado(m) : m.contenido });
     }
     messages.push({ role: 'user', content: texto });
     try {
@@ -206,7 +225,8 @@ export class AsistenteService {
   private async contexto(tenderoId: string): Promise<string> {
     const n = await this.prisma.negocio.findUnique({ where: { tenderoId } });
     const hoy = hoyBogota();
-    return `Hoy es ${hoy} (ayer ${sumarDias(hoy, -1)}). Tienda: ${n?.nombre ?? 'sin nombre'}.`;
+    const resumen = await this.registros.resumenTexto(tenderoId);
+    return `Hoy es ${hoy} (ayer ${sumarDias(hoy, -1)}). Tienda: ${n?.nombre ?? 'sin nombre'}. Lo que ya está guardado: ${resumen}`;
   }
 
   async solicitudTexto(tenderoId: string): Promise<string> {

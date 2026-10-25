@@ -1,4 +1,8 @@
-"""Contrato de la API de scoring (v1). Cambiar un campo exige nueva versión: ver TND-071."""
+"""Contrato de la API de scoring (v2). Cambiar un campo exige nueva versión: ver TND-071.
+
+v2 (oct 2026): escala 0-1000 con tres franjas (bajo, medio, bueno), segmento del negocio,
+componentes del puntaje y datos de pago/cupo opcionales del distribuidor.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+CONTRACT_VERSION = "2"
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
@@ -35,13 +40,21 @@ class SalesMonth(BaseModel):
 
 
 class DistributorMonth(BaseModel):
+    """Un mes de la relación de crédito con el distribuidor (compras fiadas y pagos)."""
+
     model_config = ConfigDict(extra="forbid")
 
     month: str
-    purchases: float = Field(ge=0)
+    purchases: float = Field(ge=0, description="Lo que compró fiado ese mes")
     invoices: int = Field(ge=0)
     paid_on_time: int = Field(ge=0)
     avg_days_late: float = Field(default=0, ge=0)
+    paid_amount: float | None = Field(
+        default=None, ge=0, description="Lo que pagó ese mes (cubre lo facturado el mes anterior)"
+    )
+    credit_limit: float | None = Field(
+        default=None, ge=0, description="Cupo que le da el proveedor"
+    )
 
     _month = field_validator("month")(_check_month)
 
@@ -68,6 +81,7 @@ class ScoreRequest(BaseModel):
 
 class Contribution(BaseModel):
     feature: str
+    component: Literal["pagos", "negocio"]
     label: str
     value: float
     display_value: str
@@ -86,17 +100,42 @@ class DataQuality(BaseModel):
     issues: list[DataIssue]
 
 
-class Level(BaseModel):
-    index: int
+class Band(BaseModel):
+    code: Literal["bajo", "medio", "bueno"]
     name: str
+    min_score: int
+    max_score: int
+
+
+class Segment(BaseModel):
+    code: str
+    name: str
+    description: str
+    share_of_businesses: float
+    median_monthly_sales: float
+    median_age_months: float
+    requested_credit: float
+    obtained_credit: float
+    used_loan_sharks: float
+    n_sample: int
+
+
+class ComponentScore(BaseModel):
+    name: Literal["pagos", "negocio"]
+    label: str
+    points: float
+    trained_on: str
 
 
 class ScoreResponse(BaseModel):
+    contract_version: str
     model_version: str
     request_id: str
     probability_default: float | None
     score: int | None
-    level: Level | None
+    band: Band | None
+    segment: Segment | None
+    components: list[ComponentScore]
     contributions: list[Contribution]
     top_positive: list[Contribution]
     top_negative: list[Contribution]

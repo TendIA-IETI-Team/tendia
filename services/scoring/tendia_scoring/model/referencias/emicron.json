@@ -1,0 +1,21 @@
+{
+ "fuente": "DANE, Encuesta de Micronegocios (EMICRON) 2024; comercio (GRUPOS12=05), Bogotá",
+ "n_muestra": 570,
+ "micronegocios_representados": 178406,
+ "ventas_mes": {
+  "p10": 600000.0,
+  "p25": 1400000.0,
+  "p50": 3000000.0,
+  "p75": 5500000.0,
+  "p90": 12000000.0
+ },
+ "antiguedad_meses_mediana": 73,
+ "lleva_registros": 0.575,
+ "usa_cuaderno": 0.495,
+ "acepta_pagos_digitales": 0.739,
+ "pidio_credito_ultimo_anio": 0.152,
+ "de_quienes_pidieron": {
+  "lo_obtuvieron": 0.932,
+  "acudieron_a_gota_a_gota": 0.096
+ }
+}

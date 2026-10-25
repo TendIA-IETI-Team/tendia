@@ -12,6 +12,8 @@ dependencies = [
     "structlog==24.4.0",
     "sentry-sdk[fastapi]==2.19.2",
     "scipy==1.14.1",
+    "pandas==2.2.3",
+    "xlrd==2.0.1",
 ]
 
 [dependency-groups]
@@ -46,4 +48,9 @@ testpaths = ["tests"]
 addopts = "--cov=tendia_scoring --cov-report=term-missing --cov-fail-under=70"
 
 [tool.coverage.run]
-omit = ["tendia_scoring/train.py"]
+omit = [
+    # Entrenamiento y descargas: corren con red y datos crudos, fuera de CI.
+    "tendia_scoring/train.py",
+    "tendia_scoring/datos/fuentes.py",
+    "tendia_scoring/datos/emicron.py",
+]

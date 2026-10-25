@@ -16,7 +16,8 @@ def test_compute_features_has_all_variables(good_request):
     fr = compute_features(good_request)
     assert fr.quality.sufficient
     assert set(fr.values) == set(FEATURES)
-    assert 0 <= fr.values["on_time_ratio"] <= 1
+    assert 0 <= fr.values["pago_meses_al_dia"] <= 1
+    assert fr.has_datafono
 
 
 def test_insufficient_data_is_reported():
@@ -29,20 +30,17 @@ def test_insufficient_data_is_reported():
     )
     fr = compute_features(req)
     assert not fr.quality.sufficient
-    codes = {i.code for i in fr.quality.issues}
-    assert codes == {"pocas_ventas", "pocos_pagos_proveedor"}
+    assert {i.code for i in fr.quality.issues} == {"pocas_ventas", "pocos_pagos_proveedor"}
     assert fr.values == {}
 
 
 def test_datafono_has_priority_over_declared(good_request):
-    m = good_request.sales[-1].month
     req = good_request.model_copy(deep=True)
     req.sales.append(req.sales[-1].model_copy(update={"amount": 1.0, "source": "declarado"}))
     assert (
         compute_features(req).values["avg_sales"]
         == compute_features(good_request).values["avg_sales"]
     )
-    assert m
 
 
 def test_adjustment_removes_bad_month_from_stability(good_request):
@@ -54,6 +52,16 @@ def test_adjustment_removes_bad_month_from_stability(good_request):
     assert after.adjusted_months == [req.sales[-2].month]
     assert after.values["sales_cv"] < before.values["sales_cv"]
     assert after.values["low_months_ratio"] <= before.values["low_months_ratio"]
+
+
+def test_late_payments_become_months_of_delay(good_request):
+    req = good_request.model_copy(deep=True)
+    for d in req.distributor[-3:]:
+        d.paid_on_time = 0
+        d.avg_days_late = 45
+    v = compute_features(req).values
+    assert v["pago_meses_al_dia"] == 0.5
+    assert v["pago_max_meses_mora"] == 2
 
 
 def test_declared_sales_mismatch_is_flagged(good_request):
@@ -85,10 +93,13 @@ def test_invalid_month_is_rejected():
     ("feature", "value", "expected"),
     [
         ("avg_sales", 1234567, "$1.234.567"),
-        ("on_time_ratio", 0.9, "90 %"),
+        ("pago_meses_al_dia", 0.5, "50 %"),
         ("sales_trend", -0.05, "-5 %"),
-        ("avg_days_late", 2.25, "2.2 días"),
+        ("pago_max_meses_mora", 0, "ninguno"),
+        ("pago_max_meses_mora", 1, "1 mes"),
+        ("pago_max_meses_mora", 3, "3 meses"),
         ("business_age_months", 24, "24 meses"),
+        ("otra", 0.5, "0.50"),
     ],
 )
 def test_display_value(feature, value, expected):

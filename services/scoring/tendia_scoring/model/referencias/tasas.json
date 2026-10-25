@@ -1,0 +1,74 @@
+{
+ "fuente": "Superintendencia Financiera, datos.gov.co w9zh-vetq",
+ "filtro": "Crédito productivo, CIIU 4711, Bogotá",
+ "desde": "2025-08-01",
+ "hasta": "2026-07-31",
+ "creditos": 5992,
+ "tasa_efectiva_anual": {
+  "p25": 48.8,
+  "p50": 61.9,
+  "p75": 65.5
+ },
+ "con_garantia_fng": {
+  "p25": 56.9,
+  "p50": 64.8,
+  "p75": 71.5
+ },
+ "sin_garantia_fng": {
+  "p25": 45.1,
+  "p50": 57.9,
+  "p75": 64.3
+ },
+ "entidades": [
+  {
+   "entidad": "Banco Mundo Mujer S.A.",
+   "creditos": 2226,
+   "tasa_promedio_ponderada": 61.0
+  },
+  {
+   "entidad": "Bancamía S.A.",
+   "creditos": 1308,
+   "tasa_promedio_ponderada": 52.5
+  },
+  {
+   "entidad": "Mibanco S.A.",
+   "creditos": 1039,
+   "tasa_promedio_ponderada": 61.9
+  },
+  {
+   "entidad": "Banco Caja Social S.A.",
+   "creditos": 420,
+   "tasa_promedio_ponderada": 37.1
+  },
+  {
+   "entidad": "Banco W S.A.",
+   "creditos": 273,
+   "tasa_promedio_ponderada": 71.3
+  },
+  {
+   "entidad": "Bold C.F.",
+   "creditos": 205,
+   "tasa_promedio_ponderada": 64.9
+  },
+  {
+   "entidad": "Banco Contactar",
+   "creditos": 187,
+   "tasa_promedio_ponderada": 67.1
+  },
+  {
+   "entidad": "JFK Cooperativa Financiera",
+   "creditos": 94,
+   "tasa_promedio_ponderada": 31.2
+  },
+  {
+   "entidad": "Banagrario",
+   "creditos": 90,
+   "tasa_promedio_ponderada": 32.3
+  },
+  {
+   "entidad": "Bancolombia",
+   "creditos": 68,
+   "tasa_promedio_ponderada": 42.7
+  }
+ ]
+}

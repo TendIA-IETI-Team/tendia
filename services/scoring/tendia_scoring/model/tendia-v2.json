@@ -1,0 +1,413 @@
+{
+ "version": "tendia-v2",
+ "escala": {
+  "A": 303.0,
+  "B": 142.0,
+  "franjas": [
+   [
+    "bajo",
+    "Bajo",
+    0,
+    499
+   ],
+   [
+    "medio",
+    "Medio",
+    500,
+    649
+   ],
+   [
+    "bueno",
+    "Bueno",
+    650,
+    1000
+   ]
+  ]
+ },
+ "l0": 2.1972245773362196,
+ "componentes": [
+  {
+   "nombre": "pagos",
+   "variables": [
+    "pago_meses_al_dia",
+    "pago_max_meses_mora",
+    "pago_proporcion_pagada",
+    "pago_uso_cupo",
+    "pago_tendencia_compras"
+   ],
+   "intercept": -1.256751281236496,
+   "coefficients": {
+    "pago_meses_al_dia": -0.7345516928878403,
+    "pago_max_meses_mora": -0.2572114893166847,
+    "pago_proporcion_pagada": 0.0946344774876396,
+    "pago_uso_cupo": -0.5651745261037489,
+    "pago_tendencia_compras": -0.19837272908245582
+   },
+   "bins": {
+    "pago_meses_al_dia": {
+     "edges": [
+      0.8333333333333334,
+      1.0
+     ],
+     "woe": [
+      -1.3506201797684585,
+      -0.45452096212335197,
+      0.7599531859408519
+     ],
+     "mean_woe": 0.187278294936143
+    },
+    "pago_max_meses_mora": {
+     "edges": [
+      0.0,
+      2.0
+     ],
+     "woe": [
+      -1.2587422887245456,
+      0.6648401705535686,
+      -1.120496780693154
+     ],
+     "mean_woe": 0.16970672274114418
+    },
+    "pago_proporcion_pagada": {
+     "edges": [
+      0.04302444044989296,
+      0.06996554871065046,
+      0.3038720022675253,
+      1.0
+     ],
+     "woe": [
+      -0.44656537716371597,
+      -0.147713412645881,
+      0.06146897486148861,
+      0.17577178589328957,
+      0.4687242690933184
+     ],
+     "mean_woe": 0.026452532890747945
+    },
+    "pago_uso_cupo": {
+     "edges": [
+      0.017978697318007664,
+      0.13843257142857146,
+      0.4541666666666667,
+      0.7614259047619047
+     ],
+     "woe": [
+      -0.03188376540481574,
+      0.5401168135821172,
+      0.2880265405241395,
+      -0.15409056656893944,
+      -0.4732609150538717
+     ],
+     "mean_woe": 0.033781621415725965
+    },
+    "pago_tendencia_compras": {
+     "edges": [
+      -0.146766964003108,
+      0.0,
+      0.15681975751158758,
+      0.7654478829827861
+     ],
+     "woe": [
+      0.20632574436557682,
+      -0.5132570295471073,
+      -0.13832086669064259,
+      0.23150382922797313,
+      0.31959771141033594
+     ],
+     "mean_woe": 0.025187050926689325
+    }
+   },
+   "peso": 1.0,
+   "entrenado_con": "Datos reales: 30.000 créditos (UCI #350)",
+   "metrics": {
+    "data": "UCI #350 Default of Credit Card Clients (Yeh 2009, CC BY 4.0): 30.000 créditos",
+    "holdout_30pct": {
+     "auc": 0.7412,
+     "gini": 0.4824,
+     "ks": 0.4072,
+     "n": 9000,
+     "default_rate": 0.2212
+    },
+    "cv5_auc_mean": 0.7426,
+    "cv5_auc_std": 0.0068,
+    "challenger_stacking_holdout": {
+     "auc": 0.7629,
+     "gini": 0.5257,
+     "ks": 0.4179,
+     "n": 9000,
+     "default_rate": 0.2212
+    },
+    "challenger_adopted": false,
+    "challenger_note": "El stacking supera al scorecard por más de 0,02 de Gini, pero no se adopta aún porque no es explicable variable por variable (requisito SARC).",
+    "train_default_rate": 0.2212
+   }
+  },
+  {
+   "nombre": "negocio",
+   "variables": [
+    "avg_sales",
+    "sales_cv",
+    "sales_trend",
+    "low_months_ratio",
+    "purchases_to_sales",
+    "business_age_months"
+   ],
+   "intercept": -1.7624539865484483,
+   "coefficients": {
+    "avg_sales": -0.41376615962259694,
+    "sales_cv": -0.4724466383945972,
+    "sales_trend": -0.44511002839500763,
+    "low_months_ratio": 0.000515111067138539,
+    "purchases_to_sales": -0.8671235634124518,
+    "business_age_months": -0.6253906793042522
+   },
+   "bins": {
+    "avg_sales": {
+     "edges": [
+      980300.0,
+      2025466.666666667,
+      3731383.3333333354,
+      7533583.3333333405
+     ],
+     "woe": [
+      -0.20424555433297992,
+      -0.13730434318773765,
+      -0.020006584706858985,
+      0.17646635748281933,
+      0.2277528948193186
+     ],
+     "mean_woe": 0.008532554014912274
+    },
+    "sales_cv": {
+     "edges": [
+      0.14263138868287178,
+      0.17173920243101395,
+      0.2013931388985657,
+      0.23794289581119263
+     ],
+     "woe": [
+      0.6447017313694662,
+      0.38900192115122506,
+      0.033347003207786205,
+      -0.11294737727429058,
+      -0.6267365256420544
+     ],
+     "mean_woe": 0.0654733505624265
+    },
+    "sales_trend": {
+     "edges": [
+      -0.12729899859178326,
+      -0.038105660424360546,
+      0.03637611866627751,
+      0.12411795917813646
+     ],
+     "woe": [
+      -0.35825684057869756,
+      -0.18875810888604425,
+      0.10303626819921699,
+      0.31421585737219804,
+      0.23825306380396252
+     ],
+     "mean_woe": 0.02169804798212715
+    },
+    "low_months_ratio": {
+     "edges": [
+      0.0
+     ],
+     "woe": [
+      -1.757441120630637,
+      -0.0003124362438077583
+     ],
+     "mean_woe": -0.0003124362438077583
+    },
+    "purchases_to_sales": {
+     "edges": [
+      0.6527811424249492,
+      0.6985260663666827,
+      0.7384363171586901,
+      0.785125716065914
+     ],
+     "woe": [
+      1.4284490580466243,
+      0.7045307934461,
+      0.2173356895998406,
+      -0.32647606563655324,
+      -0.9264830624407534
+     ],
+     "mean_woe": 0.21947128260305165
+    },
+    "business_age_months": {
+     "edges": [
+      36.0,
+      64.0,
+      98.0,
+      168.0
+     ],
+     "woe": [
+      -0.30705746936821077,
+      -0.11000322184844924,
+      0.16992629765443293,
+      0.020520600423136495,
+      0.28585373717265844
+     ],
+     "mean_woe": 0.013590517267305889
+    }
+   },
+   "peso": 0.5,
+   "entrenado_con": "Datos sintéticos calibrados con EMICRON 2024 (DANE)",
+   "metrics": {
+    "data": "Sintéticos calibrados con EMICRON 2024 (ventas de comercio en Bogotá)",
+    "oot_from_cohort": "2025-07",
+    "oot": {
+     "auc": 0.7338,
+     "gini": 0.4676,
+     "ks": 0.3647,
+     "n": 3000,
+     "default_rate": 0.1363
+    }
+   }
+  }
+ ],
+ "segmentacion": {
+  "data": "DANE EMICRON 2024, micronegocios de comercio (n = 20488)",
+  "media": [
+   14.523711,
+   4.190317,
+   0.484253,
+   0.457853
+  ],
+  "desviacion": [
+   1.246531,
+   1.195008,
+   0.999504,
+   0.996441
+  ],
+  "centroides": [
+   [
+    -0.398378,
+    0.784658,
+    -0.199988,
+    -0.220376
+   ],
+   [
+    0.319016,
+    -0.784211,
+    0.120247,
+    0.163979
+   ],
+   [
+    1.152037,
+    0.650616,
+    0.311007,
+    0.309591
+   ],
+   [
+    -1.172717,
+    -1.025409,
+    -0.2077,
+    -0.232519
+   ]
+  ],
+  "codigos": [
+   "tradicional",
+   "joven",
+   "consolidada",
+   "subsistencia"
+  ],
+  "estadisticas": {
+   "tradicional": {
+    "share_of_businesses": 0.319,
+    "median_monthly_sales": 1400000.0,
+    "median_age_months": 168,
+    "requested_credit": 0.138,
+    "obtained_credit": 0.132,
+    "used_loan_sharks": 0.051,
+    "n_sample": 6782
+   },
+   "joven": {
+    "share_of_businesses": 0.263,
+    "median_monthly_sales": 2700000.0,
+    "median_age_months": 29,
+    "requested_credit": 0.177,
+    "obtained_credit": 0.165,
+    "used_loan_sharks": 0.027,
+    "n_sample": 5186
+   },
+   "consolidada": {
+    "share_of_businesses": 0.229,
+    "median_monthly_sales": 7500000.0,
+    "median_age_months": 144,
+    "requested_credit": 0.252,
+    "obtained_credit": 0.244,
+    "used_loan_sharks": 0.04,
+    "n_sample": 4650
+   },
+   "subsistencia": {
+    "share_of_businesses": 0.188,
+    "median_monthly_sales": 600000.0,
+    "median_age_months": 24,
+    "requested_credit": 0.088,
+    "obtained_credit": 0.081,
+    "used_loan_sharks": 0.024,
+    "n_sample": 3870
+   }
+  }
+ },
+ "metrics": {
+  "trained_on": "2026-10-25",
+  "target": "Incumplimiento el mes siguiente (UCI) / mora > 30 días en 90 días (sintéticos)",
+  "pd_objetivo_negocio_promedio": 0.1,
+  "peso_componente_negocio": 0.5,
+  "pagos": {
+   "data": "UCI #350 Default of Credit Card Clients (Yeh 2009, CC BY 4.0): 30.000 créditos",
+   "holdout_30pct": {
+    "auc": 0.7412,
+    "gini": 0.4824,
+    "ks": 0.4072,
+    "n": 9000,
+    "default_rate": 0.2212
+   },
+   "cv5_auc_mean": 0.7426,
+   "cv5_auc_std": 0.0068,
+   "challenger_stacking_holdout": {
+    "auc": 0.7629,
+    "gini": 0.5257,
+    "ks": 0.4179,
+    "n": 9000,
+    "default_rate": 0.2212
+   },
+   "challenger_adopted": false,
+   "challenger_note": "El stacking supera al scorecard por más de 0,02 de Gini, pero no se adopta aún porque no es explicable variable por variable (requisito SARC).",
+   "train_default_rate": 0.2212
+  },
+  "negocio": {
+   "data": "Sintéticos calibrados con EMICRON 2024 (ventas de comercio en Bogotá)",
+   "oot_from_cohort": "2025-07",
+   "oot": {
+    "auc": 0.7338,
+    "gini": 0.4676,
+    "ks": 0.3647,
+    "n": 3000,
+    "default_rate": 0.1363
+   }
+  },
+  "combinado_sintetico": {
+   "nota": "Coherencia sobre historiales sintéticos; no es desempeño real.",
+   "auc": 0.7459,
+   "gini": 0.4919,
+   "ks": 0.3768,
+   "n": 12000,
+   "default_rate": 0.1444,
+   "distribucion_franjas": {
+    "bajo": 0.241,
+    "medio": 0.238,
+    "bueno": 0.522
+   },
+   "incumplimiento_por_franja": {
+    "bajo": 0.321,
+    "medio": 0.147,
+    "bueno": 0.062
+   }
+  }
+ }
+}

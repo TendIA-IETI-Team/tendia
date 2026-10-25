@@ -56,6 +56,13 @@ export interface Mercado {
   creditos: number;
 }
 
+export interface AdjuntoInfo {
+  id: string;
+  nombre: string;
+  tipo: string;
+  tamano: number;
+}
+
 export interface Solicitud {
   id: string;
   monto: number;
@@ -67,7 +74,10 @@ export interface Solicitud {
   calidadDatos: { sufficient: boolean; issues: { code: string; message: string }[] } | null;
   score: ScoreView | null;
   scoreOriginal: ScoreView | null;
-  variaciones: { mes: string; motivo: string }[];
+  variaciones: { mes: string; motivo: string; evidencia: AdjuntoInfo | null }[];
+  documentoGarantia: AdjuntoInfo | null;
+  /** La entidad decidió algo que el tendero aún no ha visto (T11-T13). */
+  novedad: boolean;
   garantia: {
     tipo: string;
     notaAliado: string | null;

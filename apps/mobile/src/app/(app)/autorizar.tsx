@@ -63,6 +63,10 @@ export default function Autorizar() {
         podemos mostrar tu negocio.
       </Body>
       <Aviso tono="ok">TendIA solo consulta tus datos: no puede mover ni sacar tu dinero.</Aviso>
+      <Body muted style={{ fontSize: 15 }}>
+        Para qué: calcular tu Puntaje TendIA y compartirlo solo con la entidad que tú elijas. Puedes
+        quitar cada permiso cuando quieras.
+      </Body>
       {!fuentes && !error && <Cargando texto="Cargando…" />}
       {fuentes?.map((f) => {
         const activa = Boolean(elegidas[f.fuente]);

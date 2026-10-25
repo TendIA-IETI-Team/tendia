@@ -85,6 +85,18 @@ export default function Inicio() {
       </View>
       <Title>{perfil?.nombre ? `Hola, ${perfil.nombre.split(' ')[0]}` : 'Hola'}</Title>
       {error && <Aviso tono="error">{error}</Aviso>}
+      {sol?.novedad && (
+        <Card>
+          <Text
+            testID="novedad"
+            style={{ fontFamily: font.extrabold, fontSize: 18, color: colors.indigo900 }}
+          >
+            🔔 Tienes una respuesta de {sol.aliado?.nombre ?? 'la entidad'}
+          </Text>
+          <Body>{sol.estadoTexto}.</Body>
+          <Button title="Ver la respuesta" onPress={() => router.push('/seguimiento')} />
+        </Card>
+      )}
       {sol === undefined && !error ? (
         <Cargando texto="Cargando…" />
       ) : sol ? (

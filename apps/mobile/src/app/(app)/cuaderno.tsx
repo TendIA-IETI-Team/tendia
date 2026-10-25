@@ -1,8 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { Aviso, Body, Button, Card, Cargando, Label, Screen, Title } from '@/components/ui';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import { Aviso, Body, Button, Card, Cargando, Input, Label, Screen, Title } from '@/components/ui';
 import { api, type LecturaCuaderno, type Registros } from '@/lib/api';
 import { pesos } from '@/lib/format';
 import { colors, font } from '@/lib/theme';
@@ -18,6 +18,7 @@ export default function Cuaderno() {
   const [leyendo, setLeyendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [ventaManual, setVentaManual] = useState('');
 
   const cargar = useCallback(() => {
     api<Registros>('/me/registros')
@@ -67,6 +68,29 @@ export default function Cuaderno() {
 
   function quitar(i: number) {
     setLectura((l) => l && { ...l, registros: l.registros.filter((_, j) => j !== i) });
+  }
+
+  /** El tendero corrige el total de un día antes de guardar. */
+  function corregir(i: number, texto: string) {
+    const ventas = Number(texto.replace(/\D/g, '')) || null;
+    setLectura(
+      (l) => l && { ...l, registros: l.registros.map((r, j) => (j === i ? { ...r, ventas } : r)) },
+    );
+  }
+
+  /** Plan B cuando no hay foto o no se pudo leer: digitar la venta de hoy. */
+  async function anotarManual() {
+    const monto = Number(ventaManual.replace(/\D/g, ''));
+    if (!monto) return;
+    setError(null);
+    try {
+      await api('/me/ventas-diarias', { method: 'POST', body: { monto } });
+      setAviso(`Anotamos ${pesos(monto)} como tu venta de hoy.`);
+      setVentaManual('');
+      cargar();
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
 
   async function guardar() {
@@ -125,15 +149,33 @@ export default function Cuaderno() {
         <Card>
           <Label>Revisa lo que leímos</Label>
           {!lectura.legible || !lectura.registros.length ? (
-            <Body>No pudimos leer bien la foto{lectura.motivo ? `: ${lectura.motivo}` : ''}.</Body>
+            <Body>
+              No pudimos leer bien la foto{lectura.motivo ? `: ${lectura.motivo}` : ''}. Intenta con
+              más luz o escribe tu venta abajo.
+            </Body>
           ) : (
             lectura.registros.map((r, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: font.bold, fontSize: 17, color: colors.indigo900 }}>
                     {r.fecha ?? 'Sin fecha'}
-                    {r.ventas ? ` · ventas ${pesos(r.ventas)}` : ''}
                   </Text>
+                  <TextInput
+                    accessibilityLabel={`Ventas del ${r.fecha ?? 'día sin fecha'}`}
+                    keyboardType="number-pad"
+                    value={r.ventas ? pesos(r.ventas) : ''}
+                    placeholder="Ventas del día"
+                    placeholderTextColor={colors.neutral600}
+                    onChangeText={(t) => corregir(i, t)}
+                    style={{
+                      fontFamily: font.bold,
+                      fontSize: 17,
+                      color: colors.indigo900,
+                      borderBottomWidth: 1,
+                      borderColor: colors.neutral300,
+                      paddingVertical: 4,
+                    }}
+                  />
                   {r.fiados.map((f, k) => (
                     <Body key={k} muted style={{ fontSize: 15 }}>
                       Fiado a {f.cliente}: {pesos(f.monto)}
@@ -151,7 +193,8 @@ export default function Cuaderno() {
             ))
           )}
           <Body muted style={{ fontSize: 14 }}>
-            Quita lo que esté mal leído. Los días sin fecha no se guardan como venta.
+            Corrige el valor si quedó mal leído o quita el día. Los días sin fecha no se guardan
+            como venta.
           </Body>
         </Card>
       ) : (
@@ -173,6 +216,26 @@ export default function Cuaderno() {
           ) : (
             <Aviso>La lectura de fotos aún no está activa. Anota tus ventas con Tendi.</Aviso>
           )}
+        </Card>
+      )}
+
+      {!lectura && !leyendo && (
+        <Card>
+          <Label>O anótala a mano</Label>
+          <Input
+            testID="venta-manual"
+            label="¿Cuánto vendiste hoy?"
+            placeholder="Ej.: 350.000"
+            keyboardType="number-pad"
+            value={ventaManual}
+            onChangeText={setVentaManual}
+          />
+          <Button
+            title="Anotar venta de hoy"
+            variant="secondary"
+            onPress={() => void anotarManual()}
+            disabled={!Number(ventaManual.replace(/\D/g, ''))}
+          />
         </Card>
       )}
 

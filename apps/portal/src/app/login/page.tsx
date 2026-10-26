@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import { useState } from 'react';
 import { Alerta, Button, Field, inputClass } from '@/components/ui';
-import { api, session, type Usuario } from '@/lib/api';
+import { api, inicioDe, session, type Usuario } from '@/lib/api';
 
 interface LoginResp {
   mfaRequerido: true;
@@ -55,7 +55,7 @@ export default function LoginPage() {
         body: JSON.stringify({ mfaToken: paso.mfaToken, codigo }),
       });
       session.save(r.accessToken, r.usuario);
-      router.replace('/bandeja');
+      router.replace(inicioDe(r.usuario.rol));
     } catch (err) {
       setError((err as Error).message);
       setCargando(false);

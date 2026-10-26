@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { puntos } from '@/components/charts';
 import { PageTitle } from '@/components/Shell';
-import { Alerta, Badge, Card, EstadoBadge, Vacio } from '@/components/ui';
+import { Alerta, Badge, Card, EstadoBadge, FranjaBadge, Vacio } from '@/components/ui';
 import { api, type Bandeja } from '@/lib/api';
-import { ESTADOS, fecha, NIVELES, pesos, RECOMENDACIONES } from '@/lib/format';
+import { ESTADOS, fecha, FRANJAS, pesos, RECOMENDACIONES } from '@/lib/format';
 
 const FILTROS = [
   { valor: '', texto: 'Todas' },
@@ -20,10 +20,10 @@ const FILTROS = [
 /** A1: bandeja de solicitudes con score explicado (TND-060). */
 export default function BandejaPage() {
   const [filtro, setFiltro] = useState('');
-  const [nivel, setNivel] = useState('');
+  const [franja, setFranja] = useState('');
   const [data, setData] = useState<Bandeja | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const filas = (data?.solicitudes ?? []).filter((s) => !nivel || s.nivel === nivel);
+  const filas = (data?.solicitudes ?? []).filter((s) => !franja || s.franja === franja);
 
   useEffect(() => {
     let vivo = true;
@@ -69,19 +69,19 @@ export default function BandejaPage() {
           ))}
         </div>
         <div className="mb-4 flex items-center gap-2 text-sm">
-          <label htmlFor="nivel" className="font-bold text-ink-muted">
-            Nivel del puntaje
+          <label htmlFor="franja" className="font-bold text-ink-muted">
+            Franja del puntaje
           </label>
           <select
-            id="nivel"
-            value={nivel}
-            onChange={(e) => setNivel(e.target.value)}
+            id="franja"
+            value={franja}
+            onChange={(e) => setFranja(e.target.value)}
             className="rounded-lg border border-line bg-white px-2 py-1.5 font-semibold text-brand-700"
           >
-            <option value="">Todos</option>
-            {NIVELES.map((n) => (
-              <option key={n} value={n}>
-                {n}
+            <option value="">Todas</option>
+            {FRANJAS.map((f) => (
+              <option key={f.valor} value={f.valor}>
+                {f.texto}
               </option>
             ))}
           </select>
@@ -126,11 +126,12 @@ export default function BandejaPage() {
                           <span className="tabular text-lg font-extrabold text-brand-700">
                             {s.puntaje}
                           </span>
-                          <span className="text-xs text-ink-muted">{s.nivel}</span>
+                          {s.franja && <FranjaBadge franja={s.franja} />}
                         </div>
                       ) : (
                         '—'
                       )}
+                      {s.segmento && <div className="text-xs text-ink-muted">{s.segmento}</div>}
                       {s.conVariaciones && <Badge tono="neutral">Con variación justificada</Badge>}
                     </td>
                     <td className="py-3 pr-4 text-xs">

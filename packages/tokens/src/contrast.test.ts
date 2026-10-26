@@ -14,6 +14,11 @@ const textPairs: Array<[string, string, string]> = [
   ['éxito sobre blanco', colors.success, colors.white],
   ['advertencia sobre blanco', colors.warning, colors.white],
   ['peligro sobre blanco', colors.danger, colors.white],
+  // Avisos de la app y franjas del puntaje: texto de estado sobre su fondo claro.
+  ['éxito sobre su fondo', colors.success, colors.successBg],
+  ['advertencia sobre su fondo', colors.warning, colors.warningBg],
+  ['peligro sobre su fondo', colors.danger, colors.dangerBg],
+  ['índigo sobre aviso informativo', colors.indigo700, colors.indigo100],
 ];
 
 for (const [name, fg, bg] of textPairs) {

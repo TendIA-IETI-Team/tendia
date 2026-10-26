@@ -46,6 +46,13 @@ export default function Solicitar() {
     plazo &&
     (!pideAntiguedad || antiguedad);
 
+  const faltantes = [
+    !(valor >= 200_000 && valor <= 50_000_000) && 'el monto',
+    !(destinoFinal && destinoFinal.length >= 3) && 'para qué es',
+    !plazo && 'el plazo',
+    pideAntiguedad && !antiguedad && 'hace cuánto abriste',
+  ].filter(Boolean) as string[];
+
   async function crear() {
     setError(null);
     setCargando(true);
@@ -70,13 +77,20 @@ export default function Solicitar() {
   return (
     <Screen
       footer={
-        <Button
-          testID="siguiente"
-          title="Siguiente"
-          onPress={crear}
-          disabled={!valido}
-          loading={cargando}
-        />
+        <>
+          {!valido && faltantes.length > 0 && (
+            <Body muted style={{ fontSize: 15, textAlign: 'center' }}>
+              Falta: {faltantes.join(', ')}.
+            </Body>
+          )}
+          <Button
+            testID="siguiente"
+            title="Siguiente"
+            onPress={crear}
+            disabled={!valido}
+            loading={cargando}
+          />
+        </>
       }
     >
       <Pasos actual={1} />

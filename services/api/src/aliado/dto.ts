@@ -2,9 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoSolicitud, TipoGarantia } from '@prisma/client';
 import {
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -20,7 +22,31 @@ export class FiltroBandejaDto {
   estado?: EstadoSolicitud;
 }
 
-export class DecisionDto {
+/** Condiciones con que se aprueba (A4). Si no se envían, se aprueba lo que pidió el tendero. */
+class CondicionesDto {
+  @ApiPropertyOptional({ example: 3000000 })
+  @IsOptional()
+  @IsInt()
+  @Min(100_000)
+  @Max(500_000_000)
+  montoAprobado?: number;
+
+  @ApiPropertyOptional({ example: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  plazoAprobado?: number;
+
+  @ApiPropertyOptional({ example: 52.5, description: 'Tasa efectiva anual, en %' })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(150)
+  tasaAprobada?: number;
+}
+
+export class DecisionDto extends CondicionesDto {
   @ApiProperty({ enum: ['APROBAR', 'PEDIR_GARANTIA', 'RECHAZAR'] })
   @IsIn(['APROBAR', 'PEDIR_GARANTIA', 'RECHAZAR'])
   decision: 'APROBAR' | 'PEDIR_GARANTIA' | 'RECHAZAR';
@@ -37,7 +63,7 @@ export class DecisionDto {
   tipoGarantia?: TipoGarantia;
 }
 
-export class EvaluarGarantiaDto {
+export class EvaluarGarantiaDto extends CondicionesDto {
   @ApiProperty()
   @IsBoolean()
   aceptar: boolean;
@@ -50,16 +76,16 @@ export class EvaluarGarantiaDto {
 }
 
 export class PoliticaDto {
-  @ApiProperty({ example: 60 })
+  @ApiProperty({ example: 650, description: 'Escala 0-1000' })
   @IsInt()
   @Min(0)
-  @Max(100)
+  @Max(1000)
   scoreMinAprobar: number;
 
-  @ApiProperty({ example: 45 })
+  @ApiProperty({ example: 500, description: 'Escala 0-1000' })
   @IsInt()
   @Min(0)
-  @Max(100)
+  @Max(1000)
   scoreMinConGarantia: number;
 
   @ApiProperty({ example: 5000000 })
@@ -75,4 +101,22 @@ export class CrearApiKeyDto {
   @MinLength(3)
   @MaxLength(60)
   nombre: string;
+}
+
+export class InvitacionDto {
+  @ApiProperty({ example: 'analista.nueva@bancodemo.co' })
+  @IsEmail({}, { message: 'Escribe un correo válido' })
+  @MaxLength(160)
+  email: string;
+
+  @ApiProperty({ example: 'Laura Gómez' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(80)
+  nombre: string;
+
+  @ApiPropertyOptional({ enum: ['ANALISTA', 'ADMIN_ALIADO'], default: 'ANALISTA' })
+  @IsOptional()
+  @IsIn(['ANALISTA', 'ADMIN_ALIADO'])
+  rol?: 'ANALISTA' | 'ADMIN_ALIADO';
 }

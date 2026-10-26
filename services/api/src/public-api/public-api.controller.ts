@@ -21,7 +21,7 @@ import { Public } from '../common/auth';
 import { sha256 } from '../common/crypto';
 import { ExplicacionService } from '../explicacion/explicacion.service';
 import { PrismaService } from '../prisma.service';
-import { ScoreResponseV1, ScoringClient } from '../scoring/scoring.client';
+import { ScoreResponse, ScoringClient } from '../scoring/scoring.client';
 import { TenderoModule } from '../tendero/tendero.controller';
 
 type ReqConLlave = Request & { apiKey?: ApiKey };
@@ -110,11 +110,12 @@ export class PublicApiController {
       accion: 'consulta_score_api',
       entidad: 'ConsumoApi',
       entidadId: requestId,
+      finalidad: 'consulta_api',
     });
     if (res.status === 422) {
       throw new BadRequestException({ message: 'Datos inválidos', detalle: res.body });
     }
-    const score = res.body as ScoreResponseV1;
+    const score = res.body as ScoreResponse;
     const { explicacion } = await this.explicacion.explicar(score);
     return { ...score, explanation: explicacion };
   }

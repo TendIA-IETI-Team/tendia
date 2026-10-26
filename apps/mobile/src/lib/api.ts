@@ -21,19 +21,46 @@ export type Estado =
 
 export interface Contribucion {
   feature: string;
+  component: 'pagos' | 'negocio';
   label: string;
   display_value: string;
   points: number;
 }
 
+/** Segmento del negocio con datos reales de EMICRON 2024 (DANE). */
+export interface Segmento {
+  code: string;
+  name: string;
+  description: string;
+  median_monthly_sales: number;
+  requested_credit: number;
+  used_loan_sharks: number;
+}
+
 export interface ScoreView {
   version: number;
   puntaje: number;
-  nivel: string;
-  nivelIndice: number;
+  franja: 'bajo' | 'medio' | 'bueno';
+  franjaNombre: string;
+  segmento: Segmento | null;
+  componentes: { name: 'pagos' | 'negocio'; label: string; points: number }[];
   conVariaciones: boolean;
   explicacion: { resumen: string; fortalezas: string[]; aMejorar: string[] };
   contribuciones: Contribucion[];
+}
+
+/** Tasa real que cobran las entidades a tiendas de Bogotá (Superfinanciera). No es una oferta. */
+export interface Mercado {
+  tasaEfectivaAnual: number;
+  rango: { desde: number; hasta: number };
+  creditos: number;
+}
+
+export interface AdjuntoInfo {
+  id: string;
+  nombre: string;
+  tipo: string;
+  tamano: number;
 }
 
 export interface Solicitud {
@@ -47,7 +74,10 @@ export interface Solicitud {
   calidadDatos: { sufficient: boolean; issues: { code: string; message: string }[] } | null;
   score: ScoreView | null;
   scoreOriginal: ScoreView | null;
-  variaciones: { mes: string; motivo: string }[];
+  variaciones: { mes: string; motivo: string; evidencia: AdjuntoInfo | null }[];
+  documentoGarantia: AdjuntoInfo | null;
+  /** La entidad decidió algo que el tendero aún no ha visto (T11-T13). */
+  novedad: boolean;
   garantia: {
     tipo: string;
     notaAliado: string | null;
@@ -57,6 +87,36 @@ export interface Solicitud {
   notaDecision: string | null;
   comoMejorar: string[];
   satisfaccion: number | null;
+  mercado: Mercado | null;
+  aprobado: { monto: number; plazoMeses: number; tasaEfectivaAnual: number | null } | null;
+}
+
+export interface Registros {
+  hoy: string;
+  ventaHoy: number | null;
+  ventasSemana: number;
+  ventasMes: number;
+  diasRegistradosMes: number;
+  ventasRecientes: { fecha: string; monto: number; canal: string }[];
+  fiadosPendientes: { id: string; cliente: string; monto: number; fecha: string }[];
+  totalFiado: number;
+}
+
+export interface LecturaCuaderno {
+  id: string;
+  legible: boolean;
+  motivo: string | null;
+  registros: {
+    fecha: string | null;
+    ventas: number | null;
+    fiados: { cliente: string; monto: number }[];
+  }[];
+}
+
+export interface MensajeChat {
+  rol: 'user' | 'assistant';
+  contenido: string;
+  creadoEn?: string;
 }
 
 export interface Fuente {

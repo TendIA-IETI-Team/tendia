@@ -63,6 +63,10 @@ export default function Autorizar() {
         podemos mostrar tu negocio.
       </Body>
       <Aviso tono="ok">TendIA solo consulta tus datos: no puede mover ni sacar tu dinero.</Aviso>
+      <Body muted style={{ fontSize: 15 }}>
+        Para qué: calcular tu Puntaje TendIA y compartirlo solo con la entidad que tú elijas. Puedes
+        quitar cada permiso cuando quieras.
+      </Body>
       {!fuentes && !error && <Cargando texto="Cargando…" />}
       {fuentes?.map((f) => {
         const activa = Boolean(elegidas[f.fuente]);
@@ -75,6 +79,7 @@ export default function Autorizar() {
               testID={`fuente-${f.fuente}`}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: activa }}
+              aria-checked={activa}
               onPress={() =>
                 setElegidas((e) => ({ ...e, [f.fuente]: activa ? null : f.proveedores[0] }))
               }
@@ -132,7 +137,7 @@ export default function Autorizar() {
         onPress={() => void Linking.openURL(ENLACES.politicaDatos)}
       />
       {fuentes?.some((f) => f.simulado) && (
-        <Body muted style={{ fontSize: 13 }}>
+        <Body muted style={{ fontSize: 15 }}>
           Versión de prueba: las fuentes devuelven datos simulados.
         </Body>
       )}

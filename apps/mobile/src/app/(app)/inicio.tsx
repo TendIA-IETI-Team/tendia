@@ -45,9 +45,27 @@ export default function Inicio() {
               onPress={() => router.push('/solicitar')}
             />
           )}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                testID="tendi"
+                title="Hablar con Tendi"
+                variant="accent"
+                onPress={() => router.push('/asistente')}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                testID="mi-cuaderno"
+                title="Mi cuaderno"
+                variant="secondary"
+                onPress={() => router.push('/cuaderno')}
+              />
+            </View>
+          </View>
           <Button
             title="Mis autorizaciones"
-            variant="secondary"
+            variant="link"
             onPress={() => router.push('/autorizaciones')}
           />
         </>
@@ -67,6 +85,18 @@ export default function Inicio() {
       </View>
       <Title>{perfil?.nombre ? `Hola, ${perfil.nombre.split(' ')[0]}` : 'Hola'}</Title>
       {error && <Aviso tono="error">{error}</Aviso>}
+      {sol?.novedad && (
+        <Card>
+          <Text
+            testID="novedad"
+            style={{ fontFamily: font.extrabold, fontSize: 18, color: colors.indigo900 }}
+          >
+            🔔 Tienes una respuesta de {sol.aliado?.nombre ?? 'la entidad'}
+          </Text>
+          <Body>{sol.estadoTexto}.</Body>
+          <Button title="Ver la respuesta" onPress={() => router.push('/seguimiento')} />
+        </Card>
+      )}
       {sol === undefined && !error ? (
         <Cargando texto="Cargando…" />
       ) : sol ? (
@@ -93,7 +123,7 @@ export default function Inicio() {
               <Text style={{ fontFamily: font.extrabold, color: colors.indigo700 }}>
                 {sol.score.puntaje}
               </Text>{' '}
-              de 100
+              de 1000
             </Body>
           )}
         </Card>

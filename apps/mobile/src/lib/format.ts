@@ -19,6 +19,10 @@ export function pesos(n: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
 }
 
+export function porcentaje(x: number): string {
+  return `${Math.round(x * 100)} %`;
+}
+
 export function soloDigitos(s: string): number {
   return Number(s.replace(/\D/g, '')) || 0;
 }
@@ -36,6 +40,3 @@ export function ultimosMeses(n: number, hoy = new Date()): string[] {
   }
   return out;
 }
-
-export const NIVELES = ['En construcción', 'Básico', 'Bueno', 'Muy bueno', 'Excelente'];
-export const CORTES_NIVEL = [0, 30, 45, 60, 72, 100];

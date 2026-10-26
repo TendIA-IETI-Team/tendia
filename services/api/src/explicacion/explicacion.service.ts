@@ -3,7 +3,8 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { Injectable, Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { config } from '../config';
-import type { ContributionV1, ScoreResponseV1 } from '../scoring/scoring.client';
+import { crearClienteClaude } from '../ia/claude';
+import type { Contribution, ScoreResponse } from '../scoring/scoring.client';
 
 export const ExplicacionSchema = z.object({
   resumen: z.string(),
@@ -14,9 +15,14 @@ export type Explicacion = z.infer<typeof ExplicacionSchema>;
 
 /** Consejos concretos por variable: base de la plantilla y de "cómo mejorar" tras un rechazo. */
 export const CONSEJOS: Record<string, string> = {
-  on_time_ratio: 'Paga las facturas de tu proveedor en la fecha acordada.',
-  avg_days_late: 'Si te vas a atrasar con el proveedor, avísale y acorta los días de retraso.',
-  sales_cv: 'Registra todas tus ventas en el datáfono para mostrar ventas más estables.',
+  pago_meses_al_dia: 'Paga las facturas de tu proveedor en la fecha acordada, todos los meses.',
+  pago_max_meses_mora:
+    'Evita atrasos largos con el proveedor: si te vas a demorar, abona algo y avísale.',
+  pago_proporcion_pagada: 'Paga completo lo que te fía el proveedor antes de pedir más.',
+  pago_uso_cupo: 'No uses todo el cupo que te da el proveedor: deja un margen libre.',
+  pago_tendencia_compras: 'Compra al proveedor de forma pareja, según lo que vendes.',
+  sales_cv:
+    'Registra todas tus ventas en el datáfono o con el asistente para mostrar ventas más estables.',
   low_months_ratio: 'Si un mes fue malo por algo puntual, justifícalo en la app.',
   sales_trend: 'Mantén o sube tus ventas de los próximos meses: la tendencia cuenta.',
   avg_sales:
@@ -35,7 +41,7 @@ const FRASES_PROHIBIDAS = [
   /tendia (te )?presta/i,
 ];
 
-const SYSTEM = `Eres el asistente de TendIA. Explicas a tenderos de barrio en Colombia su Puntaje TendIA (0 a 100) con palabras sencillas, en español colombiano, tratando de "tú".
+const SYSTEM = `Eres el asistente de TendIA. Explicas a tenderos de barrio en Colombia su Puntaje TendIA (0 a 1000, en tres franjas: bajo, medio y bueno) con palabras sencillas, en español colombiano, tratando de "tú".
 Reglas:
 - TendIA no presta dinero: evalúa el negocio y le comparte el puntaje al aliado que el tendero elija. Nunca digas que el crédito está aprobado ni prometas un resultado.
 - No es un puntaje de DataCrédito; no lo compares con centrales de riesgo.
@@ -46,13 +52,11 @@ Reglas:
 @Injectable()
 export class ExplicacionService {
   private readonly logger = new Logger(ExplicacionService.name);
-  private readonly client = config().ANTHROPIC_API_KEY
-    ? new Anthropic({ apiKey: config().ANTHROPIC_API_KEY, timeout: 20_000, maxRetries: 1 })
-    : null;
+  private readonly client = crearClienteClaude(20_000);
 
   /** Explicación en lenguaje simple (TND-053). Si la IA falla o no está configurada, usa la plantilla. */
   async explicar(
-    score: ScoreResponseV1,
+    score: ScoreResponse,
   ): Promise<{ explicacion: Explicacion; fuente: 'ia' | 'plantilla' }> {
     const plantilla = this.plantilla(score);
     if (!this.client || score.score === null)
@@ -61,7 +65,8 @@ export class ExplicacionService {
     // Solo viajan el puntaje y las contribuciones: nunca datos que identifiquen al tendero.
     const datos = {
       puntaje: score.score,
-      nivel: score.level?.name,
+      franja: score.band?.name,
+      tipo_de_negocio: score.segment?.name,
       ayudan: score.top_positive.map(pick),
       restan: score.top_negative.map(pick),
       meses_justificados: score.adjusted_months,
@@ -107,7 +112,7 @@ export class ExplicacionService {
     return !FRASES_PROHIBIDAS.some((re) => re.test(texto)) && e.resumen.length <= 600;
   }
 
-  plantilla(score: ScoreResponseV1): Explicacion {
+  plantilla(score: ScoreResponse): Explicacion {
     if (score.score === null) {
       return {
         resumen:
@@ -117,13 +122,13 @@ export class ExplicacionService {
       };
     }
     return {
-      resumen: `Tu Puntaje TendIA es ${score.score} de 100, nivel ${score.level?.name}. Lo calculamos con las ventas y los pagos de tu negocio, no con tu historial en bancos.`,
+      resumen: `Tu Puntaje TendIA es ${score.score} de 1000, franja ${score.band?.name.toLowerCase()}. Lo calculamos con las ventas de tu negocio y cómo le pagas a tu proveedor, no con tu historial en bancos.`,
       fortalezas: score.top_positive.map((c) => `${c.label} (${c.display_value}) te ayuda.`),
       aMejorar: score.top_negative.map((c) => CONSEJOS[c.feature] ?? c.label),
     };
   }
 }
 
-function pick(c: ContributionV1) {
+function pick(c: Contribution) {
   return { que: c.label, valor: c.display_value, puntos: Math.round(c.points) };
 }

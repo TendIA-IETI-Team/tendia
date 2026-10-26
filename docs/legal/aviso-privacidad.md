@@ -6,6 +6,6 @@
 
 - TendIA no presta dinero.
 - Puedes quitar cada autorización cuando quieras en "Mis autorizaciones"; al quitarla, borramos esos datos.
-- Puedes conocer, actualizar o pedir que borremos tus datos escribiendo a [definir correo de privacidad].
+- Puedes conocer, actualizar o pedir que borremos tus datos desde la app ("Mis autorizaciones" y "Completar información") o escribiendo a [definir correo de privacidad].
 
-Consulta la política completa en [definir URL pública de la política].
+Consulta la política completa en [github.com/TendIA-IETI-Team/tendia/blob/main/docs/legal/politica-tratamiento-datos.md](https://github.com/TendIA-IETI-Team/tendia/blob/main/docs/legal/politica-tratamiento-datos.md). La app y el portal la enlazan.

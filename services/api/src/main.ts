@@ -7,7 +7,16 @@ if (cfg.SENTRY_DSN) {
     dsn: cfg.SENTRY_DSN,
     release: cfg.RELEASE,
     environment: cfg.APP_ENV,
-    sendDefaultPii: false,
+    // Ley 1581: nada de datos personales hacia Sentry (celulares, mensajes, tokens, cuerpos).
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: { allow: ['user-agent', 'content-type'] }, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+    },
     tracesSampleRate: 0.1,
   });
 }

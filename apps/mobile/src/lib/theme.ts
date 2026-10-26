@@ -1,6 +1,6 @@
-import { chartColors, colors, scoreLevelColors } from '@tendia/tokens';
+import { type Banda, bandaDe, bandas, chartColors, colors } from '@tendia/tokens';
 
-export { chartColors, colors, scoreLevelColors };
+export { type Banda, bandaDe, bandas, chartColors, colors };
 
 export const font = {
   regular: 'Nunito_400Regular',

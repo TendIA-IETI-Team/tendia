@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { Adjuntar, type Archivo, paraEnviar } from '@/components/adjuntar';
 import { Chips } from '@/components/chips';
 import { Aviso, Body, Button, Input, Label, Screen, Title } from '@/components/ui';
 import { api, solicitudActual, type Solicitud } from '@/lib/api';
@@ -22,6 +23,7 @@ export default function Justificar() {
   const [mes, setMes] = useState<string | null>(null);
   const [motivo, setMotivo] = useState<(typeof MOTIVOS)[number] | null>(null);
   const [detalle, setDetalle] = useState('');
+  const [evidencia, setEvidencia] = useState<Archivo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
@@ -58,7 +60,7 @@ export default function Justificar() {
     try {
       await api(`/solicitudes/${sol.id}/variaciones`, {
         method: 'POST',
-        body: { mes, motivo: texto },
+        body: { mes, motivo: texto, evidencia: paraEnviar(evidencia) },
       });
       router.back();
     } catch (e) {
@@ -99,6 +101,16 @@ export default function Justificar() {
           maxLength={200}
           multiline
         />
+      )}
+      {motivo && (
+        <>
+          <Label>¿Tienes con qué mostrarlo? (opcional)</Label>
+          <Adjuntar
+            valor={evidencia}
+            onChange={setEvidencia}
+            ayuda="Una foto o PDF que lo respalde: la incapacidad médica, una foto de la obra o una noticia. La entidad la verá con tu explicación."
+          />
+        </>
       )}
       {error && <Aviso tono="error">{error}</Aviso>}
     </Screen>

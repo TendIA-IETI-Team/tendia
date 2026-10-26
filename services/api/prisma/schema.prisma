@@ -31,6 +31,8 @@ enum EstadoSolicitud {
 enum RolUsuario {
   ANALISTA
   ADMIN_ALIADO
+  // Equipo de TendIA: consulta la bitácora de cualquier tendero (TND-022). No pertenece a un aliado.
+  ADMIN_TENDIA
 }
 
 enum TipoAliado {
@@ -64,6 +66,8 @@ model Tendero {
   negocio           Negocio?
   consentimientos   Consentimiento[]
   solicitudes       Solicitud[]
+  mensajes          MensajeAsistente[]
+  extracciones      ExtraccionCuaderno[]
 }
 
 model OtpCodigo {
@@ -91,6 +95,65 @@ model Negocio {
   // Solo para demos y pruebas: fija el perfil que devuelven los conectores simulados.
   perfilSimulado         String?
   datos                  DatoMensual[]
+  ventasDiarias          VentaDiaria[]
+  fiados                 Fiado[]
+}
+
+// Ventas del día que el tendero registra por la app, el asistente o WhatsApp (RF-04).
+// Se agregan por mes como fuente MANUAL ("lo que tú nos cuentas").
+model VentaDiaria {
+  id        String   @id @default(uuid())
+  negocioId String
+  negocio   Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  fecha     String // YYYY-MM-DD
+  monto     Int
+  canal     String // app | asistente | whatsapp | cuaderno
+  creadoEn  DateTime @default(now())
+
+  @@unique([negocioId, fecha])
+}
+
+// El cuaderno de fiado: lo que los clientes le deben al tendero.
+model Fiado {
+  id        String    @id @default(uuid())
+  negocioId String
+  negocio   Negocio   @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  cliente   String
+  monto     Int
+  fecha     String // YYYY-MM-DD
+  pagadoEn  DateTime?
+  canal     String
+  creadoEn  DateTime  @default(now())
+
+  @@index([negocioId, pagadoEn])
+}
+
+// Historial del asistente TendIA (app y WhatsApp). Solo texto; sin datos de terceros.
+model MensajeAsistente {
+  id        String   @id @default(uuid())
+  tenderoId String
+  tendero   Tendero  @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  rol       String // user | assistant
+  contenido String
+  canal     String // app | whatsapp
+  // Lo que el asistente guardó en ese turno: se le recuerda a Claude para que no lo repita.
+  acciones  Json?
+  creadoEn  DateTime @default(now())
+
+  @@index([tenderoId, creadoEn])
+}
+
+// Lo que la IA leyó de una foto del cuaderno, pendiente de que el tendero lo confirme (TND-035).
+model ExtraccionCuaderno {
+  id        String   @id @default(uuid())
+  tenderoId String
+  tendero   Tendero  @relation(fields: [tenderoId], references: [id], onDelete: Cascade)
+  datos     Json
+  estado    String   @default("pendiente") // pendiente | confirmada | descartada
+  canal     String
+  creadoEn  DateTime @default(now())
+
+  @@index([tenderoId, estado])
 }
 
 model Consentimiento {
@@ -100,6 +163,9 @@ model Consentimiento {
   fuente       FuenteTipo
   proveedor    String
   versionTexto String
+  // Para qué autorizó el tendero y la referencia que devolvió el conector al autorizar (TND-020).
+  finalidad    String?
+  referencia   String?
   otorgadoEn   DateTime   @default(now())
   revocadoEn   DateTime?
 
@@ -113,10 +179,13 @@ model DatoMensual {
   fuente       FuenteTipo
   mes          String // YYYY-MM
   ventas       Int?
+  transacciones Int? // número de ventas del mes (datáfono): ticket promedio
   compras      Int?
   facturas     Int?
   pagadasATiempo Int?
   diasRetrasoPromedio Float?
+  pagado       Int? // lo que pagó al proveedor ese mes
+  cupo         Int? // cupo de crédito que le da el proveedor
   creadoEn     DateTime   @default(now())
 
   @@unique([negocioId, fuente, mes])
@@ -128,6 +197,7 @@ model Aliado {
   slug        String      @unique
   tipo        TipoAliado
   usuarios    Usuario[]
+  invitaciones Invitacion[]
   politica    Politica?
   solicitudes Solicitud[]
   apiKeys     ApiKey[]
@@ -136,8 +206,8 @@ model Aliado {
 
 model Usuario {
   id           String     @id @default(uuid())
-  aliadoId     String
-  aliado       Aliado     @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  aliadoId     String? // null solo para ADMIN_TENDIA
+  aliado       Aliado?    @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
   email        String     @unique
   nombre       String
   passwordHash String
@@ -150,12 +220,30 @@ model Usuario {
   creadoEn     DateTime   @default(now())
 }
 
+// Invitación de un administrador del aliado a un analista (TND-011). El enlace se usa una vez.
+model Invitacion {
+  id        String     @id @default(uuid())
+  aliadoId  String
+  aliado    Aliado     @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
+  email     String
+  nombre    String
+  rol       RolUsuario @default(ANALISTA)
+  tokenHash String     @unique
+  expiraEn  DateTime
+  usadaEn   DateTime?
+  creadaPor String
+  creadaEn  DateTime   @default(now())
+
+  @@index([aliadoId, creadaEn])
+}
+
 model Politica {
   id                   String   @id @default(uuid())
   aliadoId             String   @unique
   aliado               Aliado   @relation(fields: [aliadoId], references: [id], onDelete: Cascade)
-  scoreMinAprobar      Int      @default(60)
-  scoreMinConGarantia  Int      @default(45)
+  // Escala 0-1000 (modelo tendia-v2).
+  scoreMinAprobar      Int      @default(650)
+  scoreMinConGarantia  Int      @default(500)
   montoMaximo          Int      @default(5000000)
   // Sube en cada cambio; cada recomendación muestra con qué versión se calculó (TND-061).
   version              Int      @default(1)
@@ -174,16 +262,23 @@ model Solicitud {
   estado        EstadoSolicitud @default(BORRADOR)
   calidadDatos  Json?
   notaDecision  String?
+  // Condiciones con que el aliado aprueba (A4): pueden diferir de lo pedido.
+  montoAprobado Int?
+  plazoAprobado Int?
+  tasaAprobada  Float? // tasa efectiva anual en %
   decididaEn    DateTime?
   decididaPor   String?
   enviadaEn     DateTime?
   satisfaccion  Int?
   comentarioSatisfaccion String?
+  // Último estado que el tendero vio en la app: si cambia, la app le avisa (TND-057).
+  estadoVisto   EstadoSolicitud?
   creadaEn      DateTime        @default(now())
   actualizadaEn DateTime        @updatedAt
   scores        Score[]
   variaciones   Variacion[]
   garantia      Garantia?
+  adjuntos      Adjunto[]
 
   @@index([aliadoId, estado])
   @@index([tenderoId])
@@ -194,11 +289,14 @@ model Score {
   solicitudId        String
   solicitud          Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
   version            Int // 1 = original, 2+ = con variaciones justificadas
-  puntaje            Int
+  puntaje            Int // 0-1000
   probabilidadIncumplimiento Float
-  nivel              String
+  nivel              String // franja: bajo | medio | bueno
   modeloVersion      String
+  segmento           Json? // segmento del negocio (EMICRON) con sus datos reales
+  componentes        Json? // puntos por componente: pagos y negocio
   contribuciones     Json
+  indicadores        Json? // ticket promedio, regularidad de recompra, rotación (TND-042)
   calidadDatos       Json
   explicacion        Json // { resumen, fortalezas[], aMejorar[] }
   explicacionFuente  String // "ia" | "plantilla"
@@ -229,6 +327,22 @@ model Garantia {
   estado        EstadoGarantia @default(SOLICITADA)
   creadaEn      DateTime       @default(now())
   actualizadaEn DateTime       @updatedAt
+}
+
+// Evidencia de una variación (T8) o documento de la garantía (T10). Máximo 5 MB.
+model Adjunto {
+  id          String    @id @default(uuid())
+  solicitudId String
+  solicitud   Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  proposito   String // variacion | garantia
+  mes         String? // mes de la variación, si aplica
+  nombre      String
+  tipo        String // tipo MIME
+  tamano      Int
+  datos       Bytes
+  creadoEn    DateTime  @default(now())
+
+  @@index([solicitudId])
 }
 
 model ApiKey {
@@ -265,6 +379,8 @@ model Auditoria {
   accion    String
   entidad   String
   entidadId String?
+  // Para qué se leyó o cambió el dato (Ley 1581): evaluar_credito, decidir_credito, etc.
+  finalidad String?
   detalle   Json?
   creadoEn  DateTime @default(now())
 

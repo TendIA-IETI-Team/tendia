@@ -1,5 +1,13 @@
 import { decrypt, encrypt, lookupHash, maskPhone, normalizePhone } from './crypto';
-import { comoMejorar, estadoTexto, recomendar, scoreVigente } from './vistas';
+import {
+  comoMejorar,
+  estadoTexto,
+  franjaDe,
+  recomendar,
+  scoreView,
+  scoreVigente,
+  tasaReferencia,
+} from './vistas';
 
 describe('crypto', () => {
   it('cifra y descifra sin dejar el dato en claro', () => {
@@ -64,10 +72,46 @@ describe('vistas', () => {
     expect(comoMejorar(undefined)).toEqual([]);
     const consejos = comoMejorar({
       contribuciones: [
-        { feature: 'on_time_ratio', points: -8, label: 'x' },
-        { feature: 'avg_sales', points: 3, label: 'y' },
+        { feature: 'pago_meses_al_dia', points: -80, label: 'x' },
+        { feature: 'avg_sales', points: 30, label: 'y' },
       ],
     } as never);
-    expect(consejos).toEqual(['Paga las facturas de tu proveedor en la fecha acordada.']);
+    expect(consejos).toEqual([
+      'Paga las facturas de tu proveedor en la fecha acordada, todos los meses.',
+    ]);
+  });
+
+  it('franjas de la escala 0-1000 y tasa de referencia por franja', () => {
+    expect(franjaDe(499)).toBe('bajo');
+    expect(franjaDe(500)).toBe('medio');
+    expect(franjaDe(650)).toBe('bueno');
+    const tasas = {
+      fuente: 'Superintendencia Financiera',
+      filtro: 'x',
+      desde: '2025-08-01',
+      hasta: '2026-07-31',
+      creditos: 100,
+      tasa_efectiva_anual: { p25: 48.8, p50: 61.9, p75: 65.5 },
+      con_garantia_fng: null,
+      sin_garantia_fng: null,
+      entidades: [],
+    };
+    expect(tasaReferencia('bueno', tasas).tasaEfectivaAnual).toBe(48.8);
+    expect(tasaReferencia('medio', tasas).tasaEfectivaAnual).toBe(61.9);
+    expect(tasaReferencia('bajo', tasas).rango).toEqual({ desde: 48.8, hasta: 65.5 });
+  });
+
+  it('las vistas de puntajes viejos (v1) calculan su franja', () => {
+    const v = scoreView({
+      version: 1,
+      puntaje: 560,
+      nivel: 'Bueno',
+      contribuciones: [],
+      explicacion: {},
+      segmento: null,
+      componentes: null,
+    } as never);
+    expect(v.franja).toBe('medio');
+    expect(v.componentes).toEqual([]);
   });
 });

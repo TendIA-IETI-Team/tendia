@@ -3,6 +3,7 @@ node_modules/
 .pnpm-store/
 .venv/
 __pycache__/
+services/scoring/.cache/
 *.pyc
 
 # Builds

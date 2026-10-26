@@ -1,19 +1,22 @@
-"""Servicio de inferencia /score (TND-044)."""
+"""Servicio de inferencia /score (TND-044), contrato v2."""
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import uuid
+from pathlib import Path
 
 import sentry_sdk
 import structlog
 from fastapi import FastAPI, Header
 
 from . import __version__
-from .features import compute_features
-from .schemas import ScoreRequest, ScoreResponse
-from .scorecard import Scorecard, level_for
+from .features import compute_features, compute_indicators
+from .schemas import CONTRACT_VERSION, ScoreRequest, ScoreResponse, Segment
+from .scorecard import ModeloTendIA, band_for
+from .segmentos import Segmentacion, vector
 
 structlog.configure(
     processors=[
@@ -25,21 +28,35 @@ structlog.configure(
 )
 log = structlog.get_logger("scoring")
 
+# Versión desplegada: RELEASE explícito, o el commit que Render despliega, o la del paquete.
+RELEASE = os.getenv("RELEASE") or os.getenv("RENDER_GIT_COMMIT") or __version__
+
 if os.getenv("SENTRY_DSN"):
     sentry_sdk.init(
         dsn=os.environ["SENTRY_DSN"],
-        release=os.getenv("RELEASE", __version__),
+        release=RELEASE,
         environment=os.getenv("APP_ENV", "dev"),
         send_default_pii=False,
     )
 
-model = Scorecard.load()
+REFERENCIAS = Path(__file__).parent / "model" / "referencias"
+
+model = ModeloTendIA.load()
+segmentacion = Segmentacion.from_json({k: v for k, v in model.segmentacion.items() if k != "data"})
+referencias = {
+    p.stem: json.loads(p.read_text(encoding="utf-8")) for p in sorted(REFERENCIAS.glob("*.json"))
+}
 app = FastAPI(title="TendIA Scoring", version=__version__)
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "model_version": model.version}
+    return {
+        "status": "ok",
+        "model_version": model.version,
+        "contract_version": CONTRACT_VERSION,
+        "release": RELEASE,
+    }
 
 
 @app.get("/model")
@@ -47,46 +64,64 @@ def model_info() -> dict:
     return {"model_version": model.version, "metrics": model.metrics}
 
 
+@app.get("/referencias")
+def referencias_mercado() -> dict:
+    """Datos reales de contexto: EMICRON (DANE) y tasas de crédito productivo (Superfinanciera)."""
+    return referencias
+
+
 @app.post("/score", response_model=ScoreResponse)
 def score(req: ScoreRequest, x_request_id: str | None = Header(default=None)) -> ScoreResponse:
     request_id = x_request_id or str(uuid.uuid4())
     fr = compute_features(req)
+    base = {
+        "contract_version": CONTRACT_VERSION,
+        "model_version": model.version,
+        "request_id": request_id,
+        "adjusted_months": fr.adjusted_months,
+        "data_quality": fr.quality,
+        "indicators": compute_indicators(req),
+    }
     if not fr.quality.sufficient:
         log.info("score_insufficient_data", request_id=request_id, issues=len(fr.quality.issues))
         return ScoreResponse(
-            model_version=model.version,
-            request_id=request_id,
+            **base,
             probability_default=None,
             score=None,
-            level=None,
+            band=None,
+            segment=None,
+            components=[],
             contributions=[],
             top_positive=[],
             top_negative=[],
-            adjusted_months=fr.adjusted_months,
-            data_quality=fr.quality,
         )
 
     pd = model.probability_default(fr.values)
     points = model.score(fr.values)
     contribs = model.contributions(fr.values)
     ordered = sorted(contribs, key=lambda c: c.points, reverse=True)
+    seg_code = segmentacion.asignar(
+        vector(
+            fr.values["avg_sales"], fr.values["business_age_months"], 1.0, float(fr.has_datafono)
+        )
+    )
     # Sin datos personales en logs: solo IDs y resultados.
     log.info(
         "score_computed",
         request_id=request_id,
         score=points,
         model_version=model.version,
+        segment=seg_code,
         adjusted=len(fr.adjusted_months),
     )
     return ScoreResponse(
-        model_version=model.version,
-        request_id=request_id,
+        **base,
         probability_default=round(pd, 4),
         score=points,
-        level=level_for(points),
+        band=band_for(points),
+        segment=Segment(**segmentacion.describir(seg_code)),
+        components=model.components(contribs),
         contributions=contribs,
         top_positive=[c for c in ordered if c.points > 0][:3],
         top_negative=[c for c in reversed(ordered) if c.points < 0][:3],
-        adjusted_months=fr.adjusted_months,
-        data_quality=fr.quality,
     )

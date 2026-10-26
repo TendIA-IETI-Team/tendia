@@ -17,9 +17,9 @@ export const colors = {
   neutral600: '#5F5B73',
   neutral300: '#D9D6E3',
   white: '#FFFFFF',
-  success: '#1E7F4F',
+  success: '#1B7346',
   successBg: '#E5F4EC',
-  warning: '#9A6700',
+  warning: '#875A00',
   warningBg: '#FBF1DC',
   danger: '#B3261E',
   dangerBg: '#FBEAE9',
@@ -40,14 +40,22 @@ export const chartColors = {
   grid: '#E6E3EF',
 } as const;
 
-/** Rampa índigo para los 5 niveles del Puntaje TendIA (de menor a mayor). */
-export const scoreLevelColors = [
-  colors.indigo300,
-  '#7D72CC',
-  colors.indigo500,
-  '#4537A0',
-  colors.indigo700,
-] as const;
+/**
+ * Franjas del Puntaje TendIA (0-1000). La barra de tres colores salió de la prueba con doña
+ * Gloria: "bajo, medio, bueno". Usan los colores de estado (nunca el naranja de marca) y siempre
+ * van con su nombre escrito: el color no es la única señal.
+ */
+export const bandas = {
+  bajo: { nombre: 'Bajo', min: 0, max: 499, color: colors.danger, fondo: colors.dangerBg },
+  medio: { nombre: 'Medio', min: 500, max: 649, color: colors.warning, fondo: colors.warningBg },
+  bueno: { nombre: 'Bueno', min: 650, max: 1000, color: colors.success, fondo: colors.successBg },
+} as const;
+
+export type Banda = keyof typeof bandas;
+
+export function bandaDe(puntaje: number): Banda {
+  return puntaje >= 650 ? 'bueno' : puntaje >= 500 ? 'medio' : 'bajo';
+}
 
 export const fonts = {
   family: 'Nunito',

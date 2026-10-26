@@ -1,5 +1,6 @@
 # Blueprint de Render para staging (TND-005). Render despliega al fusionar a main.
 # Los secretos marcados con sync: false se cargan a mano en el panel de Render; nunca en el repo.
+# RELEASE no hace falta: API y scoring usan RENDER_GIT_COMMIT (el commit desplegado) para Sentry.
 services:
   - type: pserv
     name: tendia-scoring
@@ -38,7 +39,11 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
-      - key: OTP_DEV_MODE # true solo mientras no haya proveedor SMS en staging
+      - key: PORTAL_URL # enlaces de invitación a analistas
+        value: https://tendia-portal.onrender.com
+      # Staging: los celulares de demostración (300 000 000x) ven el código en pantalla; los reales
+      # lo reciben por SMS con Twilio Verify. En producción debe ser false (la API no arranca si no).
+      - key: OTP_DEV_MODE
         value: 'true'
       - key: SEED_ON_START
         value: 'true'
@@ -50,7 +55,9 @@ services:
         sync: false
       - key: TWILIO_AUTH_TOKEN
         sync: false
-      - key: TWILIO_FROM
+      - key: TWILIO_VERIFY_SERVICE_SID # opcional: si falta, la API crea el servicio "TendIA"
+        sync: false
+      - key: PUBLIC_API_URL # URL pública de tendia-api; valida la firma del webhook de WhatsApp
         sync: false
 
   - type: web

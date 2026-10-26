@@ -1,8 +1,16 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EstadoSolicitud, Prisma } from '@prisma/client';
+import { leerArchivo } from '../common/archivos';
 import { AuditService } from '../common/audit.service';
-import { comoMejorar, estadoTexto, scoreView, scoreVigente } from '../common/vistas';
+import {
+  comoMejorar,
+  estadoTexto,
+  scoreView,
+  scoreVigente,
+  tasaReferencia,
+} from '../common/vistas';
 import { PrismaService } from '../prisma.service';
+import { Referencias, ScoringClient } from '../scoring/scoring.client';
 import { CrearSolicitudDto, RespuestaGarantiaDto, SatisfaccionDto, VariacionDto } from './dto';
 import { EvaluacionService } from './evaluacion.service';
 import { TenderoService } from './tendero.service';
@@ -12,11 +20,17 @@ const incluir = {
   scores: true,
   variaciones: { orderBy: { mes: 'asc' } },
   garantia: true,
+  adjuntos: {
+    select: { id: true, proposito: true, mes: true, nombre: true, tipo: true, tamano: true },
+    orderBy: { creadoEn: 'asc' },
+  },
 } satisfies Prisma.SolicitudInclude;
 
 type SolicitudCompleta = Prisma.SolicitudGetPayload<{ include: typeof incluir }>;
 
 const EDITABLES: EstadoSolicitud[] = ['BORRADOR', 'DATOS_INCOMPLETOS', 'SCORE_LISTO'];
+// Cambios que decide la entidad: la app avisa al tendero hasta que los vea (TND-057).
+const CON_AVISO: EstadoSolicitud[] = ['GARANTIA_SOLICITADA', 'APROBADA', 'RECHAZADA'];
 
 @Injectable()
 export class SolicitudesService {
@@ -25,6 +39,7 @@ export class SolicitudesService {
     private readonly evaluacion: EvaluacionService,
     private readonly tendero: TenderoService,
     private readonly audit: AuditService,
+    private readonly scoring: ScoringClient,
   ) {}
 
   /** T1: solicitar crédito con monto y destino (TND-050). */
@@ -50,11 +65,13 @@ export class SolicitudesService {
       include: incluir,
       orderBy: { creadaEn: 'desc' },
     });
-    return lista.map((s) => this.vista(s));
+    const tasas = await this.tasas();
+    return lista.map((s) => this.vista(s, tasas));
   }
 
   async detalle(tenderoId: string, id: string) {
-    return this.vista(await this.cargar(tenderoId, id));
+    const [s, tasas] = await Promise.all([this.cargar(tenderoId, id), this.tasas()]);
+    return this.vista(s, tasas);
   }
 
   /**
@@ -88,9 +105,26 @@ export class SolicitudesService {
     this.exigirEstado(s, ['SCORE_LISTO']);
     await this.prisma.variacion.upsert({
       where: { solicitudId_mes: { solicitudId: id, mes: dto.mes } },
-      create: { solicitudId: id, ...dto },
+      create: { solicitudId: id, mes: dto.mes, motivo: dto.motivo },
       update: { motivo: dto.motivo },
     });
+    if (dto.evidencia) {
+      const archivo = leerArchivo(dto.evidencia);
+      await this.prisma.$transaction([
+        this.prisma.adjunto.deleteMany({
+          where: { solicitudId: id, proposito: 'variacion', mes: dto.mes },
+        }),
+        this.prisma.adjunto.create({
+          data: {
+            solicitudId: id,
+            proposito: 'variacion',
+            mes: dto.mes,
+            ...archivo,
+            tamano: archivo.datos.length,
+          },
+        }),
+      ]);
+    }
     const negocio = await this.tendero.negocioDe(tenderoId);
     await this.evaluacion.calcular(s, negocio, 2);
     return this.detalle(tenderoId, id);
@@ -99,7 +133,10 @@ export class SolicitudesService {
   async quitarVariacion(tenderoId: string, id: string, mes: string) {
     const s = await this.cargar(tenderoId, id);
     this.exigirEstado(s, ['SCORE_LISTO']);
-    await this.prisma.variacion.deleteMany({ where: { solicitudId: id, mes } });
+    await this.prisma.$transaction([
+      this.prisma.variacion.deleteMany({ where: { solicitudId: id, mes } }),
+      this.prisma.adjunto.deleteMany({ where: { solicitudId: id, proposito: 'variacion', mes } }),
+    ]);
     const quedan = await this.prisma.variacion.count({ where: { solicitudId: id } });
     if (quedan === 0) {
       await this.prisma.score.deleteMany({ where: { solicitudId: id, version: 2 } });
@@ -134,7 +171,20 @@ export class SolicitudesService {
   async responderGarantia(tenderoId: string, id: string, dto: RespuestaGarantiaDto) {
     const s = await this.cargar(tenderoId, id);
     this.exigirEstado(s, ['GARANTIA_SOLICITADA']);
+    const archivo = dto.documento && leerArchivo(dto.documento);
     await this.prisma.$transaction([
+      ...(archivo
+        ? [
+            this.prisma.adjunto.create({
+              data: {
+                solicitudId: id,
+                proposito: 'garantia',
+                ...archivo,
+                tamano: archivo.datos.length,
+              },
+            }),
+          ]
+        : []),
       this.prisma.garantia.update({
         where: { solicitudId: id },
         data: { respuesta: dto.respuesta, estado: 'ENVIADA' },
@@ -153,6 +203,13 @@ export class SolicitudesService {
       data: { satisfaccion: dto.calificacion, comentarioSatisfaccion: dto.comentario ?? null },
     });
     return this.detalle(tenderoId, id);
+  }
+
+  /** El tendero ya vio el último cambio de estado: la app deja de avisarle. */
+  async marcarVisto(tenderoId: string, id: string) {
+    const s = await this.cargar(tenderoId, id);
+    await this.prisma.solicitud.update({ where: { id }, data: { estadoVisto: s.estado } });
+    return { visto: s.estado };
   }
 
   async cancelar(tenderoId: string, id: string) {
@@ -178,9 +235,17 @@ export class SolicitudesService {
     }
   }
 
-  vista(s: SolicitudCompleta) {
+  private tasas(): Promise<Referencias['tasas'] | null> {
+    return this.scoring
+      .referencias()
+      .then((r) => r.tasas)
+      .catch(() => null);
+  }
+
+  vista(s: SolicitudCompleta, tasas: Referencias['tasas'] | null = null) {
     const original = s.scores.find((x) => x.version === 1);
     const vigente = scoreVigente(s.scores);
+    const view = vigente ? scoreView(vigente) : null;
     return {
       id: s.id,
       monto: s.monto,
@@ -192,9 +257,27 @@ export class SolicitudesService {
       creadaEn: s.creadaEn,
       enviadaEn: s.enviadaEn,
       calidadDatos: s.calidadDatos,
-      score: vigente ? scoreView(vigente) : null,
+      score: view,
       scoreOriginal: original && vigente && vigente.version !== 1 ? scoreView(original) : null,
-      variaciones: s.variaciones.map((v) => ({ mes: v.mes, motivo: v.motivo })),
+      // Tasa de referencia real del mercado para su franja (Superfinanciera). No es una oferta.
+      mercado: view && tasas ? tasaReferencia(view.franja, tasas) : null,
+      // T11-T13: condiciones con que la entidad aprobó.
+      aprobado:
+        s.estado === 'APROBADA'
+          ? {
+              monto: s.montoAprobado ?? s.monto,
+              plazoMeses: s.plazoAprobado ?? s.plazoMeses,
+              tasaEfectivaAnual: s.tasaAprobada,
+            }
+          : null,
+      // T11-T13: hay una decisión nueva de la entidad que el tendero no ha visto.
+      novedad: CON_AVISO.includes(s.estado) && s.estadoVisto !== s.estado,
+      variaciones: s.variaciones.map((v) => ({
+        mes: v.mes,
+        motivo: v.motivo,
+        evidencia: s.adjuntos.find((a) => a.proposito === 'variacion' && a.mes === v.mes) ?? null,
+      })),
+      documentoGarantia: s.adjuntos.find((a) => a.proposito === 'garantia') ?? null,
       garantia: s.garantia && {
         tipo: s.garantia.tipo,
         notaAliado: s.garantia.notaAliado,

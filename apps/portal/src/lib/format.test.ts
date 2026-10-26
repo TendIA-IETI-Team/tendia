@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CORTES_NIVEL, ESTADOS, fecha, mesCorto, millones, NIVELES, pesos } from './format';
+import { ESTADOS, fecha, FRANJAS, mesCorto, millones, pesos, porcentaje } from './format';
 
 describe('format', () => {
   it('formatea pesos colombianos', () => {
@@ -25,8 +25,8 @@ describe('format', () => {
     }
   });
 
-  it('los cortes de nivel coinciden con los del motor de scoring', () => {
-    expect(NIVELES).toHaveLength(5);
-    expect(CORTES_NIVEL).toEqual([0, 30, 45, 60, 72, 100]);
+  it('las franjas coinciden con las del motor de scoring (0-1000)', () => {
+    expect(FRANJAS.map((f) => f.valor)).toEqual(['bajo', 'medio', 'bueno']);
+    expect(porcentaje(0.051)).toBe('5 %');
   });
 });

@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
+import { Adjuntar, type Archivo, paraEnviar } from '@/components/adjuntar';
 import { Aviso, Body, Button, Card, Cargando, Input, Label, Screen, Title } from '@/components/ui';
 import { api, solicitudActual, type Solicitud } from '@/lib/api';
 import { ENLACES } from '@/lib/enlaces';
@@ -11,7 +12,7 @@ const GARANTIAS: Record<string, { nombre: string; explicacion: string }> = {
   FNG: {
     nombre: 'Respaldo del Fondo Nacional de Garantías',
     explicacion:
-      'Es un fondo del Estado que respalda tu crédito: si no pudieras pagar, el fondo responde por una parte. Puede tener un costo que la entidad te explicará.',
+      'Es como un fiador, pero del Estado: si no pudieras pagar, el Fondo le responde a la entidad por una parte de la deuda. Puede tener un costo que la entidad te explicará.',
   },
   CODEUDOR: {
     nombre: 'Un codeudor',
@@ -27,6 +28,7 @@ const GARANTIAS: Record<string, { nombre: string; explicacion: string }> = {
 export default function Seguimiento() {
   const [sol, setSol] = useState<Solicitud | null>(null);
   const [respuesta, setRespuesta] = useState('');
+  const [documento, setDocumento] = useState<Archivo | null>(null);
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,11 @@ export default function Seguimiento() {
 
   const cargar = useCallback(() => {
     solicitudActual()
-      .then(setSol)
+      .then((s) => {
+        setSol(s);
+        // Al abrir el seguimiento, el tendero ya vio la decisión: se apaga el aviso del inicio.
+        if (s?.novedad) void api(`/solicitudes/${s.id}/visto`, { method: 'POST' }).catch(() => {});
+      })
       .catch((e: Error) => setError(e.message));
   }, []);
   useFocusEffect(cargar);
@@ -70,7 +76,7 @@ export default function Seguimiento() {
             <Button
               testID="responder-garantia"
               title="Enviar mi respuesta"
-              onPress={() => accion('garantia', { respuesta })}
+              onPress={() => accion('garantia', { respuesta, documento: paraEnviar(documento) })}
               disabled={respuesta.trim().length < 3}
               loading={cargando}
             />
@@ -125,6 +131,12 @@ export default function Seguimiento() {
             multiline
             maxLength={1000}
           />
+          <Label>Documento (opcional)</Label>
+          <Adjuntar
+            valor={documento}
+            onChange={setDocumento}
+            ayuda="Si la entidad te pide un papel (certificado laboral del codeudor, formato del Fondo), tómale foto o súbelo en PDF."
+          />
         </Card>
       )}
 
@@ -135,6 +147,16 @@ export default function Seguimiento() {
       {sol.estado === 'APROBADA' && (
         <Card>
           <Aviso tono="ok">¡Felicitaciones! {sol.aliado?.nombre} aprobó tu crédito.</Aviso>
+          {sol.aprobado && (
+            <View style={{ gap: 4 }}>
+              <Label>Detalle del crédito</Label>
+              <Body>Monto: {pesos(sol.aprobado.monto)}</Body>
+              <Body>Plazo: {sol.aprobado.plazoMeses} meses</Body>
+              {sol.aprobado.tasaEfectivaAnual !== null && (
+                <Body>Tasa: {sol.aprobado.tasaEfectivaAnual} % efectivo anual</Body>
+              )}
+            </View>
+          )}
           <Body>
             La entidad te contactará para firmar y hacer el desembolso. Revisa bien la tasa y las
             cuotas antes de firmar.

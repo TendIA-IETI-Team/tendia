@@ -21,6 +21,7 @@ export function Chips<T extends string | number>({
             key={String(o)}
             accessibilityRole="radio"
             accessibilityState={{ checked: activo }}
+            aria-checked={activo}
             onPress={() => onChange(o)}
             style={[s.chip, activo && s.activo]}
           >

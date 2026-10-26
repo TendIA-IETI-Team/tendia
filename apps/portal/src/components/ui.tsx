@@ -1,5 +1,5 @@
-import { CORTES_NIVEL, ESTADOS, NIVELES } from '@/lib/format';
-import { scoreLevelColors } from '@tendia/tokens';
+import { ESTADOS } from '@/lib/format';
+import { type Banda, bandaDe, bandas } from '@tendia/tokens';
 
 export function Card({
   title,
@@ -118,19 +118,25 @@ export function Alerta({
   );
 }
 
+/** Insignia de la franja: color de estado + nombre escrito (el color nunca va solo). */
+export function FranjaBadge({ franja }: { franja: Banda }) {
+  const b = bandas[franja];
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold"
+      style={{ background: b.fondo, color: b.color }}
+    >
+      {b.nombre}
+    </span>
+  );
+}
+
 /**
- * Puntaje como número héroe + barra de 5 niveles. Los niveles usan una rampa de índigo
- * (nunca rojo/verde ni naranja) y siempre llevan nombre: el color no es la única señal.
+ * Puntaje como número héroe + barra de tres franjas (bajo, medio, bueno) en escala 0-1000,
+ * como se validó con doña Gloria. Cada franja lleva su nombre y su rango escritos.
  */
-export function ScoreHero({
-  puntaje,
-  nivel,
-  compacto = false,
-}: {
-  puntaje: number;
-  nivel: string;
-  compacto?: boolean;
-}) {
+export function ScoreHero({ puntaje, compacto = false }: { puntaje: number; compacto?: boolean }) {
+  const franja = bandaDe(puntaje);
   return (
     <div>
       <div className="flex items-baseline gap-2">
@@ -139,30 +145,40 @@ export function ScoreHero({
         >
           {puntaje}
         </span>
-        <span className="text-sm text-ink-muted">de 100</span>
-        <Badge tono="info">{nivel}</Badge>
+        <span className="text-sm text-ink-muted">de 1000</span>
+        <FranjaBadge franja={franja} />
       </div>
       {!compacto && (
         <div className="mt-3" aria-hidden="true">
-          <div className="relative flex h-2.5 gap-0.5">
-            {NIVELES.map((n, i) => (
-              <div
-                key={n}
-                className="h-full first:rounded-l-full last:rounded-r-full"
-                style={{
-                  width: `${CORTES_NIVEL[i + 1] - CORTES_NIVEL[i]}%`,
-                  background: scoreLevelColors[i],
-                }}
-              />
-            ))}
+          <div className="relative flex h-3 gap-0.5">
+            {(Object.keys(bandas) as Banda[]).map((k) => {
+              const b = bandas[k];
+              return (
+                <div
+                  key={k}
+                  className="h-full first:rounded-l-full last:rounded-r-full"
+                  style={{
+                    width: `${((b.max - b.min + 1) / 1001) * 100}%`,
+                    background: b.color,
+                    opacity: k === franja ? 1 : 0.3,
+                  }}
+                />
+              );
+            })}
             <div
-              className="absolute -top-1 h-4.5 w-1 rounded-full bg-brand-900 ring-2 ring-white"
-              style={{ left: `calc(${puntaje}% - 2px)`, height: 18 }}
+              className="absolute -top-1 w-1 rounded-full bg-brand-900 ring-2 ring-white"
+              style={{ left: `calc(${puntaje / 10}% - 2px)`, height: 20 }}
             />
           </div>
-          <div className="mt-1 flex justify-between text-[11px] text-ink-muted">
-            <span>0 · {NIVELES[0]}</span>
-            <span>{NIVELES[NIVELES.length - 1]} · 100</span>
+          <div className="mt-1 flex text-[11px] text-ink-muted">
+            {(Object.keys(bandas) as Banda[]).map((k) => (
+              <span
+                key={k}
+                style={{ width: `${((bandas[k].max - bandas[k].min + 1) / 1001) * 100}%` }}
+              >
+                {bandas[k].nombre} · {bandas[k].min}
+              </span>
+            ))}
           </div>
         </div>
       )}

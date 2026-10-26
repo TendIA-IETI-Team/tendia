@@ -16,8 +16,16 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "prettier": "3.4.2",
-    "turbo": "2.3.3",
+    "prettier": "3.9.10",
+    "turbo": "2.11.10",
     "typescript": "5.7.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "next>postcss": "8.5.31",
+      "@nestjs/swagger>js-yaml": "5.5.0",
+      "@nestjs/platform-express>multer": "2.5.0",
+      "postcss-selector-parser": "7.1.6"
+    }
   }
 }

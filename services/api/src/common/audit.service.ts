@@ -8,11 +8,24 @@ export interface AuditEntry {
   accion: string;
   entidad: string;
   entidadId?: string;
-  aliadoId?: string;
+  aliadoId?: string | null;
+  /** Para qué se leyó o cambió el dato (Ley 1581). */
+  finalidad?: Finalidad;
   detalle?: Prisma.InputJsonValue;
 }
 
-/** Bitácora de auditoría (TND-022): quién consultó o cambió qué y cuándo. Sin datos personales. */
+export type Finalidad =
+  | 'evaluar_credito'
+  | 'decidir_credito'
+  | 'revisar_documento'
+  | 'consulta_api'
+  | 'administrar_cuenta'
+  | 'atender_titular';
+
+/**
+ * Bitácora de auditoría (TND-022): quién consultó o cambió qué, cuándo y para qué. Sin datos
+ * personales. Es de solo inserción: un trigger en Postgres rechaza UPDATE y DELETE.
+ */
 @Injectable()
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}

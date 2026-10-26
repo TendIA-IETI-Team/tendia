@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
+import { Chips } from '@/components/chips';
 import { Aviso, Body, Button, Card, Input, Label, Pasos, Screen, Title } from '@/components/ui';
 import { api, solicitudActual, type Perfil, type Solicitud } from '@/lib/api';
 import { mesLargo, pesos, soloDigitos, ultimosMeses } from '@/lib/format';
@@ -11,8 +12,14 @@ export default function Completar() {
   const [nombre, setNombre] = useState('');
   const [propietario, setPropietario] = useState('');
   const [anios, setAnios] = useState('');
-  const [promedio, setPromedio] = useState('');
+  // T5 (prueba con doña Gloria): ventas de un día normal y uno flojo; la app calcula el mes.
+  const [diaNormal, setDiaNormal] = useState('');
+  const [diaFlojo, setDiaFlojo] = useState('');
+  const [diasFlojos, setDiasFlojos] = useState<0 | 1 | 2 | 3 | 4 | null>(2);
   const [ventas, setVentas] = useState<Record<string, string>>({});
+  const semana =
+    soloDigitos(diaNormal) * (7 - (diasFlojos ?? 0)) + soloDigitos(diaFlojo) * (diasFlojos ?? 0);
+  const estimado = Math.round((semana * 52) / 12 / 1000) * 1000;
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const meses = ultimosMeses(6);
@@ -26,8 +33,6 @@ export default function Completar() {
           setPropietario(p.nombre ?? '');
           if (p.negocio?.antiguedadMeses)
             setAnios(String(Math.round(p.negocio.antiguedadMeses / 12)));
-          if (p.negocio?.ventasMensualesDeclaradas)
-            setPromedio(String(p.negocio.ventasMensualesDeclaradas));
         })
         .catch((e: Error) => setError(e.message));
     }, []),
@@ -45,9 +50,18 @@ export default function Completar() {
           nombre: nombre.trim() || undefined,
           nombrePropietario: propietario.trim() || undefined,
           antiguedadMeses: Math.max(1, Math.round(Number(anios.replace(',', '.')) * 12)),
-          ventasMensualesDeclaradas: soloDigitos(promedio) || undefined,
         },
       });
+      if (soloDigitos(diaNormal) > 0) {
+        await api('/me/estimacion-ventas', {
+          method: 'POST',
+          body: {
+            diaNormal: soloDigitos(diaNormal),
+            diaFlojo: soloDigitos(diaFlojo),
+            diasFlojosPorSemana: diasFlojos ?? 0,
+          },
+        });
+      }
       const manuales = meses
         .filter((m) => soloDigitos(ventas[m] ?? '') > 0)
         .map((m) => ({ mes: m, ventas: soloDigitos(ventas[m]) }));
@@ -89,11 +103,33 @@ export default function Completar() {
         onChangeText={setAnios}
         hint="Si es menos de un año, escribe 0,5"
       />
-      <Input
-        label="¿Cuánto vendes en un mes normal?"
-        keyboardType="number-pad"
-        value={soloDigitos(promedio) ? pesos(soloDigitos(promedio)) : ''}
-        onChangeText={setPromedio}
+      <Card>
+        <Label>¿Cuánto vendes en un día?</Label>
+        <Body muted style={{ fontSize: 15 }}>
+          No tienes que sacar la cuenta de la semana: nosotros la hacemos.
+        </Body>
+        <Input
+          testID="dia-normal"
+          label="Un día normal"
+          keyboardType="number-pad"
+          value={soloDigitos(diaNormal) ? pesos(soloDigitos(diaNormal)) : ''}
+          onChangeText={setDiaNormal}
+        />
+        <Input
+          testID="dia-flojo"
+          label="Un día flojo"
+          keyboardType="number-pad"
+          value={soloDigitos(diaFlojo) ? pesos(soloDigitos(diaFlojo)) : ''}
+          onChangeText={setDiaFlojo}
+        />
+        <Label>¿Cuántos días flojos tiene una semana?</Label>
+        <Chips opciones={[0, 1, 2, 3, 4] as const} valor={diasFlojos} onChange={setDiasFlojos} />
+        {estimado > 0 && <Aviso tono="ok">Eso es más o menos {pesos(estimado)} al mes.</Aviso>}
+      </Card>
+      <Button
+        title="Pasar mi cuaderno con una foto"
+        variant="link"
+        onPress={() => router.push('/cuaderno')}
       />
       {faltaVentas && (
         <Card>

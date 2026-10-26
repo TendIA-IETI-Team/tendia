@@ -12,6 +12,7 @@ interface Evento {
   accion: string;
   entidad: string;
   entidadId: string | null;
+  finalidad: string | null;
   creadoEn: string;
 }
 
@@ -37,7 +38,7 @@ export default function AuditoriaPage() {
     <>
       <PageTitle
         title="Auditoría"
-        subtitle="Quién consultó o cambió qué, y cuándo. Últimos 200 eventos."
+        subtitle="Quién consultó o cambió qué, cuándo y para qué. Últimos 200 eventos; la bitácora no se puede editar ni borrar."
       />
       {error && <Alerta>{error}</Alerta>}
       <Card>
@@ -53,7 +54,8 @@ export default function AuditoriaPage() {
                   <th className="py-2 pr-4">Fecha y hora</th>
                   <th className="py-2 pr-4">Actor</th>
                   <th className="py-2 pr-4">Acción</th>
-                  <th className="py-2">Sobre</th>
+                  <th className="py-2 pr-4">Sobre</th>
+                  <th className="py-2">Finalidad</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,9 +69,12 @@ export default function AuditoriaPage() {
                       <span className="text-xs text-ink-muted">{e.actorId.slice(0, 8)}</span>
                     </td>
                     <td className="py-2 pr-4 font-semibold">{e.accion.replaceAll('_', ' ')}</td>
-                    <td className="py-2">
+                    <td className="py-2 pr-4">
                       {e.entidad}{' '}
                       <span className="text-xs text-ink-muted">{e.entidadId?.slice(0, 8)}</span>
+                    </td>
+                    <td className="py-2 text-ink-muted">
+                      {e.finalidad?.replaceAll('_', ' ') ?? '—'}
                     </td>
                   </tr>
                 ))}

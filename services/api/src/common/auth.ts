@@ -11,7 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 
-export type Rol = 'TENDERO' | 'ANALISTA' | 'ADMIN_ALIADO';
+export type Rol = 'TENDERO' | 'ANALISTA' | 'ADMIN_ALIADO' | 'ADMIN_TENDIA';
 
 export interface Actor {
   sub: string;

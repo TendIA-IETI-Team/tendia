@@ -42,5 +42,12 @@ export const GARANTIAS: Record<string, string> = {
   OTRA: 'Otra garantía',
 };
 
-export const NIVELES = ['En construcción', 'Básico', 'Bueno', 'Muy bueno', 'Excelente'];
-export const CORTES_NIVEL = [0, 30, 45, 60, 72, 100];
+export function porcentaje(x: number): string {
+  return `${Math.round(x * 100)} %`;
+}
+
+export const FRANJAS = [
+  { valor: 'bajo', texto: 'Bajo (0-499)' },
+  { valor: 'medio', texto: 'Medio (500-649)' },
+  { valor: 'bueno', texto: 'Bueno (650-1000)' },
+] as const;

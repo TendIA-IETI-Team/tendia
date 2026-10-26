@@ -55,12 +55,12 @@ export default function PoliticaPage() {
           {p && (
             <form onSubmit={guardar} className="space-y-5">
               <fieldset disabled={!admin} className="grid gap-4 sm:grid-cols-3">
-                <Field label="Puntaje mínimo para aprobar" hint="0 a 100">
+                <Field label="Puntaje mínimo para aprobar" hint="Escala 0-1000 (bueno ≥ 650)">
                   <input
                     className={inputClass}
                     type="number"
                     min={0}
-                    max={100}
+                    max={1000}
                     required
                     value={p.scoreMinAprobar}
                     onChange={num('scoreMinAprobar')}
@@ -74,7 +74,7 @@ export default function PoliticaPage() {
                     className={inputClass}
                     type="number"
                     min={0}
-                    max={100}
+                    max={1000}
                     required
                     value={p.scoreMinConGarantia}
                     onChange={num('scoreMinConGarantia')}

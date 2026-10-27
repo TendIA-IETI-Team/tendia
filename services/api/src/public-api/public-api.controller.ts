@@ -84,7 +84,7 @@ export class PublicApiController {
     summary: 'Calcula el Puntaje TendIA de un negocio',
     description:
       'El aliado es responsable de contar con la autorización del tendero (Ley 1581) para los datos que envía. ' +
-      'Responde puntaje 0-100, nivel, probabilidad de incumplimiento a 90 días, contribuciones y explicación.',
+      'Responde puntaje 0-1000, franja, probabilidad de incumplimiento a 90 días, contribuciones y explicación.',
   })
   @ApiHeader({ name: 'x-api-key', required: true, description: 'Llave creada en el portal' })
   @ApiBody({ schema: { type: 'object', example: EJEMPLO } })

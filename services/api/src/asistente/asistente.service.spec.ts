@@ -1,4 +1,4 @@
-import { AsistenteService, conGuardado } from './asistente.service';
+import { AsistenteService, conFecha, conGuardado } from './asistente.service';
 
 /** Prisma y registros mínimos en memoria para probar el asistente sin base de datos. */
 function montar() {
@@ -101,6 +101,13 @@ describe('AsistenteService', () => {
     expect(enviado!.system).toContain('Hoy llevas $350.000');
     // Las consultas no se guardan como acciones.
     expect(mensajes.at(-1)).toMatchObject({ rol: 'assistant', acciones: [] });
+  });
+
+  it('un mensaje de otro día lleva su fecha; uno de hoy queda igual', () => {
+    // 2026-10-25 18:46 en Bogotá es 23:46 UTC.
+    const viejo = { contenido: 'hoy vendí 350 mil', creadoEn: new Date('2026-10-25T23:46:00Z') };
+    expect(conFecha(viejo, '2026-10-27')).toBe('[Escrito el 2026-10-25] hoy vendí 350 mil');
+    expect(conFecha(viejo, '2026-10-25')).toBe('hoy vendí 350 mil');
   });
 
   it('una respuesta sin acciones queda igual en el historial', () => {

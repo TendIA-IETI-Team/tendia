@@ -132,6 +132,18 @@ describe('Cierre del MVP (e2e)', () => {
       })
       .expect(200);
     expect(respondida.body.documentoGarantia).toMatchObject({ nombre: 'certificado.pdf' });
+
+    // Lo que el tendero adjunta queda en su bitácora.
+    const eventos = await prisma.auditoria.findMany({
+      where: {
+        entidadId: solicitudId,
+        accion: { in: ['justificar_variacion', 'responder_garantia'] },
+      },
+    });
+    expect(eventos.map((e) => [e.accion, e.detalle]).sort()).toEqual([
+      ['justificar_variacion', { mes: expect.any(String), conEvidencia: true }],
+      ['responder_garantia', { conDocumento: true }],
+    ]);
   });
 
   it('el analista ve y descarga los adjuntos, y la lectura queda en la bitácora con su finalidad', async () => {

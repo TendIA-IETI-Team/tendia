@@ -125,6 +125,14 @@ export class SolicitudesService {
         }),
       ]);
     }
+    await this.audit.log({
+      actorTipo: 'TENDERO',
+      actorId: tenderoId,
+      accion: 'justificar_variacion',
+      entidad: 'Solicitud',
+      entidadId: id,
+      detalle: { mes: dto.mes, conEvidencia: !!dto.evidencia },
+    });
     const negocio = await this.tendero.negocioDe(tenderoId);
     await this.evaluacion.calcular(s, negocio, 2);
     return this.detalle(tenderoId, id);
@@ -191,6 +199,15 @@ export class SolicitudesService {
       }),
       this.prisma.solicitud.update({ where: { id }, data: { estado: 'GARANTIA_ENVIADA' } }),
     ]);
+    await this.audit.log({
+      actorTipo: 'TENDERO',
+      actorId: tenderoId,
+      aliadoId: s.aliadoId,
+      accion: 'responder_garantia',
+      entidad: 'Solicitud',
+      entidadId: id,
+      detalle: { conDocumento: !!archivo },
+    });
     return this.detalle(tenderoId, id);
   }
 

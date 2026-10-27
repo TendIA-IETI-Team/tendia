@@ -32,7 +32,8 @@ Reglas:
 - Si un monto o un nombre no es claro, pregunta antes de anotar. No inventes cifras.
 - No des asesoría de inversión, impuestos ni legal; sugiere hablar con la entidad o un asesor.
 - Nunca le pidas contraseñas, códigos ni datos de tarjetas.
-- Los mensajes anteriores ya se atendieron: lo que se anotó entonces ya está guardado (lo ves en "Ya guardado"). Actúa solo sobre el último mensaje del tendero y nunca vuelvas a anotar una venta o un fiado de un mensaje anterior.`;
+- Los mensajes anteriores ya se atendieron: lo que se anotó entonces ya está guardado (lo ves en "Ya guardado"). Actúa solo sobre el último mensaje del tendero y nunca vuelvas a anotar una venta o un fiado de un mensaje anterior.
+- Los mensajes de días anteriores empiezan con [Escrito el AAAA-MM-DD]: su "hoy" es ese día, no el de hoy. Una venta de hoy no se suma ni se compara con la de otro día.`;
 
 /** Respuesta anterior del asistente con lo que de verdad se guardó en ese turno. */
 export function conGuardado(m: { contenido: string; acciones: Accion[] }): string {
@@ -40,6 +41,12 @@ export function conGuardado(m: { contenido: string; acciones: Accion[] }): strin
   return `${m.contenido}
 
 [Ya guardado en ese turno: ${m.acciones.map((a) => a.detalle).join('; ')}]`;
+}
+
+/** Mensaje anterior del tendero: si es de otro día, lleva su fecha para que "hoy" no se confunda. */
+export function conFecha(m: { contenido: string; creadoEn: Date }, hoy = hoyBogota()): string {
+  const dia = hoyBogota(m.creadoEn);
+  return dia === hoy ? m.contenido : `[Escrito el ${dia}] ${m.contenido}`;
 }
 
 @Injectable()
@@ -100,7 +107,7 @@ export class AsistenteService {
   private async conIA(
     tenderoId: string,
     texto: string,
-    previos: { rol: string; contenido: string; acciones: Accion[] }[],
+    previos: { rol: string; contenido: string; creadoEn: Date; acciones: Accion[] }[],
     canal: Canal,
   ): Promise<RespuestaAsistente | null> {
     const acciones: Accion[] = [];
@@ -110,7 +117,7 @@ export class AsistenteService {
     for (const m of previos) {
       const role = m.rol === 'assistant' ? 'assistant' : 'user';
       if (!messages.length && role === 'assistant') continue; // el historial debe empezar por el tendero
-      messages.push({ role, content: role === 'assistant' ? conGuardado(m) : m.contenido });
+      messages.push({ role, content: role === 'assistant' ? conGuardado(m) : conFecha(m) });
     }
     messages.push({ role: 'user', content: texto });
     try {

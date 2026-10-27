@@ -106,6 +106,30 @@ describe('Cuaderno digital, asistente y WhatsApp (e2e)', () => {
       .expect(503);
   });
 
+  it('guardar dos veces la misma hoja del cuaderno no repite los fiados', async () => {
+    const tendero = await prisma.tendero.findFirstOrThrow({ include: { negocio: true } });
+    const hoja = {
+      registros: [
+        { fecha: '2026-10-21', ventas: 310000, fiados: [{ cliente: 'doña Rosa', monto: 15000 }] },
+      ],
+    };
+    for (let vez = 1; vez <= 2; vez++) {
+      const e = await prisma.extraccionCuaderno.create({
+        data: { tenderoId: tendero.id, datos: hoja, canal: 'app' },
+      });
+      const r = await request(http)
+        .post(`/me/cuaderno/${e.id}/confirmar`)
+        .set(bearer(token))
+        .send({})
+        .expect(200);
+      expect(r.body).toEqual({ ventasGuardadas: 1, fiadosGuardados: vez === 1 ? 1 : 0 });
+    }
+    const fiados = await prisma.fiado.count({
+      where: { negocioId: tendero.negocio!.id, canal: 'cuaderno', fecha: '2026-10-21' },
+    });
+    expect(fiados).toBe(1);
+  });
+
   it('WhatsApp: el tendero registrado anota ventas desde su número', async () => {
     const r = await request(http)
       .post('/whatsapp/webhook')

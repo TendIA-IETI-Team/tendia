@@ -19,7 +19,16 @@ const NAV: { href: string; label: string; roles: Rol[] }[] = [
   { href: '/equipo', label: 'Equipo', roles: ['ADMIN_ALIADO'] },
   { href: '/auditoria', label: 'Auditoría', roles: ['ADMIN_ALIADO'] },
   { href: '/admin', label: 'Bitácora por tendero', roles: ['ADMIN_TENDIA'] },
+  { href: '/admin/aliados', label: 'Aliados', roles: ['ADMIN_TENDIA'] },
 ];
+
+/** Entrada activa: la de ruta más larga que coincide (/admin/aliados no enciende /admin). */
+function activa(path: string): string | undefined {
+  const ruta = path.startsWith('/solicitudes') ? '/bandeja' : path;
+  return NAV.filter((n) => ruta === n.href || ruta.startsWith(`${n.href}/`))
+    .map((n) => n.href)
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 const ROLES: Record<Rol, string> = {
   ANALISTA: 'Analista',
@@ -73,8 +82,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           aria-label="Principal"
         >
           {NAV.filter((n) => n.roles.includes(usuario.rol)).map((n) => {
-            const active =
-              path.startsWith(n.href) || (n.href === '/bandeja' && path.startsWith('/solicitudes'));
+            const active = activa(path) === n.href;
             return (
               <Link
                 key={n.href}

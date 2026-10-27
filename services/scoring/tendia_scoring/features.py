@@ -18,6 +18,8 @@ MIN_SALES_MONTHS = 6
 MIN_DISTRIBUTOR_MONTHS = 3
 WINDOW_MONTHS = 12
 SOURCE_PRIORITY = {"datafono": 0, "open_finance": 1, "declarado": 2}
+# Con menos meses en una sola fuente, la forma de la serie no se lee bien: se usa la mezcla.
+MIN_SHAPE_MONTHS = 3
 
 FEATURES_NEGOCIO = [
     "avg_sales",
@@ -81,6 +83,25 @@ def _monthly_sales(req: ScoreRequest) -> tuple[dict[str, float], bool]:
     months = sorted(chosen)[-WINDOW_MONTHS:]
     has_datafono = any(s.source == "datafono" for s in req.sales)
     return {m: chosen[m][1] for m in months}, has_datafono
+
+
+def _shape_series(req: ScoreRequest, sales: dict[str, float]) -> dict[str, float]:
+    """Serie de una sola fuente para estabilidad, tendencia y meses bajos.
+
+    El datáfono solo ve las ventas con tarjeta y lo declarado es el total de la tienda: si se
+    mezclan mes a mes, el cambio de fuente parece una caída o una subida que no pasó. Se usa la
+    fuente con más meses en la ventana (en empate, la de mayor prioridad). En el entrenamiento
+    todas las ventas son de datáfono, así que ahí el resultado es el mismo que con la mezcla.
+    """
+    por_fuente: dict[str, dict[str, float]] = {}
+    for s in req.sales:
+        if s.month in sales:
+            por_fuente.setdefault(s.source, {})[s.month] = s.amount
+    fuente = min(por_fuente, key=lambda f: (-len(por_fuente[f]), SOURCE_PRIORITY[f]))
+    serie = por_fuente[fuente]
+    if len(serie) < MIN_SHAPE_MONTHS:
+        return sales
+    return {m: serie[m] for m in sorted(serie)}
 
 
 def historial_pagos(req: ScoreRequest) -> list[MesPago]:
@@ -160,8 +181,9 @@ def compute_features(req: ScoreRequest) -> FeatureResult:
     values: dict[str, float] = {}
     if sufficient:
         amounts = list(sales.values())
+        shape = _shape_series(req, sales)
         # Los meses justificados no castigan estabilidad, tendencia ni meses bajos.
-        stable = [v for m, v in sales.items() if m not in adjusted] or amounts
+        stable = [v for m, v in shape.items() if m not in adjusted] or list(shape.values())
         values["avg_sales"] = mean(amounts)
         values["sales_cv"] = pstdev(stable) / mean(stable) if mean(stable) > 0 else 1.0
         last3, prev3 = stable[-3:], stable[-6:-3]

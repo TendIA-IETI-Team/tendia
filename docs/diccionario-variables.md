@@ -18,12 +18,14 @@ Una mora corta es una señal temprana de la larga, y ordena a los negocios de fo
 
 **Auto-reportada** quiere decir que el tendero la escribe o la cuenta (app, Tendi, WhatsApp o foto del cuaderno), en vez de venir de un tercero. Esos datos pesan menos: el datáfono y Open Finance tienen prioridad sobre lo declarado (`SOURCE_PRIORITY`), y una diferencia de más del 50 % entre lo declarado y lo registrado genera la alerta `ventas_declaradas_no_coinciden`.
 
+Estabilidad, tendencia y meses flojos se calculan con **una sola fuente**: la que tiene más meses en la ventana (en empate, la de mayor prioridad), o la mezcla si ninguna llega a 3 meses. El datáfono solo ve lo vendido con tarjeta y lo declarado es el total de la tienda, así que mezclarlos mes a mes inventaba caídas o subidas. En el entrenamiento todas las ventas son de datáfono, así que el modelo no cambia.
+
 ### Componente de negocio (peso 0,5)
 
 | Variable              | Qué mide                  | Cálculo                                                         | Fuente                              | Auto-reportada                          |
 | --------------------- | ------------------------- | --------------------------------------------------------------- | ----------------------------------- | --------------------------------------- |
 | `avg_sales`           | Ventas promedio al mes    | Promedio de las ventas mensuales de la ventana                  | Datáfono > Open Finance > declarado | Solo si no hay datáfono ni Open Finance |
-| `sales_cv`            | Estabilidad de las ventas | Desviación estándar / promedio, sin los meses justificados (T8) | Igual que `avg_sales`               | Igual                                   |
+| `sales_cv`            | Estabilidad de las ventas | Desviación estándar / promedio, sin los meses justificados (T8) | La fuente con más meses             | Igual                                   |
 | `sales_trend`         | Tendencia reciente        | (promedio últimos 3 meses − 3 anteriores) / 3 anteriores        | Igual                               | Igual                                   |
 | `low_months_ratio`    | Meses muy flojos          | Proporción de meses por debajo de la mitad de la mediana        | Igual                               | Igual                                   |
 | `purchases_to_sales`  | Compras frente a ventas   | Compras al proveedor / ventas, en los meses que coinciden       | Distribuidor + ventas               | No                                      |

@@ -23,6 +23,11 @@ export function porcentaje(x: number): string {
   return `${Math.round(x * 100)} %`;
 }
 
+/** Tasa ya en porcentaje con coma decimal: 48.8 -> "48,8 %". */
+export function tasa(x: number): string {
+  return `${String(x).replace('.', ',')} %`;
+}
+
 export function soloDigitos(s: string): number {
   return Number(s.replace(/\D/g, '')) || 0;
 }

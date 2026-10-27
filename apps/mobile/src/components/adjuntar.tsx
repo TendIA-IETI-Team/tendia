@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { Aviso, Body, Button } from '@/components/ui';
 import { colors, font } from '@/lib/theme';
 
@@ -16,6 +16,19 @@ export interface Archivo {
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
+
+/** En la web el selector entrega un blob: expo-file-system no lo lee, así que se usa FileReader. */
+async function leerBase64(asset: DocumentPicker.DocumentPickerAsset): Promise<string> {
+  if (Platform.OS !== 'web') return new File(asset.uri).base64();
+  const blob: Blob = asset.file ?? (await fetch(asset.uri).then((r) => r.blob()));
+  const dataUrl = await new Promise<string>((ok, mal) => {
+    const lector = new FileReader();
+    lector.onload = () => ok(lector.result as string);
+    lector.onerror = () => mal(lector.error);
+    lector.readAsDataURL(blob);
+  });
+  return dataUrl.slice(dataUrl.indexOf(',') + 1);
+}
 
 /** Foto con la cámara, o un PDF o foto del celular. Máximo 5 MB. */
 export function Adjuntar({
@@ -72,7 +85,7 @@ export function Adjuntar({
       return;
     }
     try {
-      const base64 = await new File(asset.uri).base64();
+      const base64 = await leerBase64(asset);
       aceptar({
         nombre: asset.name,
         tipo,

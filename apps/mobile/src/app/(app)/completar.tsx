@@ -31,14 +31,20 @@ export default function Completar() {
           setSol(s);
           setNombre(p.negocio?.nombre ?? '');
           setPropietario(p.nombre ?? '');
+          // Con un decimal y coma: 6 meses es "0,5", no "1" (que se leería como un año).
           if (p.negocio?.antiguedadMeses)
-            setAnios(String(Math.round(p.negocio.antiguedadMeses / 12)));
+            setAnios(
+              String(Math.round((p.negocio.antiguedadMeses / 12) * 10) / 10).replace('.', ','),
+            );
         })
         .catch((e: Error) => setError(e.message));
     }, []),
   );
 
   const faltaVentas = sol?.calidadDatos?.issues.some((i) => i.code === 'pocas_ventas') ?? false;
+  // Los pagos al proveedor no se pueden escribir a mano: hay que autorizar esa fuente.
+  const faltaProveedor =
+    sol?.calidadDatos?.issues.some((i) => i.code === 'pocos_pagos_proveedor') ?? false;
 
   async function guardar() {
     setError(null);
@@ -93,6 +99,13 @@ export default function Completar() {
           {i.message}
         </Aviso>
       ))}
+      {faltaProveedor && (
+        <Button
+          title="Autorizar los pagos a tu proveedor"
+          variant="secondary"
+          onPress={() => router.push('/autorizar')}
+        />
+      )}
       <Input label="Nombre de la tienda" value={nombre} onChangeText={setNombre} maxLength={80} />
       <Input label="Tu nombre" value={propietario} onChangeText={setPropietario} maxLength={80} />
       <Input

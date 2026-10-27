@@ -82,6 +82,7 @@ export default function Completar() {
 
   return (
     <Screen
+      tendi
       footer={
         <Button
           testID="guardar"

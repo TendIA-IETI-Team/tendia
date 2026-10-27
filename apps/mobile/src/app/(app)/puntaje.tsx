@@ -48,6 +48,7 @@ export default function Puntaje() {
 
   return (
     <Screen
+      tendi
       footer={
         <>
           <Button

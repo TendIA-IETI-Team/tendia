@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import {
@@ -14,15 +15,52 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { type Banda, bandaDe, bandas, colors, font, type } from '@/lib/theme';
 
-export function Screen({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+/**
+ * Pantalla con contenido desplazable y botones fijos abajo. Con `tendi`, un botón en la esquina
+ * inferior derecha abre el chat con Tendi; flota sobre los botones de abajo, sin taparlos.
+ */
+export function Screen({
+  children,
+  footer,
+  tendi = false,
+}: {
+  children: ReactNode;
+  footer?: ReactNode;
+  tendi?: boolean;
+}) {
+  const boton = tendi && <BotonTendi style={footer ? s.tendiSobreFooter : s.tendiAbajo} />;
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
       <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[s.scroll, tendi && { paddingBottom: 96 }]}
+        keyboardShouldPersistTaps="handled"
+      >
         {children}
       </ScrollView>
-      {footer && <View style={s.footer}>{footer}</View>}
+      {footer ? (
+        <View style={s.footer}>
+          {footer}
+          {boton}
+        </View>
+      ) : (
+        boton
+      )}
     </SafeAreaView>
+  );
+}
+
+function BotonTendi({ style }: { style: ViewStyle }) {
+  return (
+    <Pressable
+      testID="tendi-flotante"
+      accessibilityRole="button"
+      accessibilityLabel="Hablar con Tendi"
+      onPress={() => router.push('/asistente')}
+      style={({ pressed }) => [s.tendi, style, pressed && { opacity: 0.85 }]}
+    >
+      <Text style={s.tendiTexto}>💬 Tendi</Text>
+    </Pressable>
   );
 }
 
@@ -255,6 +293,23 @@ const s = StyleSheet.create({
     borderTopColor: colors.neutral300,
     backgroundColor: colors.white,
   },
+  tendi: {
+    position: 'absolute',
+    right: 16,
+    minHeight: 56,
+    paddingHorizontal: 20,
+    borderRadius: 28,
+    justifyContent: 'center',
+    backgroundColor: colors.orange500,
+    shadowColor: colors.indigo900,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  tendiSobreFooter: { top: -72 },
+  tendiAbajo: { bottom: 24 },
+  tendiTexto: { fontFamily: font.extrabold, fontSize: type.body, color: colors.indigo900 },
   title: {
     fontFamily: font.extrabold,
     fontSize: type.title,

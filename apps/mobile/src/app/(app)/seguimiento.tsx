@@ -70,6 +70,7 @@ export default function Seguimiento() {
 
   return (
     <Screen
+      tendi
       footer={
         <>
           {sol.estado === 'GARANTIA_SOLICITADA' && (

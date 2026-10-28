@@ -5,7 +5,7 @@ import { Adjuntar, type Archivo, paraEnviar } from '@/components/adjuntar';
 import { Aviso, Body, Button, Card, Cargando, Input, Label, Screen, Title } from '@/components/ui';
 import { api, solicitudActual, type Solicitud } from '@/lib/api';
 import { ENLACES } from '@/lib/enlaces';
-import { pesos } from '@/lib/format';
+import { pesos, tasa } from '@/lib/format';
 import { colors, font } from '@/lib/theme';
 
 const GARANTIAS: Record<string, { nombre: string; explicacion: string }> = {
@@ -70,6 +70,7 @@ export default function Seguimiento() {
 
   return (
     <Screen
+      tendi
       footer={
         <>
           {sol.estado === 'GARANTIA_SOLICITADA' && (
@@ -153,7 +154,7 @@ export default function Seguimiento() {
               <Body>Monto: {pesos(sol.aprobado.monto)}</Body>
               <Body>Plazo: {sol.aprobado.plazoMeses} meses</Body>
               {sol.aprobado.tasaEfectivaAnual !== null && (
-                <Body>Tasa: {sol.aprobado.tasaEfectivaAnual} % efectivo anual</Body>
+                <Body>Tasa: {tasa(sol.aprobado.tasaEfectivaAnual)} efectivo anual</Body>
               )}
             </View>
           )}

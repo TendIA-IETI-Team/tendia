@@ -114,6 +114,20 @@ export class CuadernoService {
     });
   }
 
+  private async fiadoYaAnotado(tenderoId: string, fecha: string, cliente: string, monto: number) {
+    const negocioId = await this.registros.negocioId(tenderoId);
+    const n = await this.prisma.fiado.count({
+      where: {
+        negocioId,
+        canal: 'cuaderno',
+        fecha,
+        monto: Math.round(monto),
+        cliente: { equals: cliente.trim(), mode: 'insensitive' },
+      },
+    });
+    return n > 0;
+  }
+
   /** Guarda lo leído (con las correcciones del tendero, si las hizo). */
   async confirmar(tenderoId: string, id: string, corregido?: LecturaCuaderno['registros']) {
     const e = await this.prisma.extraccionCuaderno.findFirst({
@@ -130,6 +144,10 @@ export class CuadernoService {
       }
       for (const f of r.fiados) {
         if (f.cliente && f.monto > 0) {
+          // Las ventas se reemplazan por día; un fiado de la misma hoja guardada dos veces se omite.
+          if (r.fecha && (await this.fiadoYaAnotado(tenderoId, r.fecha, f.cliente, f.monto))) {
+            continue;
+          }
           await this.registros.registrarFiado(
             tenderoId,
             f.cliente,

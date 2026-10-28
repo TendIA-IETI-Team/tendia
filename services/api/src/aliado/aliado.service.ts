@@ -8,8 +8,8 @@ import { EstadoSolicitud, Prisma } from '@prisma/client';
 import { AuditService } from '../common/audit.service';
 import type { Actor } from '../common/auth';
 import { randomToken, sha256 } from '../common/crypto';
+import { crearInvitacion } from '../common/invitaciones';
 import { resumenSatisfaccion } from '../common/satisfaccion';
-import { config } from '../config';
 import { NotificadorService } from '../notificaciones/notificador.service';
 import { recomendar, scoreView, scoreVigente, tasaReferencia } from '../common/vistas';
 import { PrismaService } from '../prisma.service';
@@ -24,8 +24,6 @@ const VISIBLES: EstadoSolicitud[] = [
   'APROBADA',
   'RECHAZADA',
 ];
-
-const INVITACION_DIAS = 7;
 
 const POLITICA_POR_DEFECTO = {
   scoreMinAprobar: 650,
@@ -412,18 +410,12 @@ export class AliadoService {
     if (await this.prisma.usuario.findUnique({ where: { email } })) {
       throw new ConflictException('Ya existe un usuario con ese correo');
     }
-    const token = randomToken(32);
-    const inv = await this.prisma.invitacion.create({
-      data: {
-        aliadoId: actor.aliadoId!,
-        email,
-        nombre: dto.nombre,
-        rol: dto.rol ?? 'ANALISTA',
-        tokenHash: sha256(token),
-        expiraEn: new Date(Date.now() + INVITACION_DIAS * 86_400_000),
-        creadaPor: actor.sub,
-      },
-      include: { aliado: { select: { nombre: true } } },
+    const { inv, enlace, mailto } = await crearInvitacion(this.prisma, {
+      aliadoId: actor.aliadoId!,
+      email,
+      nombre: dto.nombre,
+      rol: dto.rol ?? 'ANALISTA',
+      creadaPor: actor.sub,
     });
     await this.audit.log({
       actorTipo: 'USUARIO',
@@ -434,24 +426,8 @@ export class AliadoService {
       entidadId: inv.id,
       finalidad: 'administrar_cuenta',
     });
-    const enlace = `${config().PORTAL_URL}/invitacion/${token}`;
-    const asunto = `Te invitaron al portal de TendIA de ${inv.aliado.nombre}`;
-    const cuerpo = [
-      `Hola ${inv.nombre}:`,
-      '',
-      `Te invitaron a revisar solicitudes de crédito en TendIA. Crea tu contraseña aquí (vence en ${INVITACION_DIAS} días):`,
-      enlace,
-      '',
-      'Al entrar te pediremos activar la verificación en dos pasos.',
-    ].join('\n');
-    return {
-      id: inv.id,
-      email,
-      expiraEn: inv.expiraEn,
-      enlace,
-      // Abre el correo del administrador con la invitación lista para enviar.
-      mailto: `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`,
-    };
+    // El mailto abre el correo del administrador con la invitación lista para enviar.
+    return { id: inv.id, email, expiraEn: inv.expiraEn, enlace, mailto };
   }
 
   async revocarInvitacion(actor: Actor, id: string) {

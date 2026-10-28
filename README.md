@@ -31,6 +31,7 @@
 <p align="center">
   <a href="#-pruébalo-ya">Pruébalo</a> ·
   <a href="#-así-se-ve">Capturas</a> ·
+  <a href="#-recorridos-completos">Recorridos</a> ·
   <a href="#-cómo-funciona">Arquitectura</a> ·
   <a href="#-modelo-y-datos-reales">Modelo</a> ·
   <a href="#-inteligencia-artificial">IA</a> ·
@@ -73,7 +74,7 @@ Una tienda de barrio vende todos los días, pero el sistema financiero no la ve:
 | `admin@bancodemo.co`    | Administrador del Banco Demo Popular | Todo: solicitudes, política, llaves de API, equipo, auditoría |
 | `analista@bancodemo.co` | Analista del Banco Demo Popular      | Revisar y decidir solicitudes                                 |
 | `admin@microdemo.co`    | Administrador de Microcrédito Demo   | Ver que no accede a las solicitudes del banco                 |
-| `admin@tendia.co`       | Equipo TendIA                        | Bitácora de cualquier tendero y satisfacción global           |
+| `admin@tendia.co`       | Equipo TendIA                        | Alta de aliados, bitácora de cualquier tendero y satisfacción |
 
 El primer ingreso pide escanear un QR con Google Authenticator o similar. Si la cuenta ya lo tenía activado y no tienes el código, reinícialo: `docker compose exec api node dist/scripts/reset-mfa.js <correo>` (en Render, desde la _Shell_ del servicio `tendia-api`).
 
@@ -152,6 +153,33 @@ Claude leyó esta hoja así, y nada se guardó hasta que el tendero confirmó:
     <td><img src="docs/img/portal-mfa-qr.png" alt="MFA"><br><sub><b>MFA</b> · enrolamiento obligatorio en el primer ingreso</sub></td>
   </tr>
 </table>
+
+## 🎬 Recorridos completos
+
+> Grabados con Claude en Chrome sobre la aplicación corriendo en local (Docker y Expo web), con Claude real, datos sembrados y los celulares de demostración. Cada recorrido es una de las pruebas de punta a punta que hicimos por rol.
+
+### App del tendero
+
+<table>
+  <tr>
+    <td align="center" valign="top"><img src="docs/img/gifs/app-solicitud.gif" width="230" alt="Solicitar un crédito"><br><sub><b>Solicitud</b> · código en pantalla, monto, fuentes autorizadas, puntaje explicado por Claude y envío al banco</sub></td>
+    <td align="center" valign="top"><img src="docs/img/gifs/app-tendi-cuaderno.gif" width="230" alt="Tendi y cuaderno"><br><sub><b>Tendi y cuaderno</b> · botón 💬 Tendi, una venta y un fiado por chat, y Claude lee la foto del cuaderno</sub></td>
+    <td align="center" valign="top"><img src="docs/img/gifs/app-justificar.gif" width="230" alt="Justificar un mes malo"><br><sub><b>T8</b> · enero justificado con foto: el puntaje sube 20 puntos</sub></td>
+  </tr>
+  <tr>
+    <td align="center" valign="top"><img src="docs/img/gifs/app-garantia.gif" width="230" alt="Garantía y aprobación"><br><sub><b>T10 a T12</b> · responde la garantía con un PDF, recibe la aprobación y califica</sub></td>
+    <td align="center" valign="top"><img src="docs/img/gifs/app-datos-incompletos.gif" width="230" alt="Datos incompletos"><br><sub><b>T5</b> · faltan pagos al proveedor: la app lleva a autorizarlos y calcula el puntaje</sub></td>
+    <td></td>
+  </tr>
+</table>
+
+### Portal del aliado
+
+<p align="center"><img src="docs/img/gifs/portal-analista.gif" width="900" alt="Analista"><br><sub><b>Analista</b> · ingreso con verificación en dos pasos, bandeja, detalle con explicación de IA, pide garantía FNG, revisa el PDF del tendero y aprueba</sub></p>
+
+<p align="center"><img src="docs/img/gifs/portal-admin-banco.gif" width="900" alt="Administrador del banco"><br><sub><b>Administrador del banco</b> · la política rechaza un valor inválido y se guarda, crea y revoca una llave de API, y la auditoría lo registra todo</sub></p>
+
+<p align="center"><img src="docs/img/gifs/portal-alta-aliado.gif" width="900" alt="Alta de un aliado"><br><sub><b>Equipo TendIA</b> · da de alta una fintech; su administradora abre la invitación, crea su contraseña, escanea el QR y entra a su bandeja vacía</sub></p>
 
 ## 🧭 Cómo funciona
 
@@ -239,7 +267,7 @@ TendIA usa **Claude** (Anthropic) en tres lugares. Ninguno calcula ni cambia el 
 | **Tendi**, en la app y en WhatsApp | Con _tool use_ anota ventas y fiados, marca pagos, cuenta cómo va la solicitud y explica términos como "FNG"       | Intérprete de reglas ("hoy vendí 350 mil") |
 | **Mi cuaderno**                    | Lee la foto de la hoja del cuaderno (visión + salida estructurada); el tendero confirma o corrige antes de guardar | Anotar a mano o con Tendi                  |
 
-Tendi recuerda lo que ya anotó en cada turno, así que no repite registros al leer la conversación. El webhook de WhatsApp valida la firma `X-Twilio-Signature`. Decisiones en [ADR-003](docs/adr/ADR-003-asistente-ia.md).
+Tendi recuerda lo que ya anotó en cada turno, así que no repite registros al leer la conversación, y recibe cada mensaje de otro día con su fecha para no confundir "hoy". En la app se abre desde el inicio o con el botón **💬 Tendi** de la esquina inferior derecha en el puntaje, el seguimiento, el cuaderno, los datos que faltan y las autorizaciones. El webhook de WhatsApp valida la firma `X-Twilio-Signature`. Decisiones en [ADR-003](docs/adr/ADR-003-asistente-ia.md).
 
 ## 🔐 Seguridad y Ley 1581
 

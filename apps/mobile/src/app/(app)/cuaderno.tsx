@@ -121,6 +121,7 @@ export default function Cuaderno() {
 
   return (
     <Screen
+      tendi
       footer={
         lectura ? (
           <>

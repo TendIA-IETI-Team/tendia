@@ -15,7 +15,7 @@ import {
   Title,
 } from '@/components/ui';
 import { solicitudActual, type Solicitud } from '@/lib/api';
-import { mesLargo, porcentaje } from '@/lib/format';
+import { mesLargo, porcentaje, tasa } from '@/lib/format';
 import { colors, font, type } from '@/lib/theme';
 
 /** T7: ver mi score con su escala y su explicación en lenguaje simple (TND-052, TND-053). */
@@ -48,6 +48,7 @@ export default function Puntaje() {
 
   return (
     <Screen
+      tendi
       footer={
         <>
           <Button
@@ -131,9 +132,9 @@ export default function Puntaje() {
           <Body>
             A tiendas como la tuya en Bogotá les prestan con tasas de{' '}
             <Text style={{ fontFamily: font.extrabold }}>
-              {sol.mercado.rango.desde} % a {sol.mercado.rango.hasta} % al año
+              {tasa(sol.mercado.rango.desde)} a {tasa(sol.mercado.rango.hasta)} al año
             </Text>
-            . Para tu franja, una referencia es {sol.mercado.tasaEfectivaAnual} % al año.
+            . Para tu franja, una referencia es {tasa(sol.mercado.tasaEfectivaAnual)} al año.
           </Body>
           <Body muted style={{ fontSize: 14 }}>
             Datos reales de la Superintendencia Financiera ({sol.mercado.creditos} créditos). No es

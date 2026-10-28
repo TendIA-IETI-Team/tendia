@@ -39,7 +39,10 @@ export default function Autorizaciones() {
   const pasadas = lista?.filter((c) => c.revocadoEn) ?? [];
 
   return (
-    <Screen footer={<Button title="Volver" variant="secondary" onPress={() => router.back()} />}>
+    <Screen
+      tendi
+      footer={<Button title="Volver" variant="secondary" onPress={() => router.back()} />}
+    >
       <Title>Mis autorizaciones</Title>
       <Body muted>
         Aquí ves qué datos de tu negocio nos dejaste usar. Puedes quitar cualquiera cuando quieras.

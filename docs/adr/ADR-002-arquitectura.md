@@ -51,4 +51,4 @@ flowchart TB
 - Los clientes nunca hablan con la base de datos, el scoring ni la IA directamente.
 - El scoring no tiene estado ni datos personales: recibe series mensuales y devuelve el puntaje.
 - Los conectores reales (Bold, Treinta, Belvo, distribuidores) implementan la interfaz `Conector` sin cambiar el resto del sistema.
-- Staging en Render (`render.yaml`): el scoring corre como servicio privado y la API y el portal como servicios web.
+- Staging en Vercel ([`vercel.json`](../../vercel.json)), un solo proyecto con Vercel Services: el scoring es un servicio privado que solo la API alcanza por binding, y la API y el portal tienen rutas públicas (`/api` y `/`). Antes estaba en Render; se movió al plan gratis de Vercel por costo.

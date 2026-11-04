@@ -3,7 +3,7 @@
 Motor de scoring de TendIA: convierte series mensuales de ventas y pagos al distribuidor en un **Puntaje TendIA (0-1000)** en tres franjas, con su segmento y con la contribución de cada variable. No guarda estado ni datos personales.
 
 ```bash
-uv sync
+uv sync --group train                               # runtime + pruebas + entrenamiento (Vercel solo instala el runtime)
 uv run uvicorn tendia_scoring.app:app --port 8000   # http://localhost:8000/docs
 uv run pytest                                       # pruebas + cobertura ≥ 70 %
 uv run python -m tendia_scoring.datos.preparar      # descarga UCI, EMICRON y Superfinanciera (a .cache)

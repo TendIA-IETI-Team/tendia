@@ -1,0 +1,49 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "portal": {
+      "root": "apps/portal",
+      "framework": "nextjs",
+      "installCommand": "pnpm install --frozen-lockfile --filter @tendia/portal...",
+      "buildCommand": "pnpm build"
+    },
+    "api": {
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "Dockerfile.api",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "scoring",
+          "format": "url",
+          "env": "SCORING_URL"
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/api/:path(.*)?",
+          "destination": "/:path"
+        }
+      ]
+    },
+    "scoring": {
+      "root": "services/scoring",
+      "framework": "fastapi",
+      "entrypoint": "tendia_scoring.app:app"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "portal"
+      }
+    }
+  ]
+}

@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://tendia-portal.onrender.com"><img alt="Portal en Render" src="https://img.shields.io/badge/portal-en%20línea-362D7C?logo=render&logoColor=white"></a>
-  <a href="https://tendia-api.onrender.com/docs"><img alt="API en Render" src="https://img.shields.io/badge/API-OpenAPI-362D7C?logo=swagger&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app"><img alt="Portal en Vercel" src="https://img.shields.io/badge/portal-en%20línea-362D7C?logo=vercel&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app/api/docs"><img alt="API en Vercel" src="https://img.shields.io/badge/API-OpenAPI-362D7C?logo=swagger&logoColor=white"></a>
   <img alt="Modelo" src="https://img.shields.io/badge/modelo-tendia--v2%20·%20AUC%200%2C741-F38B54">
   <img alt="Datos reales" src="https://img.shields.io/badge/datos-UCI%20·%20DANE%20·%20Superfinanciera-F38B54">
 </p>
@@ -59,13 +59,13 @@ Una tienda de barrio vende todos los días, pero el sistema financiero no la ve:
 
 ## 🚀 Pruébalo ya
 
-| Qué                                     | Dónde                                                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Portal del aliado**                   | https://tendia-portal.onrender.com                                                                           |
-| **API pública y documentación OpenAPI** | https://tendia-api.onrender.com/docs                                                                         |
-| Salud de la API (versión desplegada)    | https://tendia-api.onrender.com/health                                                                       |
-| Motor de scoring                        | Servicio **privado** en Render: solo la API lo llama                                                         |
-| App del tendero                         | Expo Go con `EXPO_PUBLIC_API_URL=https://tendia-api.onrender.com` (ver [Correr en local](#-correr-en-local)) |
+| Qué                                     | Dónde                                                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Portal del aliado**                   | https://tendia-app.vercel.app                                                                                  |
+| **API pública y documentación OpenAPI** | https://tendia-app.vercel.app/api/docs                                                                         |
+| Salud de la API (versión desplegada)    | https://tendia-app.vercel.app/api/health                                                                       |
+| Motor de scoring                        | Servicio **privado** en Vercel: solo la API lo llama                                                           |
+| App del tendero                         | Expo Go con `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api` (ver [Correr en local](#-correr-en-local)) |
 
 **Cuentas de demostración** (staging y local, contraseña `TendIA-demo-2026!`):
 
@@ -76,7 +76,7 @@ Una tienda de barrio vende todos los días, pero el sistema financiero no la ve:
 | `admin@microdemo.co`    | Administrador de Microcrédito Demo   | Ver que no accede a las solicitudes del banco                 |
 | `admin@tendia.co`       | Equipo TendIA                        | Alta de aliados, bitácora de cualquier tendero y satisfacción |
 
-El primer ingreso pide escanear un QR con Google Authenticator o similar. Si la cuenta ya lo tenía activado y no tienes el código, reinícialo: `docker compose exec api node dist/scripts/reset-mfa.js <correo>` (en Render, desde la _Shell_ del servicio `tendia-api`).
+El primer ingreso pide escanear un QR con Google Authenticator o similar. Si la cuenta ya lo tenía activado y no tienes el código, reinícialo: `docker compose exec api node dist/scripts/reset-mfa.js <correo>` (en staging, desde tu computador con las variables de Vercel: ver [docs/deploy.md](docs/deploy.md#reiniciar-el-mfa-en-staging)).
 
 **Celulares de demostración** para la app. Ven el código en pantalla aunque Twilio esté configurado, porque nadie es dueño de esos números:
 
@@ -191,7 +191,7 @@ flowchart LR
     portal[🖥️ Portal del aliado<br>Next.js]
     core[🏦 Core del aliado]
   end
-  subgraph TendIA en Render
+  subgraph TendIA en Vercel
     api[API TendIA<br>NestJS]
     scoring[Scoring privado<br>FastAPI]
   end
@@ -326,7 +326,7 @@ cd apps/mobile && npm install && npx expo start  # terminal 4
 
 | Pieza   | Comando                                                                                                                   | Qué cubre                                                                                                     | Resultado              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Scoring | `cd services/scoring && uv run pytest`                                                                                    | Variables, scorecard, indicadores, contrato `/score` v2                                                       | **41 pruebas · 91 %**  |
+| Scoring | `cd services/scoring && uv sync --group train && uv run pytest`                                                           | Variables, scorecard, indicadores, contrato `/score` v2                                                       | **41 pruebas · 91 %**  |
 | API     | `pnpm --filter @tendia/api test`                                                                                          | Flujo T1 → T13, aislamiento y RLS, Ley 1581, invitaciones, adjuntos, asistente, OTP con Twilio Verify, Sentry | **101 pruebas · 90 %** |
 | Portal  | `pnpm --filter @tendia/portal test` y `test:e2e`                                                                          | Formatos y flujo feliz con Playwright (MFA → aprobar con la tasa del mercado)                                 | ✅                     |
 | App     | `npm run lint && npx tsc --noEmit` en `apps/mobile`; [`.maestro/flujo-feliz.yaml`](apps/mobile/.maestro/flujo-feliz.yaml) | Tipos, lint y flujo feliz con Maestro                                                                         | ✅                     |
@@ -336,16 +336,16 @@ Las pruebas de la API necesitan Postgres (`tendia_test`) y el scoring corriendo.
 
 ## ☁️ Despliegue
 
-[`render.yaml`](render.yaml) define los tres servicios. Render despliega al fusionar a `main`, y la API aplica las migraciones al arrancar.
+Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](https://vercel.com/docs/services): [`vercel.json`](vercel.json) define los tres servicios, que se construyen y despliegan juntos. La API corre en un contenedor con el mismo `Dockerfile.api` de `docker compose` y aplica las migraciones de Prisma al arrancar.
 
-| Servicio         | Tipo                             | URL                                |
-| ---------------- | -------------------------------- | ---------------------------------- |
-| `tendia-portal`  | Web                              | https://tendia-portal.onrender.com |
-| `tendia-api`     | Web                              | https://tendia-api.onrender.com    |
-| `tendia-scoring` | Privado                          | Solo dentro de la red de Render    |
-| Base de datos    | Supabase (Postgres administrado) | Cadena en `DATABASE_URL`           |
+| Servicio      | Tipo                                       | URL                                 |
+| ------------- | ------------------------------------------ | ----------------------------------- |
+| `portal`      | Next.js                                    | https://tendia-app.vercel.app       |
+| `api`         | NestJS en contenedor (`Dockerfile.api`)    | https://tendia-app.vercel.app/api   |
+| `scoring`     | FastAPI **privado**: sin ruta pública      | Solo la API lo llama, por _binding_ |
+| Base de datos | Supabase (Postgres administrado, _pooler_) | `DATABASE_URL` y `DIRECT_URL`       |
 
-Variables, Sentry con la versión del commit (`RENDER_GIT_COMMIT`), Twilio y WhatsApp en [docs/deploy.md](docs/deploy.md).
+Variables, migraciones, Sentry con la versión del commit (`VERCEL_GIT_COMMIT_SHA`), Twilio y WhatsApp en [docs/deploy.md](docs/deploy.md).
 
 ## 📚 Documentación
 

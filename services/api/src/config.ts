@@ -1,18 +1,19 @@
 import { existsSync } from 'node:fs';
 import { z } from 'zod';
 
-// En desarrollo local se carga services/api/.env (en Docker y Render llegan como variables de entorno).
+// En desarrollo local se carga services/api/.env (en Docker y Vercel llegan como variables de entorno).
 if (existsSync('.env') && process.env.APP_ENV !== 'test') process.loadEnvFile('.env');
 
 const schema = z.object({
   APP_ENV: z.enum(['local', 'test', 'dev', 'staging', 'production']).default('local'),
   PORT: z.coerce.number().default(4000),
   DATABASE_URL: z.string().min(1),
-  // Render entrega los servicios privados como host:puerto, sin esquema.
+  // En Vercel llega del binding del servicio privado; se aceptan host:puerto sin esquema y la
+  // barra final se quita para no pedir "//score".
   SCORING_URL: z
     .string()
     .default('http://127.0.0.1:8000')
-    .transform((v) => (/^https?:\/\//.test(v) ? v : `http://${v}`))
+    .transform((v) => (/^https?:\/\//.test(v) ? v : `http://${v}`).replace(/\/+$/, ''))
     .pipe(z.string().url()),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET debe tener al menos 32 caracteres'),
   // 32 bytes en base64 para AES-256-GCM (cédula y celular cifrados en reposo).
@@ -38,11 +39,11 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   ANTHROPIC_MODEL: z.string().default('claude-opus-5-5'),
   SENTRY_DSN: z.string().optional(),
-  // Versión desplegada: RELEASE explícito, o el commit que Render despliega (RENDER_GIT_COMMIT).
+  // Versión desplegada: RELEASE explícito, o el commit que Vercel despliega (VERCEL_GIT_COMMIT_SHA).
   RELEASE: z
     .string()
     .optional()
-    .transform((v) => v || process.env.RENDER_GIT_COMMIT || 'dev'),
+    .transform((v) => v || process.env.VERCEL_GIT_COMMIT_SHA || 'dev'),
   SEED_ON_START: z
     .enum(['true', 'false'])
     .default('false')

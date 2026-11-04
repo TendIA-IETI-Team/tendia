@@ -3,9 +3,9 @@ COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-group train --no-install-project
 COPY tendia_scoring ./tendia_scoring
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-group train
 RUN useradd --create-home app
 USER app
 ENV PATH="/app/.venv/bin:$PATH" PORT=8000

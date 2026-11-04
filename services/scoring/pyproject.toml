@@ -3,22 +3,26 @@ name = "tendia-scoring"
 version = "0.1.0"
 description = "Motor de scoring de TendIA: scorecard interpretable de probabilidad de incumplimiento a 90 días."
 requires-python = ">=3.12"
+# Solo lo que usa el servicio en ejecución: el paquete que se despliega queda liviano.
 dependencies = [
     "fastapi==0.162.0",
     "uvicorn[standard]==0.54.0",
     "pydantic==2.10.3",
-    "numpy==2.2.0",
-    "scikit-learn==1.6.0",
+    "numpy==2.3.5",
     "structlog==24.4.0",
     "sentry-sdk[fastapi]==2.73.0",
-    "scipy==1.14.1",
-    "pandas==2.2.3",
-    "xlrd==2.0.1",
 ]
 
 [dependency-groups]
+# Entrenamiento y lectura de los datos crudos (train.py, datos/): no se despliegan.
+train = [
+    "scikit-learn==1.7.2",
+    "scipy==1.16.3",
+    "pandas==3.1.0",
+    "xlrd==2.0.2",
+]
 dev = [
-    "pytest==9.1.1",
+    "pytest==9.2.0",
     "pytest-cov==6.0.0",
     "httpx==0.28.1",
     "ruff==0.8.4",

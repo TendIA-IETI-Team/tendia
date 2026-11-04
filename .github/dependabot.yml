@@ -7,6 +7,14 @@ updates:
     groups:
       minor-y-parches:
         update-types: [minor, patch]
+      # Nest se actualiza completo o no se actualiza: un paquete suelto rompe los peers.
+      nestjs:
+        patterns: ['@nestjs/*']
+        update-types: [major]
+    ignore:
+      # Los tipos siguen la versión de Node del runtime (22 en CI y en Vercel).
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: npm
     directory: /apps/mobile
     schedule: { interval: weekly }
@@ -25,5 +33,10 @@ updates:
     directory: /
     schedule: { interval: monthly }
   - package-ecosystem: docker
-    directory: /services/api
+    # Dockerfile.api, en la raíz (Vercel construye desde la carpeta del Dockerfile).
+    directory: /
     schedule: { interval: monthly }
+    # La imagen local usa la misma versión mayor de Node que CI y Vercel.
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']

@@ -8,7 +8,7 @@ import { config } from './config';
 /** Configuración compartida por main.ts y las pruebas e2e. */
 export function configureApp(app: INestApplication): void {
   const express = app as NestExpressApplication;
-  // Las fotos del cuaderno llegan en base64 (hasta 5 MB); Twilio envía formularios urlencoded.
+  // Las fotos del cuaderno llegan en base64 (hasta 3 MB); Twilio envía formularios urlencoded.
   express.useBodyParser('json', { limit: '8mb' });
   express.useBodyParser('urlencoded', { extended: true, limit: '1mb' });
   app.use(helmet());

@@ -1,0 +1,21 @@
+# Lo que `vercel deploy` no sube. Los secretos llegan como variables del proyecto, nunca en archivos.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.vercel
+
+# Dependencias y artefactos: Vercel los instala y construye en el build.
+node_modules
+**/node_modules
+**/.venv
+**/__pycache__
+**/dist
+**/.next
+**/coverage
+**/.turbo
+
+# La app del tendero no se despliega en Vercel (se construye con EAS).
+apps/mobile

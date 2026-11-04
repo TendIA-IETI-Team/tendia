@@ -42,7 +42,7 @@
 ```bash
 docker compose up -d db
 docker exec tendia-db-1 psql -U tendia -c "CREATE DATABASE tendia_test"
-cd services/scoring && uv run pytest && uv run uvicorn tendia_scoring.app:app --port 8000 &
+cd services/scoring && uv sync --group train && uv run pytest && uv run uvicorn tendia_scoring.app:app --port 8000 &
 DATABASE_URL=postgresql://tendia:tendia@127.0.0.1:55432/tendia_test pnpm --filter @tendia/api exec prisma migrate deploy
 pnpm --filter @tendia/api test
 docker compose up -d --build && pnpm --filter @tendia/portal test:e2e

@@ -81,4 +81,4 @@ Cada variable aporta `142 · peso_c · −coef · (WoE − WoE promedio)` puntos
 - **Variaciones justificadas:** el tendero puede excluir meses de la estabilidad. El aliado ve los dos puntajes y el motivo.
 - **Deriva:** recalcular las métricas cada trimestre; reentrenar si el Gini baja más de 0,05.
 
-Reentrenar: `cd services/scoring && uv run python -m tendia_scoring.datos.preparar && uv run python -m tendia_scoring.train`.
+Reentrenar: `cd services/scoring && uv sync --group train && uv run python -m tendia_scoring.datos.preparar && uv run python -m tendia_scoring.train`.

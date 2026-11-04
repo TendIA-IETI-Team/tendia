@@ -33,7 +33,8 @@ updates:
     directory: /
     schedule: { interval: monthly }
   - package-ecosystem: docker
-    directory: /services/api
+    # Dockerfile.api, en la raíz (Vercel construye desde la carpeta del Dockerfile).
+    directory: /
     schedule: { interval: monthly }
     # La imagen local usa la misma versión mayor de Node que CI y Vercel.
     ignore:

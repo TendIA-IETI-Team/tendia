@@ -12,6 +12,7 @@ TendIA usa tres fuentes abiertas. Los archivos crudos se descargan a `services/s
 
 ```bash
 cd services/scoring
+uv sync --group train                            # scikit-learn, scipy, pandas y xlrd
 uv run python -m tendia_scoring.datos.preparar   # descarga y genera model/referencias/*.json
 uv run python -m tendia_scoring.train            # reentrena y genera model/tendia-v2.json
 ```

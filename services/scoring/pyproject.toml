@@ -28,9 +28,6 @@ dev = [
     "ruff==0.8.4",
 ]
 
-[tool.uv]
-default-groups = ["dev", "train"]
-
 [build-system]
 requires = ["hatchling==1.32.4"]
 build-backend = "hatchling.build"

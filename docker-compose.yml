@@ -39,7 +39,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: services/api/Dockerfile
+      dockerfile: Dockerfile.api
     env_file:
       - path: .env
         required: false

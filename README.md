@@ -336,12 +336,12 @@ Las pruebas de la API necesitan Postgres (`tendia_test`) y el scoring corriendo.
 
 ## ☁️ Despliegue
 
-Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](https://vercel.com/docs/services): [`vercel.json`](vercel.json) define los tres servicios, que se construyen y despliegan juntos. El build de la API aplica las migraciones de Prisma.
+Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](https://vercel.com/docs/services): [`vercel.json`](vercel.json) define los tres servicios, que se construyen y despliegan juntos. La API corre en un contenedor con el mismo `Dockerfile.api` de `docker compose` y aplica las migraciones de Prisma al arrancar.
 
 | Servicio      | Tipo                                       | URL                                 |
 | ------------- | ------------------------------------------ | ----------------------------------- |
 | `portal`      | Next.js                                    | https://tendia-app.vercel.app       |
-| `api`         | NestJS (una Vercel Function)               | https://tendia-app.vercel.app/api   |
+| `api`         | NestJS en contenedor (`Dockerfile.api`)    | https://tendia-app.vercel.app/api   |
 | `scoring`     | FastAPI **privado**: sin ruta pública      | Solo la API lo llama, por _binding_ |
 | Base de datos | Supabase (Postgres administrado, _pooler_) | `DATABASE_URL` y `DIRECT_URL`       |
 

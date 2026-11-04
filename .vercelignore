@@ -17,5 +17,5 @@ node_modules
 **/coverage
 **/.turbo
 
-# La app del tendero no se despliega en Vercel (se construye con EAS).
-apps/mobile
+# La app del tendero se publica en web (/app); los builds nativos siguen con EAS.
+**/dist-vercel

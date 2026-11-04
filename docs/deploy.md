@@ -1,24 +1,26 @@
 # Ambientes y despliegue
 
-| Ambiente | Base de datos                      | API, scoring y portal                                                        | App                   |
-| -------- | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- |
-| Local    | `docker compose` (Postgres 16)     | `docker compose up --build`                                                  | Expo Go o emulador    |
-| Dev      | Proyecto Supabase `tendia-dev`     | Local contra la base dev                                                     | Expo Go               |
-| Staging  | Proyecto Supabase `tendia-staging` | Vercel, proyecto `tendia-app` ([`vercel.json`](../vercel.json)), plan gratis | Build interno con EAS |
+| Ambiente | Base de datos                      | API, scoring y portal                                                        | App                                  |
+| -------- | ---------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| Local    | `docker compose` (Postgres 16)     | `docker compose up --build`                                                  | Expo Go o emulador                   |
+| Dev      | Proyecto Supabase `tendia-dev`     | Local contra la base dev                                                     | Expo Go                              |
+| Staging  | Proyecto Supabase `tendia-staging` | Vercel, proyecto `tendia-app` ([`vercel.json`](../vercel.json)), plan gratis | Web en `/app`; build interno con EAS |
 
 Ningún secreto vive en el repo: van en GitHub Secrets, en las variables del proyecto de Vercel o en `.env` locales (ignorados por git).
 
 ## Cómo está armado en Vercel
 
-Un solo proyecto con [Vercel Services](https://vercel.com/docs/services). Los tres servicios se construyen por separado y se despliegan juntos, así que el portal, la API y el scoring de un despliegue siempre son de la misma versión.
+Un solo proyecto con [Vercel Services](https://vercel.com/docs/services). Los cuatro servicios se construyen por separado y se despliegan juntos, así que el portal, la app, la API y el scoring de un despliegue siempre son de la misma versión. El proyecto está conectado al repositorio: cada fusión a `main` despliega a producción y cada PR recibe un _preview_.
 
 | Servicio  | Carpeta            | Ruta pública                   | Notas                                                                                         |
 | --------- | ------------------ | ------------------------------ | --------------------------------------------------------------------------------------------- |
 | `portal`  | `apps/portal`      | `/`                            | Llama a la API en `/api`, en el mismo dominio: no necesita CORS                               |
+| `app`     | `apps/mobile`      | `/app/*`                       | App del tendero exportada para web (`expo export -p web`), estática; también llama a `/api`   |
 | `api`     | `services/api`     | `/api/*` (el prefijo se quita) | NestJS en contenedor con `Dockerfile.api`, el mismo de `docker compose`; migra al arrancar    |
 | `scoring` | `services/scoring` | **ninguna**                    | FastAPI privado. La API lo alcanza por el _binding_ `SCORING_URL`; Internet no puede llamarlo |
 
-- URL: https://tendia-app.vercel.app (portal), https://tendia-app.vercel.app/api/docs (OpenAPI), https://tendia-app.vercel.app/api/health.
+- URL: https://tendia-app.vercel.app (portal), https://tendia-app.vercel.app/app (app del tendero), https://tendia-app.vercel.app/api/docs (OpenAPI), https://tendia-app.vercel.app/api/health.
+- La app web se construye con `EXPO_BASE_URL=/app` (lo lee [`app.config.js`](../apps/mobile/app.config.js)) y `EXPO_PUBLIC_API_URL=/api`. En local y en los builds nativos nada de eso cambia.
 - Las funciones de Vercel aceptan cuerpos de hasta 4,5 MB, por eso las fotos y los PDF van hasta 3 MB (unos 4 MB en base64).
 - La API va en contenedor porque el empaquetado de backends de Vercel no incluye el `node_modules` de un monorepo con pnpm y re-empaqueta el TypeScript sin los metadatos de decoradores que necesita Nest. `Dockerfile.api` está en la raíz porque Vercel usa la carpeta del Dockerfile como contexto de build.
 - El scoring solo instala lo que usa en ejecución; scikit-learn, scipy, pandas y xlrd están en el grupo `train` de `pyproject.toml`.
@@ -41,7 +43,7 @@ Un solo proyecto con [Vercel Services](https://vercel.com/docs/services). Los tr
    - `SCORING_URL` **no** se configura: la inyecta el binding de `vercel.json`.
 4. **Migraciones:** el contenedor de la API las aplica al arrancar con `DIRECT_URL` (la CLI de Prisma viene en la imagen). La migración `bitacora_inmutable_y_rls` crea el rol `tendia_aliado`, activa RLS en todas las tablas y el trigger que impide editar la bitácora. Se probó como en Supabase: un usuario sin superusuario con `CREATEROLE`, en una base nueva y con el rol ya creado por otro. Si el usuario no puede usar el rol, la API lo avisa en el log y sigue con el aislamiento de la aplicación.
 5. **WhatsApp:** en Twilio → Messaging → _Try it out_ → WhatsApp sandbox, _When a message comes in_ = `POST https://tendia-app.vercel.app/api/whatsapp/webhook`. Cada celular se une al sandbox enviando el código `join …` que muestra Twilio. Los avisos de decisión salen del número del sandbox (`TWILIO_WHATSAPP_FROM`, por defecto `whatsapp:+14155238886`) y solo llegan a quien escribió al sandbox en las últimas 24 horas.
-6. **App:** `cd apps/mobile && npx eas-cli@latest build --profile preview --platform android` con `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api`.
+6. **App nativa (opcional):** la versión web ya queda en `/app`. Para un APK: `cd apps/mobile && npx eas-cli@latest build --profile preview --platform android` con `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api`.
 
 `OTP_DEV_MODE` queda en `true` en staging: los celulares de demostración (`300 000 0000` a `300 000 0999`) ven el código en pantalla y los reales lo reciben por SMS. En producción debe ser `false`.
 

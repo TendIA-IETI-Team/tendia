@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://tendia-app.vercel.app"><img alt="Portal en Vercel" src="https://img.shields.io/badge/portal-en%20línea-362D7C?logo=vercel&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app/app"><img alt="App del tendero en Vercel" src="https://img.shields.io/badge/app%20del%20tendero-en%20línea-F38B54?logo=expo&logoColor=white"></a>
   <a href="https://tendia-app.vercel.app/api/docs"><img alt="API en Vercel" src="https://img.shields.io/badge/API-OpenAPI-362D7C?logo=swagger&logoColor=white"></a>
   <img alt="Modelo" src="https://img.shields.io/badge/modelo-tendia--v2%20·%20AUC%200%2C741-F38B54">
   <img alt="Datos reales" src="https://img.shields.io/badge/datos-UCI%20·%20DANE%20·%20Superfinanciera-F38B54">
@@ -59,13 +60,13 @@ Una tienda de barrio vende todos los días, pero el sistema financiero no la ve:
 
 ## 🚀 Pruébalo ya
 
-| Qué                                     | Dónde                                                                                                          |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Portal del aliado**                   | https://tendia-app.vercel.app                                                                                  |
-| **API pública y documentación OpenAPI** | https://tendia-app.vercel.app/api/docs                                                                         |
-| Salud de la API (versión desplegada)    | https://tendia-app.vercel.app/api/health                                                                       |
-| Motor de scoring                        | Servicio **privado** en Vercel: solo la API lo llama                                                           |
-| App del tendero                         | Expo Go con `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api` (ver [Correr en local](#-correr-en-local)) |
+| Qué                                     | Dónde                                                                                                                                                           |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Portal del aliado**                   | https://tendia-app.vercel.app                                                                                                                                   |
+| **API pública y documentación OpenAPI** | https://tendia-app.vercel.app/api/docs                                                                                                                          |
+| Salud de la API (versión desplegada)    | https://tendia-app.vercel.app/api/health                                                                                                                        |
+| Motor de scoring                        | Servicio **privado** en Vercel: solo la API lo llama                                                                                                            |
+| **App del tendero**                     | https://tendia-app.vercel.app/app (versión web, ábrela desde el celular). En Expo Go o un build de EAS: `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api` |
 
 **Cuentas de demostración** (staging y local, contraseña `TendIA-demo-2026!`):
 
@@ -336,11 +337,12 @@ Las pruebas de la API necesitan Postgres (`tendia_test`) y el scoring corriendo.
 
 ## ☁️ Despliegue
 
-Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](https://vercel.com/docs/services): [`vercel.json`](vercel.json) define los tres servicios, que se construyen y despliegan juntos. La API corre en un contenedor con el mismo `Dockerfile.api` de `docker compose` y aplica las migraciones de Prisma al arrancar.
+Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](https://vercel.com/docs/services): [`vercel.json`](vercel.json) define los cuatro servicios, que se construyen y despliegan juntos, y cada fusión a `main` despliega solo. La API corre en un contenedor con el mismo `Dockerfile.api` de `docker compose` y aplica las migraciones de Prisma al arrancar.
 
 | Servicio      | Tipo                                       | URL                                 |
 | ------------- | ------------------------------------------ | ----------------------------------- |
 | `portal`      | Next.js                                    | https://tendia-app.vercel.app       |
+| `app`         | App del tendero en web (Expo, estática)    | https://tendia-app.vercel.app/app   |
 | `api`         | NestJS en contenedor (`Dockerfile.api`)    | https://tendia-app.vercel.app/api   |
 | `scoring`     | FastAPI **privado**: sin ruta pública      | Solo la API lo llama, por _binding_ |
 | Base de datos | Supabase (Postgres administrado, _pooler_) | `DATABASE_URL` y `DIRECT_URL`       |

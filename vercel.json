@@ -7,6 +7,22 @@
       "installCommand": "pnpm install --frozen-lockfile --filter @tendia/portal...",
       "buildCommand": "pnpm build"
     },
+    "app": {
+      "root": "apps/mobile",
+      "installCommand": "npm ci --no-audit --no-fund",
+      "buildCommand": "EXPO_BASE_URL=/app EXPO_PUBLIC_API_URL=/api npx expo export -p web --output-dir dist-vercel/app",
+      "outputDirectory": "dist-vercel",
+      "rewrites": [
+        {
+          "source": "/app",
+          "destination": "/app/index.html"
+        },
+        {
+          "source": "/app/(.*)",
+          "destination": "/app/index.html"
+        }
+      ]
+    },
     "api": {
       "root": ".",
       "runtime": "container",
@@ -37,6 +53,18 @@
       "source": "/api/(.*)",
       "destination": {
         "service": "api"
+      }
+    },
+    {
+      "source": "/app",
+      "destination": {
+        "service": "app"
+      }
+    },
+    {
+      "source": "/app/(.*)",
+      "destination": {
+        "service": "app"
       }
     },
     {

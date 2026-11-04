@@ -126,7 +126,7 @@ jobs:
         working-directory: services/scoring
         run: |
           uv python install 3.12
-          uv sync --frozen --no-dev
+          uv sync --frozen --no-dev --no-group train
           nohup uv run uvicorn tendia_scoring.app:app --port 8000 > /tmp/scoring.log 2>&1 &
       - run: pnpm install --frozen-lockfile --filter @tendia/api...
       - name: Lint y tipos

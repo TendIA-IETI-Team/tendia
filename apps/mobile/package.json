@@ -35,5 +35,8 @@
     "typecheck": "tsc --noEmit",
     "export:web": "expo export -p web"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "node-forge": "1.4.3"
+  }
 }

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "portal": {
+      "root": "apps/portal",
+      "framework": "nextjs",
+      "installCommand": "pnpm install --frozen-lockfile --filter @tendia/portal...",
+      "buildCommand": "pnpm build"
+    },
+    "api": {
+      "root": "services/api",
+      "framework": "nestjs",
+      "entrypoint": "src/main.ts",
+      "installCommand": "pnpm install --frozen-lockfile --filter @tendia/api...",
+      "buildCommand": "pnpm exec prisma generate && DATABASE_URL=\"$DIRECT_URL\" pnpm exec prisma migrate deploy",
+      "bindings": [
+        { "type": "service", "service": "scoring", "format": "url", "env": "SCORING_URL" }
+      ],
+      "functions": { "src/main.ts": { "maxDuration": 60 } },
+      "rewrites": [{ "source": "/api/:path(.*)?", "destination": "/:path" }]
+    },
+    "scoring": {
+      "root": "services/scoring",
+      "framework": "fastapi",
+      "entrypoint": "tendia_scoring.app:app"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "portal" } }
+  ]
+}

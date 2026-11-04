@@ -2,6 +2,9 @@
   "name": "@tendia/portal",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "description": "Portal del aliado: bandeja con score explicado, decisiones, política de riesgo e integraciones.",
   "scripts": {
     "dev": "next dev -p 3000",

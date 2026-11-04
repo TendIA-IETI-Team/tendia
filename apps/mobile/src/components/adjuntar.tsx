@@ -14,7 +14,8 @@ export interface Archivo {
   tamano: number;
 }
 
-const MAX_BYTES = 5 * 1024 * 1024;
+// El mismo máximo de la API (3 MB): las funciones de Vercel aceptan cuerpos de hasta 4,5 MB.
+const MAX_BYTES = 3 * 1024 * 1024;
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
 
 /** En la web el selector entrega un blob: expo-file-system no lo lee, así que se usa FileReader. */
@@ -30,7 +31,7 @@ async function leerBase64(asset: DocumentPicker.DocumentPickerAsset): Promise<st
   return dataUrl.slice(dataUrl.indexOf(',') + 1);
 }
 
-/** Foto con la cámara, o un PDF o foto del celular. Máximo 5 MB. */
+/** Foto con la cámara, o un PDF o foto del celular. Máximo 3 MB. */
 export function Adjuntar({
   valor,
   onChange,
@@ -44,7 +45,7 @@ export function Adjuntar({
 
   function aceptar(a: Archivo) {
     if (a.tamano > MAX_BYTES) {
-      setError('El archivo pesa más de 5 MB. Prueba con una foto más liviana.');
+      setError('El archivo pesa más de 3 MB. Prueba con una foto más liviana.');
       return;
     }
     setError(null);

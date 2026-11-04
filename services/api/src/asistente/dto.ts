@@ -15,6 +15,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { MAX_ARCHIVO_BYTES } from '../common/archivos';
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -79,9 +80,9 @@ export class EstimacionVentasDto {
 }
 
 export class CuadernoDto {
-  @ApiProperty({ description: 'Foto en base64 (máximo 5 MB)' })
+  @ApiProperty({ description: 'Foto en base64 (máximo 3 MB)' })
   @IsString()
-  @MaxLength(7_500_000)
+  @MaxLength(Math.ceil((MAX_ARCHIVO_BYTES * 4) / 3) + 64)
   imagenBase64: string;
 
   @ApiProperty({ enum: ['image/jpeg', 'image/png', 'image/webp'] })

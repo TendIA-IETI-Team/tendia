@@ -28,8 +28,8 @@ structlog.configure(
 )
 log = structlog.get_logger("scoring")
 
-# Versión desplegada: RELEASE explícito, o el commit que Render despliega, o la del paquete.
-RELEASE = os.getenv("RELEASE") or os.getenv("RENDER_GIT_COMMIT") or __version__
+# Versión desplegada: RELEASE explícito, o el commit que Vercel despliega, o la del paquete.
+RELEASE = os.getenv("RELEASE") or os.getenv("VERCEL_GIT_COMMIT_SHA") or __version__
 
 if os.getenv("SENTRY_DSN"):
     sentry_sdk.init(

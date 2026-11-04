@@ -2,6 +2,9 @@
   "name": "@tendia/api",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "description": "API de TendIA: identidad, consentimientos, solicitudes, conectores y orquestación del score.",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",

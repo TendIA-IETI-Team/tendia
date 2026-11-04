@@ -54,13 +54,13 @@ def test_health():
     assert body["release"]
 
 
-def test_release_usa_el_commit_de_render(monkeypatch):
+def test_release_usa_el_commit_de_vercel(monkeypatch):
     import importlib
 
     import tendia_scoring.app as app_mod
 
     monkeypatch.delenv("RELEASE", raising=False)
-    monkeypatch.setenv("RENDER_GIT_COMMIT", "abc1234")
+    monkeypatch.setenv("VERCEL_GIT_COMMIT_SHA", "abc1234")
     try:
         assert importlib.reload(app_mod).RELEASE == "abc1234"
         monkeypatch.setenv("RELEASE", "v-explicita")

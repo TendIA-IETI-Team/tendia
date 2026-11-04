@@ -3,7 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsString, MaxLength, MinLength } from 'class-validator';
 
 export const TIPOS_ARCHIVO = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
-export const MAX_ARCHIVO_BYTES = 5 * 1024 * 1024;
+// Máximo 3 MB: en base64 pesa unos 4 MB y las funciones de Vercel aceptan cuerpos de hasta 4,5 MB.
+export const MAX_ARCHIVO_BYTES = 3 * 1024 * 1024;
 
 /** Archivo que manda la app en base64: evidencia de T8 o documento de la garantía (T10). */
 export class ArchivoDto {
@@ -17,7 +18,7 @@ export class ArchivoDto {
   @IsIn(TIPOS_ARCHIVO, { message: 'Solo se aceptan fotos (JPG, PNG, WEBP) o PDF' })
   tipo: (typeof TIPOS_ARCHIVO)[number];
 
-  @ApiProperty({ description: 'Contenido en base64 (máximo 5 MB)' })
+  @ApiProperty({ description: 'Contenido en base64 (máximo 3 MB)' })
   @IsString()
   @MaxLength(Math.ceil((MAX_ARCHIVO_BYTES * 4) / 3) + 64)
   base64: string;
@@ -28,7 +29,7 @@ export function leerArchivo(a: ArchivoDto): { nombre: string; tipo: string; dato
   const datos = Buffer.from(a.base64.replace(/^data:[^;]+;base64,/, ''), 'base64');
   if (!datos.length) throw new BadRequestException('El archivo está vacío');
   if (datos.length > MAX_ARCHIVO_BYTES) {
-    throw new BadRequestException('El archivo pesa más de 5 MB');
+    throw new BadRequestException('El archivo pesa más de 3 MB');
   }
   const firma = datos.subarray(0, 12).toString('latin1');
   const coincide =

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { MAX_ARCHIVO_BYTES } from '../common/archivos';
 import { AuditService } from '../common/audit.service';
 import { config } from '../config';
 import { crearClienteClaude } from '../ia/claude';
@@ -31,7 +32,7 @@ export type LecturaCuaderno = z.infer<typeof LecturaCuadernoSchema>;
 
 const TIPOS = ['image/jpeg', 'image/png', 'image/webp'] as const;
 export type TipoImagen = (typeof TIPOS)[number];
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = MAX_ARCHIVO_BYTES;
 
 const SYSTEM = `Lees fotos de cuadernos de tiendas de barrio en Colombia. Extrae, por cada día escrito, el total vendido y los fiados (cliente y monto).
 Reglas:
@@ -67,7 +68,7 @@ export class CuadernoService {
     }
     const datos = imagenBase64.replace(/^data:[^;]+;base64,/, '').replace(/\s/g, '');
     if (Buffer.byteLength(datos, 'base64') > MAX_BYTES) {
-      throw new BadRequestException('La foto es muy pesada (máximo 5 MB)');
+      throw new BadRequestException('La foto es muy pesada (máximo 3 MB)');
     }
     let lectura: LecturaCuaderno;
     try {

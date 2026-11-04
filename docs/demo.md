@@ -2,12 +2,12 @@
 
 Duración: **5 minutos 45 segundos**, con 15 segundos de margen para preguntas rápidas. Se puede hacer en staging (sin instalar nada) o en local con `docker compose up --build`.
 
-| Ambiente         | Portal                             | API y documentación                  | App                                                               |
-| ---------------- | ---------------------------------- | ------------------------------------ | ----------------------------------------------------------------- |
-| Staging (Render) | https://tendia-portal.onrender.com | https://tendia-api.onrender.com/docs | Expo Go con `EXPO_PUBLIC_API_URL=https://tendia-api.onrender.com` |
-| Local            | http://localhost:3000              | http://localhost:4000/docs           | Expo Go o `npm run web` en `apps/mobile`                          |
+| Ambiente         | Portal                        | API y documentación                    | App                                                                 |
+| ---------------- | ----------------------------- | -------------------------------------- | ------------------------------------------------------------------- |
+| Staging (Vercel) | https://tendia-app.vercel.app | https://tendia-app.vercel.app/api/docs | Expo Go con `EXPO_PUBLIC_API_URL=https://tendia-app.vercel.app/api` |
+| Local            | http://localhost:3000         | http://localhost:4000/docs             | Expo Go o `npm run web` en `apps/mobile`                            |
 
-**Datos de demo en staging:** con `SEED_ON_START=true` (en `render.yaml`), la API carga al arrancar los aliados Banco Demo Popular y Microcrédito Demo, sus analistas y el usuario `admin@tendia.co`. Los celulares `300 000 0001` a `300 000 0004` tienen perfiles fijos y ven el código en pantalla aunque Twilio esté configurado. Si los servicios están en el plan gratis de Render, se duermen tras 15 minutos sin uso: abre el portal y `/health` 2 minutos antes de empezar.
+**Datos de demo en staging:** con `SEED_ON_START=true` (variable del proyecto en Vercel), la API carga al arrancar los aliados Banco Demo Popular y Microcrédito Demo, sus analistas y el usuario `admin@tendia.co`. Los celulares `300 000 0001` a `300 000 0004` tienen perfiles fijos y ven el código en pantalla aunque Twilio esté configurado. En Vercel no se duermen, pero la primera petición después de un rato sin uso tarda unos segundos más: abre el portal y `https://tendia-app.vercel.app/api/health` antes de empezar.
 
 ## Flujo feliz y de garantía
 

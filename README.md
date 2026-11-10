@@ -351,18 +351,22 @@ Variables, migraciones, Sentry con la versión del commit (`VERCEL_GIT_COMMIT_SH
 
 ## 📚 Documentación
 
-| Documento                                                                                                             | De qué trata                                                  |
-| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [ADR-001 Autenticación](docs/adr/ADR-001-autenticacion.md)                                                            | JWT propios, OTP con Twilio Verify, MFA, invitaciones y roles |
-| [ADR-002 Arquitectura](docs/adr/ADR-002-arquitectura.md)                                                              | C4 nivel 2 y por qué esta división                            |
-| [ADR-003 Asistente de IA](docs/adr/ADR-003-asistente-ia.md)                                                           | Tendi, WhatsApp y lectura del cuaderno                        |
-| [Modelo de datos](docs/data-model.md)                                                                                 | Diagrama entidad-relación, estados y protección de datos      |
-| [Model card](docs/model-card.md) · [Diccionario de variables](docs/diccionario-variables.md) · [Datos](docs/datos.md) | Cómo se entrena, con qué, qué tan bien funciona y sus límites |
-| [Plan de pruebas](docs/test-plan.md)                                                                                  | Pirámide, cobertura y casos que no se pueden romper           |
-| [OWASP API Top 10](docs/security/owasp-api-top10.md)                                                                  | Revisión de seguridad                                         |
-| [Política de datos](docs/legal/politica-tratamiento-datos.md) · [Aviso de privacidad](docs/legal/aviso-privacidad.md) | Ley 1581                                                      |
-| [Guion de demo](docs/demo.md) · [Prueba de usabilidad](docs/usabilidad.md)                                            | Entrega final y validación con tenderos                       |
-| [Despliegue](docs/deploy.md) · [Marca](docs/brand.md)                                                                 | Ambientes, secretos, observabilidad y paleta                  |
+| Documento                                                                                                                           | De qué trata                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [Contexto](docs/contexto.md) · [Requerimientos](docs/requerimientos.md) · [Datos de entrada y salida](docs/datos-entrada-salida.md) | Problema, actores, requerimientos y qué entra y sale                                 |
+| [Planificación](docs/planificacion.md)                                                                                              | Sprints, épicas, riesgos y modelo financiero a 36 meses                              |
+| [Diseño](docs/diseno/README.md)                                                                                                     | C4 (contexto, contenedores, componentes), infraestructura, clases y entidad-relación |
+| [Plan de infraestructura](docs/diseno/plan-infraestructura.md) · [Monolito sin estado](docs/diseno/monolito-sin-estado.md)          | Cómo crece la infraestructura y por qué la API es un monolito modular                |
+| [ADR-001 Autenticación](docs/adr/ADR-001-autenticacion.md)                                                                          | JWT propios, OTP con Twilio Verify, MFA, invitaciones y roles                        |
+| [ADR-002 Arquitectura](docs/adr/ADR-002-arquitectura.md)                                                                            | C4 nivel 2 y por qué esta división                                                   |
+| [ADR-003 Asistente de IA](docs/adr/ADR-003-asistente-ia.md)                                                                         | Tendi, WhatsApp y lectura del cuaderno                                               |
+| [Modelo de datos](docs/data-model.md)                                                                                               | Diagrama entidad-relación, estados y protección de datos                             |
+| [Model card](docs/model-card.md) · [Diccionario de variables](docs/diccionario-variables.md) · [Datos](docs/datos.md)               | Cómo se entrena, con qué, qué tan bien funciona y sus límites                        |
+| [Plan de pruebas](docs/test-plan.md)                                                                                                | Pirámide, cobertura y casos que no se pueden romper                                  |
+| [OWASP API Top 10](docs/security/owasp-api-top10.md)                                                                                | Revisión de seguridad                                                                |
+| [Política de datos](docs/legal/politica-tratamiento-datos.md) · [Aviso de privacidad](docs/legal/aviso-privacidad.md)               | Ley 1581                                                                             |
+| [Guion de demo](docs/demo.md) · [Prueba de usabilidad](docs/usabilidad.md)                                                          | Entrega final y validación con tenderos                                              |
+| [Despliegue](docs/deploy.md) · [Marca](docs/brand.md)                                                                               | Ambientes, secretos, observabilidad y paleta                                         |
 
 ## 🤝 Cómo trabajamos
 

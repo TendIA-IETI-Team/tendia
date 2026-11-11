@@ -1,6 +1,6 @@
 # Documento de requerimientos
 
-Cada requerimiento apunta a su historia (`TND-XXX`) en los [issues](https://github.com/TendIA-IETI-Team/tendia/issues), agrupadas en las épicas E0 a E8. Los códigos T y A son las pantallas de los wireframes: T para el tendero y A para el aliado. Contexto y actores en [contexto.md](contexto.md).
+Cada requerimiento apunta a su historia (`TND-XXX`) en los [issues](https://github.com/TendIA-IETI-Team/tendia/issues), agrupadas en las épicas E0 a E8 de GitHub; la planeación por sprints, con las historias de Jira, está en [planificación](planificacion.md). Los códigos T y A son las pantallas de los wireframes: T para el tendero y A para el aliado. Contexto y actores en [contexto.md](contexto.md).
 
 Prioridad MoSCoW: **M** debe, **S** debería, **C** podría.
 

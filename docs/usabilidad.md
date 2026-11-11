@@ -105,6 +105,7 @@ Gravedad: **1** cosmético, **2** dificulta la tarea, **3** la impide. No hubo d
     <td align="center"><img src="img/usabilidad/despues-tendi.png" width="200" alt="Después: sugerencias de 44 px"><br><sub>Después</sub></td>
     <td align="center"><img src="img/usabilidad/antes-garantia.png" width="200" alt="Antes: FNG sin comparación"><br><sub>Antes: FNG sin "fiador"</sub></td>
     <td align="center"><img src="img/usabilidad/despues-garantia.png" width="200" alt="Después: FNG como un fiador"><br><sub>Después</sub></td>
+    <td align="center"><img src="img/usabilidad/despues-cuaderno.png" width="200" alt="Después: el resumen del cuaderno va primero"><br><sub>Hallazgo 10: el resumen va primero</sub></td>
   </tr>
 </table>
 

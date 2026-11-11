@@ -37,7 +37,7 @@ TendIA **no presta dinero**. Es una plataforma B2B2C: la entidad paga la evaluac
 - **Ley 1581 de 2012 (habeas data):** permiso explícito por fuente y finalidad, que se puede revocar, y bitácora de quién vio qué.
 - **SARC de la Superintendencia Financiera:** el modelo de riesgo debe ser explicable y auditable. Por eso es un scorecard y no una caja negra.
 - **Usuarios con poca experiencia digital:** letra grande, cuatro pasos, lenguaje de tendero, WhatsApp como canal alterno.
-- **Equipo y tiempo:** seis estudiantes y un semestre (cuatro sprints de dos semanas).
+- **Equipo y tiempo:** seis estudiantes y un semestre, en cinco sprints ([planificación](planificacion.md)).
 - **Costo:** staging en planes gratuitos (Vercel Hobby y Supabase Free).
 
 ## Alcance del MVP

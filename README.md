@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://tendia-landing.vercel.app"><img alt="Página de TendIA" src="https://img.shields.io/badge/página-tendia--landing-F38B54?logo=vercel&logoColor=white"></a>
   <a href="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://tendia-app.vercel.app"><img alt="Portal en Vercel" src="https://img.shields.io/badge/portal-en%20línea-362D7C?logo=vercel&logoColor=white"></a>
   <a href="https://tendia-app.vercel.app/app"><img alt="App del tendero en Vercel" src="https://img.shields.io/badge/app%20del%20tendero-en%20línea-F38B54?logo=expo&logoColor=white"></a>
@@ -35,9 +36,11 @@
   <a href="#-recorridos-completos">Recorridos</a> ·
   <a href="#-cómo-funciona">Arquitectura</a> ·
   <a href="#-modelo-y-datos-reales">Modelo</a> ·
+  <a href="#-modelo-de-negocio">Negocio</a> ·
   <a href="#-inteligencia-artificial">IA</a> ·
   <a href="#-seguridad-y-ley-1581">Seguridad</a> ·
   <a href="#-correr-en-local">Local</a> ·
+  <a href="#-estado-y-próximos-pasos">Estado</a> ·
   <a href="#-documentación">Docs</a>
 </p>
 
@@ -62,6 +65,7 @@ Una tienda de barrio vende todos los días, pero el sistema financiero no la ve:
 
 | Qué                                     | Dónde                                                                                                                                                           |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Página de TendIA** (empieza aquí)     | https://tendia-landing.vercel.app: qué es TendIA y enlaces a la app, al portal y a la API                                                                       |
 | **Portal del aliado**                   | https://tendia-app.vercel.app                                                                                                                                   |
 | **API pública y documentación OpenAPI** | https://tendia-app.vercel.app/api/docs                                                                                                                          |
 | Salud de la API (versión desplegada)    | https://tendia-app.vercel.app/api/health                                                                                                                        |
@@ -99,14 +103,17 @@ Con tu propio celular, el código llega por SMS de verdad (Twilio Verify). En un
 
 <table>
   <tr>
+    <td align="center"><img src="docs/img/app-ingreso.png" width="200" alt="Ingreso con OTP"><br><sub><b>Ingreso</b> · celular y código</sub></td>
+    <td align="center"><img src="docs/img/app-inicio.png" width="200" alt="Inicio"><br><sub><b>Inicio</b> · su solicitud, su puntaje y Tendi a un toque</sub></td>
     <td align="center"><img src="docs/img/app-puntaje.png" width="200" alt="Puntaje TendIA"><br><sub><b>T7</b> · Puntaje sobre 1000 con su franja</sub></td>
-    <td align="center"><img src="docs/img/app-tendi.png" width="200" alt="Chat con Tendi"><br><sub><b>Tendi</b> · asistente con Claude</sub></td>
-    <td align="center"><img src="docs/img/app-cuaderno.png" width="200" alt="Mi cuaderno"><br><sub><b>Mi cuaderno</b> · foto, a mano o con Tendi</sub></td>
-    <td align="center"><img src="docs/img/app-aviso-decision.png" width="200" alt="Aviso de decisión"><br><sub><b>T11</b> · aviso de la decisión</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="docs/img/app-ingreso.png" width="200" alt="Ingreso con OTP"><br><sub><b>Ingreso</b> · celular y código</sub></td>
+    <td align="center"><img src="docs/img/app-tendi.png" width="200" alt="Chat con Tendi"><br><sub><b>Tendi</b> · asistente con Claude</sub></td>
+    <td align="center"><img src="docs/img/app-cuaderno.png" width="200" alt="Mi cuaderno"><br><sub><b>Mi cuaderno</b> · foto, a mano o con Tendi</sub></td>
     <td align="center"><img src="docs/img/app-completar.png" width="200" alt="Completar información"><br><sub><b>T5</b> · día normal y día flojo</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/img/app-aviso-decision.png" width="200" alt="Aviso de decisión"><br><sub><b>T11</b> · aviso de la decisión</sub></td>
     <td align="center"><img src="docs/img/app-aprobado.png" width="200" alt="Crédito aprobado"><br><sub><b>T12</b> · aprobado con monto, plazo y tasa</sub></td>
     <td align="center"><img src="docs/img/app-rechazo.png" width="200" alt="Rechazo con consejos"><br><sub><b>T13</b> · rechazo con consejos</sub></td>
   </tr>
@@ -152,6 +159,10 @@ Claude leyó esta hoja así, y nada se guardó hasta que el tendero confirmó:
   <tr>
     <td><img src="docs/img/portal-integraciones.png" alt="API y consumo"><br><sub><b>API y consumo</b> · llaves y consultas por mes</sub></td>
     <td><img src="docs/img/portal-mfa-qr.png" alt="MFA"><br><sub><b>MFA</b> · enrolamiento obligatorio en el primer ingreso</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/portal-politica.png" alt="Política de riesgo"><br><sub><b>Política de riesgo</b> · puntajes mínimos y monto máximo de cada entidad</sub></td>
+    <td><img src="docs/img/portal-login.png" alt="Ingreso al portal"><br><sub><b>Ingreso</b> · correo y contraseña, luego el código de la app de autenticación</sub></td>
   </tr>
 </table>
 
@@ -219,6 +230,8 @@ flowchart LR
 | [`packages/tokens`](packages/tokens)   | Paleta y tipografía de marca, con pruebas de contraste WCAG                                            | TypeScript                           |
 | [`docs`](docs)                         | ADR, modelo de datos, model card, datos, plan de pruebas, legal, seguridad, demo                       | Markdown                             |
 
+La API es un **monolito modular sin estado**: un solo proceso con 14 módulos que no guarda nada en memoria, así que escala agregando instancias. El scoring ya es un servicio aparte. Los diagramas C4, de infraestructura, de clases y entidad-relación están en [docs/diseno](docs/diseno/README.md), junto con el [plan de crecimiento de la infraestructura](docs/diseno/plan-infraestructura.md) y [por qué un monolito](docs/diseno/monolito-sin-estado.md).
+
 ### El recorrido de una solicitud
 
 ```mermaid
@@ -257,6 +270,23 @@ El modelo `tendia-v2` es un **scorecard interpretable** (WoE + regresión logís
 - **Explicable por diseño:** cada variable aporta puntos frente a un negocio promedio y la suma es exacta. Un stacking de LR+HGB+RF ganó 0,04 de Gini y no se adoptó, porque no se explica variable por variable (SARC).
 
 Detalle en la [model card](docs/model-card.md), el [diccionario de variables](docs/diccionario-variables.md) y las [fuentes de datos](docs/datos.md).
+
+## 💼 Modelo de negocio
+
+La entidad paga; **el tendero nunca paga**. Las cifras salen del modelo financiero a 36 meses ([planificación](docs/planificacion.md#modelo-financiero)).
+
+| Concepto                 | Valor                                                               |
+| ------------------------ | ------------------------------------------------------------------- |
+| Plan mensual por entidad | **$1.800.000** con 500 puntajes incluidos                           |
+| Puntaje adicional        | **$3.500**                                                          |
+| Costo de cada puntaje    | $1.075; el 89 % son datos externos y la IA cuesta $115              |
+| Margen por cliente       | ~70 % desde el primer cliente                                       |
+| Clientes                 | 10 entidades en el mes 1 y ~47 en el mes 36                         |
+| Punto de equilibrio      | **Mes 5**                                                           |
+| En tres años             | ~$2.281 millones de ingresos y ~$545 millones de utilidad operativa |
+| Inversión que pedimos    | **$60 millones** de capital semilla y aporte de los socios          |
+
+Clientes objetivo: cooperativas, microfinancieras, distribuidores que fían, fintechs y bancos. Usan el portal o la API pública.
 
 ## 🤖 Inteligencia artificial
 
@@ -327,8 +357,8 @@ cd apps/mobile && npm install && npx expo start  # terminal 4
 
 | Pieza   | Comando                                                                                                                   | Qué cubre                                                                                                     | Resultado              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Scoring | `cd services/scoring && uv sync --group train && uv run pytest`                                                           | Variables, scorecard, indicadores, contrato `/score` v2                                                       | **41 pruebas · 91 %**  |
-| API     | `pnpm --filter @tendia/api test`                                                                                          | Flujo T1 → T13, aislamiento y RLS, Ley 1581, invitaciones, adjuntos, asistente, OTP con Twilio Verify, Sentry | **101 pruebas · 90 %** |
+| Scoring | `cd services/scoring && uv sync --group train && uv run pytest`                                                           | Variables, scorecard, indicadores, contrato `/score` v2                                                       | **45 pruebas · 91 %**  |
+| API     | `pnpm --filter @tendia/api test`                                                                                          | Flujo T1 → T13, aislamiento y RLS, Ley 1581, invitaciones, adjuntos, asistente, OTP con Twilio Verify, Sentry | **108 pruebas · 90 %** |
 | Portal  | `pnpm --filter @tendia/portal test` y `test:e2e`                                                                          | Formatos y flujo feliz con Playwright (MFA → aprobar con la tasa del mercado)                                 | ✅                     |
 | App     | `npm run lint && npx tsc --noEmit` en `apps/mobile`; [`.maestro/flujo-feliz.yaml`](apps/mobile/.maestro/flujo-feliz.yaml) | Tipos, lint y flujo feliz con Maestro                                                                         | ✅                     |
 | Tokens  | `pnpm --filter @tendia/tokens test`                                                                                       | Contraste WCAG AA de la paleta                                                                                | ✅                     |
@@ -349,7 +379,38 @@ Un solo proyecto de Vercel (`tendia-app`, plan gratis) con [Vercel Services](htt
 
 Variables, migraciones, Sentry con la versión del commit (`VERCEL_GIT_COMMIT_SHA`), Twilio y WhatsApp en [docs/deploy.md](docs/deploy.md).
 
+## 🗂️ Estructura del repositorio
+
+```text
+tendia/
+├── apps/
+│   ├── mobile/          App del tendero (Expo), también publicada en web en /app
+│   └── portal/          Portal del aliado (Next.js)
+├── services/
+│   ├── api/             API TendIA (NestJS + Prisma): única puerta a los datos
+│   └── scoring/         Motor de scoring (FastAPI): scorecard, segmentos y referencias
+├── packages/tokens/     Paleta y tipografía compartidas, con pruebas de contraste
+├── docs/                Análisis, diseño, ADR, modelo, legal, seguridad y demo
+├── Dockerfile.api       Imagen de la API, igual en local y en Vercel
+├── docker-compose.yml   Todo el sistema en local
+└── vercel.json          Los cuatro servicios del despliegue
+```
+
+## 🚦 Estado y próximos pasos
+
+| Qué                                                  | Estado                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Flujo completo T1 a T13 y A1 a A4                    | ✅ En línea en Vercel                                                                       |
+| Modelo con datos reales (UCI, DANE, Superfinanciera) | ✅ Pagos al proveedor con datos reales; el componente de negocio, con sintéticos calibrados |
+| IA (explicación, Tendi, cuaderno) y WhatsApp         | ✅ Con respaldo sin IA                                                                      |
+| Conectores de datáfono, distribuidor y Open Finance  | 🟡 Simulados con distribuciones de EMICRON                                                  |
+| Twilio                                               | 🟡 Cuenta de prueba: SMS solo a números verificados                                         |
+
+Lo que sigue: convenios con proveedores de datos (Bold, Treinta, distribuidores), un piloto con 10 entidades que pagan desde el mes 1, validar el modelo con los pagos reales de esos créditos y entrar al sandbox de la Superfinanciera.
+
 ## 📚 Documentación
+
+Todo el análisis y el diseño también está en un solo documento de Word: [**TendIA · Análisis y diseño (.docx)**](docs/TendIA-analisis-y-diseno.docx).
 
 | Documento                                                                                                                           | De qué trata                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -385,4 +446,4 @@ Variables, migraciones, Sentry con la versión del commit (`VERCEL_GIT_COMMIT_SH
 | Juan Esteban Lozano Cárdenas ([@juanLozano-2004](https://github.com/juanLozano-2004))             | UX/UI & Wireframes          |
 | Raquel Iveth Selma Ayala ([@RaquelSAyala](https://github.com/RaquelSAyala))                       | Documentation & QA          |
 
-<p align="center"><sub>Proyecto de IETI · Escuela Colombiana de Ingeniería Julio Garavito · 2026</sub></p>
+<p align="center"><sub><a href="https://tendia-landing.vercel.app">tendia-landing.vercel.app</a> · Proyecto de IETI · Escuela Colombiana de Ingeniería Julio Garavito · 2026</sub></p>

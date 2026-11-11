@@ -433,7 +433,7 @@ Todo el análisis y el diseño también está en un solo documento de Word: [**T
 
 - Ramas `feature/TND-XXX-descripcion`, [Conventional Commits](https://www.conventionalcommits.org/es/v1.0.0/) y PR obligatorio a `main` con al menos una aprobación.
 - [CI](.github/workflows/ci.yml) corre solo las piezas que cambiaron; el check `ci-ok` es obligatorio para fusionar. Dependabot propone las actualizaciones.
-- La Definition of Done está en la plantilla de PR. Las historias viven en los issues (`TND-XXX`) agrupados en épicas E0 a E8.
+- La Definition of Done está en la plantilla de PR. La planeación está en Jira: 26 épicas, 108 historias y 314 subtareas en cinco sprints ([planificación](docs/planificacion.md)); en GitHub, el trabajo técnico se sigue con los issues `TND-XXX`.
 
 ## 👥 Equipo
 

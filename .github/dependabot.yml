@@ -7,13 +7,16 @@ updates:
     groups:
       minor-y-parches:
         update-types: [minor, patch]
-      # Nest se actualiza completo o no se actualiza: un paquete suelto rompe los peers.
-      nestjs:
-        patterns: ['@nestjs/*']
-        update-types: [major]
     ignore:
       # Los tipos siguen la versión de Node del runtime (22 en CI y en Vercel).
       - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # Nest 12 es solo ESM: Jest no lo carga en Node 22 y la CLI cambia (#101, #111).
+      # Se migra a propósito, no con un PR automático.
+      - dependency-name: '@nestjs/*'
+        update-types: ['version-update:semver-major']
+      # Tailwind 4 cambia el plugin de PostCSS y la configuración pasa a CSS (#112).
+      - dependency-name: 'tailwindcss'
         update-types: ['version-update:semver-major']
   - package-ecosystem: npm
     directory: /apps/mobile

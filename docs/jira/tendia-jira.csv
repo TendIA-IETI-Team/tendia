@@ -1,0 +1,2587 @@
+"Work item ID","Work type","Summary","Description","Parent","Labels","Labels","Sprint"
+"1","Epic","Ingreso del tendero con celular y código","Ingreso y registro sin contraseñas, con código por SMS (Twilio Verify) o código en pantalla en ambientes de prueba. Sección 1.1.","","tendia","app-tendero",""
+"27","Epic","Inicio y creación de la solicitud de crédito","Pantalla de inicio con el estado de la solicitud y formulario T1. Secciones 1.2 y 1.3.","","tendia","app-tendero",""
+"47","Epic","Autorización de fuentes de datos (T2)","Consentimiento por fuente (datáfono, distribuidor, open finance) conforme a la Ley 1581. Sección 1.4.","","tendia","app-tendero",""
+"57","Epic","Evaluación automática y datos faltantes (T4, T5, T6)","Traer los datos autorizados, calcular el puntaje y completar la información cuando falte. Secciones 1.5 y 1.6.","","tendia","app-tendero",""
+"77","Epic","Puntaje TendIA explicado y justificación de meses (T7, T8)","Mostrar el puntaje y su explicación antes de compartirlo, y permitir justificar meses malos con evidencia. Secciones 1.7 y 1.8.","","tendia","app-tendero",""
+"96","Epic","Compartir con una entidad y seguimiento (T9 a T13)","Elegir la entidad, seguir la solicitud, responder garantías, ver el resultado y calificar. Secciones 1.9 y 1.10.","","tendia","app-tendero",""
+"116","Epic","Mis autorizaciones","Consultar y revocar consentimientos (derecho de supresión, Ley 1581). Sección 1.11.","","tendia","app-tendero",""
+"122","Epic","Diseño accesible de la app","Accesibilidad para tenderos de todas las edades. Sección 1.14.","","tendia","app-tendero",""
+"130","Epic","Cuaderno digital","Reemplazo del cuaderno de papel: ventas diarias, fiados y lectura de fotos. Sección 1.12.","","tendia","cuaderno-tendi",""
+"153","Epic","Tendi, el asistente con IA","Chat para anotar ventas y fiados y preguntar por el crédito en lenguaje natural. Sección 1.13.","","tendia","cuaderno-tendi",""
+"179","Epic","Tendi por WhatsApp","Uso de Tendi y recepción de avisos por WhatsApp vía Twilio. Sección 2.","","tendia","cuaderno-tendi",""
+"195","Epic","Acceso seguro al portal","Ingreso con contraseña y MFA obligatorio, invitaciones y roles. Secciones 3.1 a 3.3.","","tendia","portal-aliado",""
+"218","Epic","Bandeja y detalle de solicitudes (A1, A2)","Ver las solicitudes compartidas con la entidad y toda la información para decidir. Secciones 3.4 y 3.5.","","tendia","portal-aliado",""
+"241","Epic","Decisión y garantías (A2, A3, A4)","Aprobar, pedir garantía, rechazar y evaluar garantías. Secciones 3.6 y 3.7.","","tendia","portal-aliado",""
+"257","Epic","Configuración de la entidad","Política de riesgo, llaves y consumo de API, y equipo. Secciones 3.8 a 3.10.","","tendia","portal-aliado",""
+"278","Epic","Satisfacción y auditoría del aliado","Tablero de satisfacción y bitácora de la entidad. Secciones 3.11 y 3.12.","","tendia","portal-aliado",""
+"287","Epic","Atención al titular de los datos","Bitácora por tendero y satisfacción global. Secciones 4.1 y 4.2.","","tendia","admin-tendia",""
+"296","Epic","Gestión de entidades aliadas","Alta de entidades, invitaciones de administrador y reinicio de MFA. Secciones 4.3 y 4.4.","","tendia","admin-tendia",""
+"309","Epic","API pública para el core del aliado","POST /v1/score con llave de API y facturación por consulta. Sección 5.","","tendia","scoring-api",""
+"321","Epic","Conectores de datos","Datáfono, distribuidor y open finance, hoy simulados con distribuciones de EMICRON. Sección 6.1.","","tendia","scoring-api",""
+"335","Epic","Motor de scoring tendia-v2","Scorecard interpretable (WoE + regresión logística), calidad de datos, indicadores, segmentación y tasas. Secciones 6.2 a 6.6 y 6.8.","","tendia","scoring-api",""
+"357","Epic","Explicación del puntaje con IA","Explicación en palabras sencillas con Claude y plantilla de respaldo. Sección 6.7.","","tendia","scoring-api",""
+"365","Epic","Protección de datos personales","Cifrado, aislamiento, bitácora, adjuntos, límites y registros. Sección 7.","","tendia","seguridad",""
+"395","Epic","Despliegue y operación","Health check, servicios externos opcionales, seed y despliegue. Sección 8.","","tendia","operacion",""
+"410","Epic","Calidad y pruebas","CI por piezas y pruebas de extremo a extremo. Sección 8.","","tendia","operacion",""
+"418","Epic","Próximas funcionalidades (Anexo D)","Backlog de mejoras identificadas en el Anexo D de funcionalidades.md.","","tendia","roadmap",""
+"2","Story","Solicitar el código de ingreso con mi celular","*Como* tendero, *quiero* ingresar solo con mi número de celular, *para* no tener que recordar contraseñas.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Solicitar el código de ingreso con mi celular
+
+  Scenario: Celular válido recibe el código por SMS
+    Given que Twilio Verify está configurado
+    And estoy en la pantalla de ingreso
+    When escribo un celular de 10 dígitos que empieza por 3
+    And pulso ""Recibir código por mensaje""
+    Then recibo un SMS con un código de 6 dígitos
+    And la app me muestra el campo ""Código""
+
+  Scenario: Celular incompleto
+    Given estoy en la pantalla de ingreso
+    When escribo un número con menos de 10 dígitos
+    Then el botón ""Recibir código por mensaje"" permanece desactivado
+
+  Scenario: Normalización del número
+    Given escribo ""+57 300 123 4567""
+    When solicito el código
+    Then la API normaliza el número a ""3001234567"" quitando espacios y el prefijo 57
+{noformat}
+
+_Referencia: sección 1.1 de funcionalidades.md_
+_Técnico: POST /auth/tendero/otp · auth.service.ts, otp-sender.ts_","1","tendia","app-tendero","Sprint 1"
+"7","Story","Verificar el código y crear la cuenta en el primer ingreso","*Como* tendero, *quiero* confirmar mi identidad con el código que recibí, *para* entrar a la app o registrarme la primera vez.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Verificar el código y crear la cuenta en el primer ingreso
+
+  Scenario: Primer ingreso crea la cuenta
+    Given solicité un código hace menos de 5 minutos
+    And mi celular no está registrado
+    When escribo el código correcto y pulso ""Entrar""
+    Then se crea mi cuenta de tendero y mi negocio vacío
+    And mi celular se guarda cifrado
+    And recibo una sesión válida por 90 días
+    And la app me lleva a la pantalla de inicio
+
+  Scenario: Ingreso de un tendero ya registrado
+    Given ya tengo una cuenta
+    When escribo el código correcto
+    Then entro a mi cuenta existente sin crear una nueva
+
+  Scenario: Código vencido
+    Given solicité un código hace más de 5 minutos
+    When lo escribo y pulso ""Entrar""
+    Then veo un mensaje de error
+    And puedo pulsar ""Reenviar código"" o ""Cambiar número""
+{noformat}
+
+_Referencia: sección 1.1 de funcionalidades.md_
+_Técnico: POST /auth/tendero/verificar_","1","tendia","app-tendero","Sprint 1"
+"13","Story","Limitar intentos y envíos de códigos","*Como* tendero, *quiero* que mi cuenta esté protegida contra intentos de adivinar el código, *para* que nadie entre con mi número.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Limitar intentos y envíos de códigos
+
+  Scenario: Se agotan los intentos de un código
+    Given solicité un código
+    When escribo un código incorrecto 5 veces
+    Then el código deja de ser válido
+    And debo solicitar uno nuevo
+
+  Scenario: Demasiados códigos solicitados
+    Given pedí 3 códigos en los últimos 10 minutos
+    When pido un cuarto código
+    Then veo ""Pediste muchos códigos. Espera unos minutos…""
+
+  Scenario: Límite de peticiones por IP
+    Given una IP hizo 10 peticiones a las rutas de ingreso en el último minuto
+    When hace una petición más
+    Then la API responde con error 429
+{noformat}
+
+_Referencia: sección 1.1 de funcionalidades.md_","1","tendia","app-tendero","Sprint 1"
+"18","Story","Ingresar con celulares de demostración fuera de producción","*Como* equipo de TendIA, *quiero* usar celulares de demostración con perfiles simulados, *para* hacer demos y pruebas sin enviar SMS.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ingresar con celulares de demostración fuera de producción
+
+  Scenario: Código en pantalla en ambiente de pruebas
+    Given el ambiente no es producción
+    When ingreso con un celular entre 300 000 0000 y 300 000 0999
+    Then veo ""Modo de prueba: tu código es XXXXXX""
+    And no se envía ningún SMS
+
+  Scenario: Producción nunca muestra el código
+    Given el ambiente es producción
+    When ingreso con un celular de demostración
+    Then no se muestra el código en pantalla
+
+  Scenario Outline: Perfiles de demostración
+    Given ingreso con el celular <celular>
+    When evalúo una solicitud
+    Then obtengo el perfil ""<perfil>""
+
+    Examples:
+      | celular      | perfil                  |
+      | 300 000 0001 | Buen negocio            |
+      | 300 000 0002 | Caída fuerte en enero   |
+      | 300 000 0003 | Negocio riesgoso        |
+      | 300 000 0004 | Negocio nuevo (4 meses) |
+{noformat}
+
+_Referencia: sección 1.1 de funcionalidades.md_","1","tendia","app-tendero","Sprint 1"
+"22","Story","Cerrar sesión y manejar la sesión vencida","*Como* tendero, *quiero* cerrar mi sesión y que la app reaccione si mi sesión vence, *para* proteger mi cuenta en un celular compartido.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Cerrar sesión y manejar la sesión vencida
+
+  Scenario: Cerrar sesión
+    Given tengo la sesión abierta
+    When pulso ""Salir"" en el inicio
+    Then se borra mi token y vuelvo a la pantalla de ingreso
+
+  Scenario: Sesión inválida
+    Given mi sesión ya no es válida
+    When la app recibe una respuesta 401 de la API
+    Then cierra la sesión automáticamente y me lleva al ingreso
+
+  Scenario: Pantallas protegidas
+    Given no tengo sesión
+    When intento abrir una pantalla interna
+    Then la app me lleva al ingreso
+{noformat}
+
+_Referencia: sección 1.1 de funcionalidades.md_","1","tendia","app-tendero","Sprint 1"
+"28","Story","Ver la pantalla de inicio con el estado de mi solicitud","*Como* tendero, *quiero* ver en el inicio cómo va mi solicitud, *para* saber qué sigue sin buscar.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver la pantalla de inicio con el estado de mi solicitud
+
+  Scenario: Con una solicitud en curso
+    Given tengo una solicitud ""Enviada"" a Banco Demo Popular
+    When abro el inicio
+    Then veo el saludo ""Hola, {nombre}""
+    And veo la tarjeta ""TU SOLICITUD"" con monto, destino y plazo
+    And veo el estado ""Banco Demo Popular está revisando tu solicitud""
+    And veo ""Tu Puntaje TendIA: N de 1000""
+    And veo el botón ""Continuar mi solicitud""
+
+  Scenario: Sin solicitudes en curso
+    Given no tengo una solicitud en curso
+    When abro el inicio
+    Then veo el texto para pedir un crédito y el botón ""Solicitar un crédito""
+    And veo la nota ""TendIA no presta dinero…""
+
+  Scenario: Continuar lleva al paso correcto
+    Given mi solicitud está en ""Datos incompletos""
+    When pulso ""Continuar mi solicitud""
+    Then llego a la pantalla para completar la información
+
+  Scenario: Recarga al volver
+    Given estoy en otra pantalla
+    When vuelvo al inicio
+    Then la información se recarga
+{noformat}
+
+_Referencia: sección 1.2 de funcionalidades.md_","27","tendia","app-tendero","Sprint 2"
+"34","Story","Ver el aviso de una nueva respuesta de la entidad","*Como* tendero, *quiero* enterarme en el inicio de que la entidad respondió, *para* actuar a tiempo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el aviso de una nueva respuesta de la entidad
+
+  Scenario: Aviso de novedad
+    Given la entidad decidió mi solicitud y no lo he visto
+    When abro el inicio
+    Then veo ""Tienes una respuesta de {entidad}"" con el botón ""Ver la respuesta""
+
+  Scenario: La novedad se marca como vista
+    Given veo el aviso de novedad
+    When abro el seguimiento de la solicitud
+    Then la novedad se marca como vista
+    And el aviso ya no aparece en el inicio
+{noformat}
+
+_Referencia: sección 1.2 de funcionalidades.md_","27","tendia","app-tendero","Sprint 2"
+"38","Story","Crear una solicitud de crédito (T1)","*Como* tendero, *quiero* decir cuánto necesito, para qué y en cuánto tiempo, *para* iniciar mi solicitud de crédito.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Crear una solicitud de crédito (T1)
+
+  Scenario: Crear la solicitud
+    Given no tengo solicitudes abiertas
+    And estoy en ""Paso 1 de 4""
+    When escribo $3.000.000, elijo ""Surtir la tienda"" y 6 meses
+    And pulso ""Siguiente""
+    Then se crea la solicitud en estado Borrador
+    And la app me lleva a autorizar las fuentes
+
+  Scenario: El pie indica lo que falta
+    Given no he elegido el plazo
+    Then el pie de la pantalla dice ""Falta: el plazo""
+    And no puedo continuar
+
+  Scenario: Guardar la antigüedad del negocio
+    Given no se conoce la antigüedad de mi negocio
+    When elijo ""1 a 3 años"" y pulso ""Siguiente""
+    Then la antigüedad se guarda en mi negocio
+
+  Scenario: Destino ""Otro""
+    When elijo ""Otro""
+    Then aparece un campo de texto de hasta 200 caracteres
+
+  Scenario Outline: Montos fuera de rango
+    When intento crear una solicitud por <monto>
+    Then la API rechaza la solicitud con un mensaje de validación
+
+    Examples:
+      | monto       |
+      | $150.000    |
+      | $60.000.000 |
+{noformat}
+
+_Referencia: sección 1.3 de funcionalidades.md_
+_Técnico: POST /solicitudes, PUT /me/negocio · solicitar.tsx_","27","tendia","app-tendero","Sprint 2"
+"43","Story","Permitir solo una solicitud abierta por tendero","*Como* tendero, *quiero* tener una sola solicitud abierta a la vez, *para* no confundirme con varias solicitudes en paralelo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Permitir solo una solicitud abierta por tendero
+
+  Scenario: Ya hay una solicitud en curso
+    Given tengo una solicitud en curso
+    When intento crear otra
+    Then la API responde ""Ya tienes una solicitud en curso…""
+
+  Scenario: La anterior ya terminó
+    Given mi última solicitud fue aprobada o rechazada
+    When pulso ""Solicitar un crédito""
+    Then puedo crear una solicitud nueva
+
+  Scenario: Borrar antes de enviar
+    Given tengo una solicitud que no he enviado a ninguna entidad
+    When la borro
+    Then puedo crear otra solicitud
+{noformat}
+
+_Referencia: sección 1.3, Anexo A de funcionalidades.md_","27","tendia","app-tendero","Sprint 2"
+"48","Story","Autorizar las fuentes de datos de mi negocio","*Como* tendero, *quiero* dar permiso fuente por fuente para leer los datos de mi negocio, *para* que calculen mi puntaje con información real.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Autorizar las fuentes de datos de mi negocio
+
+  Scenario: Autorizar varias fuentes
+    Given estoy en ""Paso 2 de 4""
+    When marco ""Ventas con datáfono"" y ""Pagos a tu proveedor""
+    And pulso ""Autorizar y calcular mi puntaje""
+    Then se registra un consentimiento por cada fuente con la versión ""2026-10-v1"", la fecha, la finalidad y la referencia del conector
+    And la app me lleva a la evaluación automática
+
+  Scenario: No duplicar consentimientos
+    Given ya tengo un consentimiento vigente para ""Ventas con datáfono""
+    When vuelvo a autorizarla
+    Then no se crea un consentimiento duplicado
+
+  Scenario: Desmarcar no revoca
+    Given tengo una fuente autorizada
+    When la desmarco en esta pantalla
+    Then el consentimiento sigue vigente
+
+  Scenario: Información de transparencia
+    When abro la pantalla
+    Then veo ""TendIA solo consulta tus datos: no puede mover ni sacar tu dinero.""
+    And veo la finalidad del tratamiento y el enlace ""Leer cómo cuidamos tus datos""
+    And veo qué datos usamos de cada fuente
+{noformat}
+
+_Referencia: sección 1.4 de funcionalidades.md_
+_Técnico: tendero.service.ts, conectores/_","47","tendia","app-tendero","Sprint 2"
+"53","Story","Elegir el proveedor de una fuente","*Como* tendero, *quiero* indicar qué proveedor uso para una fuente, *para* que traigan los datos del lugar correcto.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Elegir el proveedor de una fuente
+
+  Scenario: Fuente con varios proveedores
+    Given la fuente ""Ventas con datáfono"" tiene varios proveedores
+    When la marco
+    Then aparece ""¿Cuál usas?"" con Bold, Treinta, Chiper y Vendty
+    And el consentimiento guarda el proveedor que elegí
+{noformat}
+
+_Referencia: sección 1.4 de funcionalidades.md_","47","tendia","app-tendero","Sprint 2"
+"58","Story","Evaluar automáticamente mi negocio","*Como* tendero, *quiero* que TendIA traiga mis datos y calcule mi puntaje mostrándome el avance, *para* saber que algo está pasando.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Evaluar automáticamente mi negocio
+
+  Scenario: Evaluación exitosa
+    Given autoricé mis fuentes
+    When la app solicita evaluar la solicitud
+    Then los conectores traen 12 meses de datos hasta el último mes cerrado y se guardan por mes
+    And el motor de scoring calcula el puntaje
+    And la solicitud pasa a ""Puntaje listo""
+    And la app me lleva al puntaje
+
+  Scenario: Mensajes de progreso
+    When empieza la evaluación
+    Then veo ""Estamos revisando tu negocio"" con cuatro mensajes que avanzan
+    And la pantalla espera al menos 2,4 segundos
+
+  Scenario: Evaluación lenta
+    Given la evaluación tarda más de 30 segundos
+    Then veo ""Está tardando un poco más de lo normal…""
+
+  Scenario: Error en la evaluación
+    Given la evaluación falla
+    Then veo el mensaje de error y el botón ""Intentar de nuevo""
+{noformat}
+
+_Referencia: sección 1.5 de funcionalidades.md_
+_Técnico: POST /solicitudes/:id/evaluar_","57","tendia","app-tendero","Sprint 2"
+"64","Story","Detectar datos incompletos para el puntaje","*Como* tendero, *quiero* saber exactamente qué información falta, *para* poder completarla y obtener mi puntaje.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Detectar datos incompletos para el puntaje
+
+  Scenario Outline: Datos insuficientes
+    Given mi negocio tiene <situacion>
+    When se evalúa la solicitud
+    Then la solicitud queda en ""Datos incompletos""
+    And veo el mensaje ""<mensaje>""
+    And la app me lleva a completar la información
+
+    Examples:
+      | situacion                       | mensaje                                                        |
+      | 4 meses de ventas               | Necesitamos al menos 6 meses de ventas y hay 4.                |
+      | 2 meses de compras al proveedor | Necesitamos al menos 3 meses de compras al proveedor y hay 2.  |
+      | antigüedad desconocida          | Cuéntanos cuánto tiempo lleva abierto tu negocio.              |
+{noformat}
+
+_Referencia: sección 1.6, 6.3 de funcionalidades.md_","57","tendia","app-tendero","Sprint 2"
+"68","Story","Completar los datos del negocio y estimar mis ventas","*Como* tendero, *quiero* completar lo que falta de forma sencilla, *para* poder calcular mi puntaje.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Completar los datos del negocio y estimar mis ventas
+
+  Scenario: Estimación de ventas mensuales en vivo
+    Given estoy completando la información
+    When escribo $100.000 en ""Un día normal"", $50.000 en ""Un día flojo"" y 2 días flojos por semana
+    Then veo ""Eso es más o menos $2.600.000 al mes""
+
+  Scenario: Faltan pagos al proveedor
+    Given faltan pagos al proveedor
+    Then veo el botón ""Autorizar los pagos a tu proveedor""
+    And no puedo escribir esos datos a mano
+
+  Scenario: Antigüedad obligatoria
+    When dejo vacío ""¿Hace cuántos años abriste?""
+    Then no puedo guardar
+    And el campo acepta decimales como 0,5
+
+  Scenario: Guardar y recalcular
+    When pulso ""Guardar y calcular de nuevo""
+    Then se guardan el negocio, la estimación y las ventas escritas
+    And la app vuelve a la evaluación automática
+{noformat}
+
+_Referencia: sección 1.6 de funcionalidades.md_","57","tendia","app-tendero","Sprint 2"
+"73","Story","Escribir las ventas de los últimos 6 meses","*Como* tendero, *quiero* copiar mis ventas del cuaderno de papel, *para* tener historial suficiente.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Escribir las ventas de los últimos 6 meses
+
+  Scenario: Ventas manuales
+    Given falta historial de ventas
+    Then veo un campo por cada uno de los últimos 6 meses cerrados
+    When los lleno y guardo
+    Then se guardan como fuente ""manual""
+
+  Scenario: Atajo al cuaderno
+    Then veo el enlace ""Pasar mi cuaderno con una foto""
+{noformat}
+
+_Referencia: sección 1.6 de funcionalidades.md_","57","tendia","app-tendero","Sprint 2"
+"78","Story","Ver mi Puntaje TendIA explicado","*Como* tendero, *quiero* ver mi puntaje y por qué lo obtuve en palabras sencillas, *para* entender mi situación antes de compartirlo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver mi Puntaje TendIA explicado
+
+  Scenario Outline: Franja del puntaje
+    Given mi puntaje es <puntaje>
+    When abro la pantalla del puntaje
+    Then veo ""<puntaje> de 1000"" en grande con la franja ""<franja>"" escrita y la barra de escala
+
+    Examples:
+      | puntaje | franja |
+      | 480     | Bajo   |
+      | 600     | Medio  |
+      | 700     | Bueno  |
+
+  Scenario: Explicación del puntaje
+    When abro la pantalla del puntaje
+    Then veo un resumen, hasta 3 puntos en ""Lo que te ayuda"" y hasta 3 consejos en ""Lo que puedes mejorar""
+    And veo ""Este no es un puntaje de DataCrédito…"" y que TendIA no presta dinero
+
+  Scenario: Acciones disponibles
+    Then veo los botones ""Compartir con una entidad"", ""Justificar un mes malo"" e ""Ir al inicio""
+    And veo el botón flotante de Tendi
+{noformat}
+
+_Referencia: sección 1.7 de funcionalidades.md_","77","tendia","app-tendero","Sprint 3"
+"83","Story","Ver mi segmento y las tasas de referencia del mercado","*Como* tendero, *quiero* saber a qué negocios me parezco y cuánto cobran las entidades, *para* comparar ofertas y evitar el gota a gota.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver mi segmento y las tasas de referencia del mercado
+
+  Scenario: Segmento del DANE
+    When abro la pantalla del puntaje
+    Then veo ""Tu negocio se parece a: {segmento}""
+    And veo qué porcentaje de negocios así pidió crédito y cuántos acudieron al gota a gota
+
+  Scenario: Tasas de referencia
+    When abro la pantalla del puntaje
+    Then veo el rango de tasas de la Superintendencia Financiera para tiendas en Bogotá
+    And veo la tasa de referencia para mi franja
+    And veo que no es una oferta y que el gota a gota cobra más de 380 % al año
+{noformat}
+
+_Referencia: sección 1.7, 6.5, 6.6 de funcionalidades.md_","77","tendia","app-tendero","Sprint 3"
+"87","Story","Justificar un mes de ventas bajas","*Como* tendero, *quiero* explicar por qué un mes vendí poco, *para* que ese mes no cuente en mi contra.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Justificar un mes de ventas bajas
+
+  Scenario: Justificar y recalcular
+    Given mi solicitud está en ""Puntaje listo""
+    When elijo uno de mis 6 meses de menores ventas y el motivo ""Obras en la calle""
+    And pulso ""Recalcular mi puntaje""
+    Then se guarda la justificación
+    And el puntaje se recalcula como versión 2 excluyendo ese mes de estabilidad, tendencia y meses flojos
+    And veo ""Con tu justificación tu puntaje subió N puntos (antes: X)""
+
+  Scenario: Otro motivo exige detalle
+    When elijo ""Otro motivo"" sin escribir el detalle
+    Then no puedo recalcular
+
+  Scenario: Justificar de nuevo el mismo mes
+    Given ya justifiqué marzo
+    When vuelvo a justificar marzo
+    Then la nueva justificación reemplaza la anterior
+
+  Scenario: No se permite después de enviar
+    Given mi solicitud ya fue enviada a una entidad
+    When intento justificar un mes
+    Then la API rechaza la operación
+
+  Scenario: Límite de meses
+    Given ya tengo 12 meses justificados
+    When intento justificar otro
+    Then la API rechaza la operación
+{noformat}
+
+_Referencia: sección 1.8 de funcionalidades.md_","77","tendia","app-tendero","Sprint 3"
+"92","Story","Adjuntar evidencia a una justificación","*Como* tendero, *quiero* adjuntar una foto o PDF que respalde mi justificación, *para* que la entidad me crea.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Adjuntar evidencia a una justificación
+
+  Scenario: Evidencia válida
+    When adjunto un PDF de 2 MB
+    Then la evidencia se guarda con la justificación
+
+  Scenario Outline: Evidencia inválida
+    When adjunto <archivo>
+    Then el archivo se rechaza con un mensaje claro
+
+    Examples:
+      | archivo                                      |
+      | un JPG de 4 MB                               |
+      | un archivo .exe renombrado como .pdf         |
+      | un archivo GIF                               |
+{noformat}
+
+_Referencia: sección 1.8, 7 de funcionalidades.md_","77","tendia","app-tendero","Sprint 3"
+"97","Story","Compartir mi puntaje con una entidad","*Como* tendero, *quiero* elegir a qué entidad le muestro mi puntaje, *para* controlar quién ve mis datos.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Compartir mi puntaje con una entidad
+
+  Scenario: Enviar a una entidad
+    Given mi solicitud está en ""Puntaje listo""
+    When elijo ""Banco Demo Popular"" y pulso ""Enviar a Banco Demo Popular""
+    Then la solicitud pasa a ""Enviada"" y queda asociada a esa entidad
+    And el envío queda registrado en la bitácora
+    And la app me lleva al seguimiento
+
+  Scenario: Ninguna otra entidad la ve
+    Given envié mi solicitud a Banco Demo Popular
+    When Microcrédito Demo consulta su bandeja
+    Then mi solicitud no aparece
+
+  Scenario: Tipos de entidad en lenguaje sencillo
+    When abro la lista de entidades
+    Then cada una muestra su tipo: ""Banco"", ""Empresa de crédito digital"", ""Entidad de microcrédito"" o ""Distribuidor""
+{noformat}
+
+_Referencia: sección 1.9 de funcionalidades.md_","96","tendia","app-tendero","Sprint 3"
+"101","Story","Seguir el estado de mi solicitud","*Como* tendero, *quiero* saber en todo momento quién revisa mi solicitud, *para* estar tranquilo y saber qué hacer.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Seguir el estado de mi solicitud
+
+  Scenario: Solicitud en revisión
+    Given mi solicitud está ""Enviada""
+    When abro el seguimiento
+    Then veo ""La entidad está revisando tu puntaje. Te avisaremos cuando decida.""
+    And veo el botón ""Actualizar""
+
+  Scenario: Información siempre visible
+    When abro el seguimiento
+    Then veo ""Quién revisa tu solicitud"" con la entidad, el monto, el plazo y el puntaje
+{noformat}
+
+_Referencia: sección 1.10 de funcionalidades.md_","96","tendia","app-tendero","Sprint 3"
+"104","Story","Responder una solicitud de garantía (T10)","*Como* tendero, *quiero* entender qué garantía me piden y responder con un documento, *para* seguir con mi crédito.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Responder una solicitud de garantía (T10)
+
+  Scenario Outline: Explicación de la garantía
+    Given la entidad me pidió la garantía ""<garantia>""
+    When abro el seguimiento
+    Then veo la explicación ""<explicacion>""
+    And veo la nota de la entidad
+
+    Examples:
+      | garantia                         | explicacion                                                                |
+      | Fondo Nacional de Garantías (FNG)| Es como un fiador, pero del Estado… (con enlace a fng.gov.co)              |
+      | Codeudor                         | Una persona de confianza que se compromete a pagar si tú no puedes.        |
+      | Otra garantía                    | Lee la nota de la entidad para saber qué necesita.                         |
+
+  Scenario: Enviar la respuesta
+    Given la solicitud está en ""Garantía solicitada""
+    When escribo una respuesta de entre 3 y 1000 caracteres, adjunto un PDF de máximo 3 MB y pulso ""Enviar mi respuesta""
+    Then la solicitud pasa a ""Garantía enviada""
+    And veo ""Recibimos tu respuesta. La entidad está revisando tu garantía.""
+{noformat}
+
+_Referencia: sección 1.10 de funcionalidades.md_","96","tendia","app-tendero","Sprint 3"
+"108","Story","Ver el resultado de mi solicitud (T12, T13)","*Como* tendero, *quiero* conocer la decisión de la entidad con su detalle, *para* saber qué sigue.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el resultado de mi solicitud (T12, T13)
+
+  Scenario: Crédito aprobado
+    Given la entidad aprobó mi crédito
+    When abro el seguimiento
+    Then veo ""¡Felicitaciones! {Entidad} aprobó tu crédito.""
+    And veo el monto, el plazo y la tasa efectiva anual
+    And veo que la entidad me contactará para firmar y que revise la tasa y las cuotas
+
+  Scenario: Crédito rechazado
+    Given la entidad rechazó mi solicitud
+    When abro el seguimiento
+    Then veo ""Esta vez la entidad no aprobó tu crédito…""
+    And veo 3 consejos basados en los factores que más me restaron
+    And veo la nota de la entidad
+{noformat}
+
+_Referencia: sección 1.10 de funcionalidades.md_","96","tendia","app-tendero","Sprint 3"
+"112","Story","Calificar mi experiencia con TendIA","*Como* tendero, *quiero* calificar qué tan fácil fue pedir mi crédito, *para* ayudar a mejorar el servicio.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Calificar mi experiencia con TendIA
+
+  Scenario: Encuesta al terminar
+    Given mi solicitud fue aprobada o rechazada
+    When abro el seguimiento
+    Then veo ""¿Qué tan fácil fue pedir tu crédito con TendIA?"" con 1 a 5 estrellas
+    When elijo 4 estrellas y escribo un comentario de hasta 500 caracteres
+    Then la calificación se guarda
+    And la entidad la ve en su tablero de satisfacción
+
+  Scenario: Comentario demasiado largo
+    When escribo un comentario de más de 500 caracteres
+    Then la API rechaza la calificación
+{noformat}
+
+_Referencia: sección 1.10 de funcionalidades.md_","96","tendia","app-tendero","Sprint 3"
+"117","Story","Revocar una autorización de datos","*Como* tendero, *quiero* ver qué datos autoricé y quitar el permiso cuando quiera, *para* ejercer mi derecho de supresión.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Revocar una autorización de datos
+
+  Scenario: Ver autorizaciones
+    When abro ""Mis autorizaciones""
+    Then veo cada autorización vigente con su fuente, proveedor y fecha
+    And veo la lista de autorizaciones que ya quité
+
+  Scenario: Revocar con confirmación
+    Given tengo autorizada ""Ventas con datáfono""
+    When pulso ""Quitar autorización"" y confirmo
+    Then el consentimiento queda revocado
+    And se borran todos los datos mensuales de esa fuente
+    And la revocación queda en la bitácora
+
+  Scenario: Cancelar la revocación
+    When pulso ""Quitar autorización"" y cancelo la confirmación
+    Then la autorización sigue vigente
+{noformat}
+
+_Referencia: sección 1.11 de funcionalidades.md_","116","tendia","app-tendero","Sprint 2"
+"123","Story","Aplicar tamaños, contraste y lenguaje simple","*Como* tendero, *quiero* leer y tocar todo con facilidad, *para* usar la app sin ayuda.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aplicar tamaños, contraste y lenguaje simple
+
+  Scenario: Tamaños mínimos
+    Then el texto mide 18 px, los campos 20 px, los títulos 26 px y el puntaje 64 px
+    And los botones miden al menos 56 px de alto y los elementos táctiles al menos 44 px
+
+  Scenario: El color nunca va solo
+    Then cada franja lleva su nombre escrito
+    And el texto sobre naranja es oscuro y cumple WCAG AA
+
+  Scenario: Lenguaje simple y errores en pantalla
+    Then no aparecen tecnicismos como ""open finance"" o ""POS""
+    And los errores se muestran en español dentro de la pantalla, sin ventanas emergentes
+{noformat}
+
+_Referencia: sección 1.14 de funcionalidades.md_","122","tendia","app-tendero","Sprint 5"
+"127","Story","Ser compatible con lectores de pantalla","*Como* tendero con baja visión, *quiero* usar la app con un lector de pantalla, *para* no depender de otra persona.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ser compatible con lectores de pantalla
+
+  Scenario: Roles accesibles
+    Given tengo activo el lector de pantalla
+    When recorro las pantallas
+    Then los títulos, botones, opciones, casillas, barra de progreso y alertas anuncian su rol
+
+  Scenario: Barra de avance
+    Given estoy en el flujo de solicitud
+    Then el lector anuncia ""Paso X de 4""
+{noformat}
+
+_Referencia: sección 1.14 de funcionalidades.md_","122","tendia","app-tendero","Sprint 5"
+"131","Story","Anotar la venta del día","*Como* tendero, *quiero* anotar cuánto vendí hoy, *para* llevar mis cuentas y que cuenten para mi puntaje.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Anotar la venta del día
+
+  Scenario: Anotar venta a mano
+    Given estoy en ""Mi cuaderno""
+    When escribo $350.000 en ""¿Cuánto vendiste hoy?"" y pulso ""Anotar venta de hoy""
+    Then la venta de hoy queda guardada
+    And veo actualizados hoy, esta semana, este mes y los días anotados
+
+  Scenario: Reemplazar la venta del día
+    Given ya anoté $300.000 hoy
+    When anoto $350.000 hoy
+    Then la venta de hoy queda en $350.000
+
+  Scenario: Resumen sin anotar
+    Given no he anotado hoy
+    Then veo ""sin anotar"" en la venta de hoy
+{noformat}
+
+_Referencia: sección 1.12 de funcionalidades.md_","130","tendia","cuaderno-tendi","Sprint 4"
+"135","Story","Registrar fiados y marcarlos como pagados","*Como* tendero, *quiero* anotar lo que le fío a mis clientes y marcar cuando me pagan, *para* saber cuánto me deben.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Registrar fiados y marcarlos como pagados
+
+  Scenario: Ver lo que me deben
+    When abro ""Mi cuaderno""
+    Then veo ""Te deben (fiados)"" con el total pendiente y hasta 20 fiados con cliente y monto
+
+  Scenario: Marcar un fiado pagado desde el botón
+    Given don Pedro me debe $20.000 en un fiado
+    When pulso ""Ya pagó"" en ese fiado
+    Then ese fiado queda pagado y el total pendiente baja
+
+  Scenario: Marcar pagado por nombre desde Tendi
+    Given don Pedro tiene dos fiados pendientes
+    When le digo a Tendi ""Don Pedro me pagó""
+    Then todos los fiados pendientes de don Pedro quedan pagados
+
+  Scenario: Fiado fuera de límite
+    When intento anotar un fiado de más de $50.000.000
+    Then se rechaza
+{noformat}
+
+_Referencia: sección 1.12 de funcionalidades.md_","130","tendia","cuaderno-tendi","Sprint 4"
+"139","Story","Pasar el cuaderno de papel a la app con una foto","*Como* tendero, *quiero* tomar una foto de mi cuaderno y que la app lea las ventas y fiados, *para* no escribir todo de nuevo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Pasar el cuaderno de papel a la app con una foto
+
+  Scenario: Lectura y revisión
+    Given la lectura con IA está activa
+    When tomo una foto de una hoja del cuaderno
+    Then la API la envía a Claude con visión
+    And veo ""Revisa lo que leímos"" con fecha, ventas y fiados por día
+    And puedo corregir el valor de cada día o quitar días
+
+  Scenario: Guardar la lectura
+    Given revisé lo que se leyó
+    When pulso ""Guardar en mi cuaderno""
+    Then veo ""Guardado: N días de ventas y M fiados.""
+    And los fiados repetidos con misma fecha, cliente y monto no se duplican
+    And la foto no se guarda
+
+  Scenario: Descartar
+    When pulso ""Descartar""
+    Then no se guarda nada
+
+  Scenario: Limpieza del resultado
+    Given la IA leyó una fecha futura, un monto negativo y un fiado sin nombre
+    Then esos registros se descartan antes de mostrarlos
+
+  Scenario: IA no disponible
+    Given la lectura con IA no está activa
+    Then no veo ""Tomar foto"" ni ""Elegir de la galería""
+    And la app me sugiere anotar con Tendi
+{noformat}
+
+_Referencia: sección 1.12 de funcionalidades.md_","130","tendia","cuaderno-tendi","Sprint 4"
+"146","Story","Validar fechas y montos del cuaderno","*Como* equipo de TendIA, *quiero* que el cuaderno solo acepte datos razonables, *para* que el puntaje no se alimente de errores.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Validar fechas y montos del cuaderno
+
+  Scenario Outline: Registros rechazados
+    When intento anotar <registro>
+    Then el registro se rechaza
+
+    Examples:
+      | registro                                |
+      | una venta con fecha futura              |
+      | una venta de hace más de 400 días       |
+      | una venta de más de $500.000.000 al día |
+{noformat}
+
+_Referencia: sección 1.12 de funcionalidades.md_","130","tendia","cuaderno-tendi","Sprint 4"
+"149","Story","Contar las ventas del cuaderno en el puntaje","*Como* tendero, *quiero* que mis ventas anotadas cuenten para mi puntaje, *para* tener historial aunque no use datáfono.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Contar las ventas del cuaderno en el puntaje
+
+  Scenario: Mes con suficientes días
+    Given anoté 10 días de ventas en un mes de 30 días con promedio de $100.000
+    When se evalúa mi solicitud
+    Then ese mes cuenta con ventas de $3.000.000
+
+  Scenario: Mes con pocos días
+    Given anoté 5 días en un mes
+    When se evalúa mi solicitud
+    Then ese mes del cuaderno no cuenta para el puntaje
+
+  Scenario: Lo escrito a mano manda
+    Given escribí ese mes a mano en ""Completar información""
+    Then se usa el valor escrito a mano y no el del cuaderno
+{noformat}
+
+_Referencia: sección 1.12, 1.5 de funcionalidades.md_","130","tendia","cuaderno-tendi","Sprint 4"
+"154","Story","Conversar con Tendi en la app","*Como* tendero, *quiero* hablar con un asistente como le hablaría a un vecino, *para* anotar y preguntar sin formularios.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Conversar con Tendi en la app
+
+  Scenario: Abrir el chat
+    When pulso ""Hablar con Tendi""
+    Then veo el saludo ""Hola, soy Tendi…""
+    And veo los últimos 50 mensajes de la conversación
+    And veo sugerencias como ""Hoy vendí 350 mil"" y ""¿Cómo va mi crédito?""
+
+  Scenario: Enviar una sugerencia
+    When toco la sugerencia ""¿Cómo voy este mes?""
+    Then se envía como mensaje y Tendi responde
+
+  Scenario: Mensaje demasiado largo
+    When escribo un mensaje de más de 1000 caracteres
+    Then no puedo enviarlo
+
+  Scenario: Acceso desde varias pantallas
+    Then el botón flotante de Tendi está en el puntaje, el seguimiento, el cuaderno, completar datos y las autorizaciones
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"159","Story","Anotar ventas y fiados en lenguaje natural","*Como* tendero, *quiero* decirle a Tendi mis ventas y fiados con mis propias palabras, *para* anotar rápido.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Anotar ventas y fiados en lenguaje natural
+
+  Scenario Outline: Montos como los dice un tendero
+    When le escribo a Tendi ""<mensaje>""
+    Then se anota una venta de <monto> en la fecha <fecha>
+
+    Examples:
+      | mensaje               | monto       | fecha |
+      | Hoy vendí 350 mil     | $350.000    | hoy   |
+      | Ayer hice 2 palos     | $2.000.000  | ayer  |
+      | Hoy vendí 1,5 millones| $1.500.000  | hoy   |
+      | Hoy vendí 80k         | $80.000     | hoy   |
+
+  Scenario: Anotar un fiado
+    When le escribo ""Le fié 20 lucas a don Pedro""
+    Then se anota un fiado de $20.000 a don Pedro
+
+  Scenario: Dato ambiguo
+    When le escribo ""Le fié a alguien""
+    Then Tendi me pregunta el nombre y el monto en lugar de inventarlos
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"163","Story","Consultar mi resumen y el estado de mi crédito con Tendi","*Como* tendero, *quiero* preguntarle a Tendi cómo voy y cómo va mi crédito, *para* saberlo sin navegar la app.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Consultar mi resumen y el estado de mi crédito con Tendi
+
+  Scenario: Resumen del mes
+    When le pregunto ""¿Cómo voy este mes?""
+    Then Tendi responde con mis ventas del mes y lo que me deben
+
+  Scenario: Estado de la solicitud
+    Given tengo una solicitud con puntaje
+    When le pregunto ""¿Cómo va mi crédito?""
+    Then Tendi me dice el estado, el puntaje y hasta 2 consejos
+
+  Scenario: Explicar términos
+    When le pregunto ""¿Qué es el Fondo Nacional de Garantías?""
+    Then Tendi lo explica en máximo 3 frases sencillas
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"167","Story","Evitar que Tendi anote dos veces lo mismo","*Como* tendero, *quiero* que Tendi recuerde lo que ya anotó, *para* no tener registros duplicados.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Evitar que Tendi anote dos veces lo mismo
+
+  Scenario: Memoria de acciones
+    Given Tendi anotó una venta en un turno anterior
+    When Tendi relee la conversación
+    Then no vuelve a anotar esa venta
+
+  Scenario: Mensajes de otro día
+    Given un mensaje de ayer decía ""hoy vendí 200 mil""
+    When hoy le escribo a Tendi
+    Then ese mensaje lleva su fecha y no se confunde con hoy
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"171","Story","Responder con reglas cuando la IA no esté disponible","*Como* tendero, *quiero* que Tendi funcione aunque falle la IA, *para* poder anotar siempre.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Responder con reglas cuando la IA no esté disponible
+
+  Scenario: Sin llave de Claude
+    Given no hay llave de Claude configurada
+    When escribo ""Hoy vendí 350 mil""
+    Then el intérprete de reglas anota la venta
+
+  Scenario: Frase no entendida
+    Given la IA no está disponible
+    When escribo algo que el intérprete no entiende
+    Then Tendi me sugiere ejemplos de frases
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"175","Story","Aplicar las reglas de comportamiento de Tendi","*Como* equipo de TendIA, *quiero* que Tendi siga reglas claras de seguridad y tono, *para* proteger al tendero y la marca.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aplicar las reglas de comportamiento de Tendi
+
+  Scenario: No promete créditos
+    Given mi solicitud no está aprobada
+    When le pregunto a Tendi si ya me prestaron
+    Then Tendi no dice que está aprobada
+    And recuerda que TendIA no presta y que el puntaje no es de DataCrédito
+
+  Scenario: No pide datos sensibles
+    Then Tendi nunca pide contraseñas, códigos ni tarjetas
+    And no da asesoría legal, de impuestos ni de inversión
+
+  Scenario: Tono
+    Then Tendi responde en español colombiano, tuteando y en máximo 3 frases
+
+  Scenario: Límite de mensajes
+    Given envié 30 mensajes en el último minuto
+    When envío otro
+    Then la API lo rechaza con 429
+{noformat}
+
+_Referencia: sección 1.13 de funcionalidades.md_","153","tendia","cuaderno-tendi","Sprint 4"
+"180","Story","Recibir mensajes verificados de WhatsApp","*Como* tendero, *quiero* escribirle a Tendi por WhatsApp, *para* usarlo sin abrir la app.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Recibir mensajes verificados de WhatsApp
+
+  Scenario: Mensaje firmado por Twilio
+    Given estoy registrado con mi celular
+    When escribo ""hoy vendí 200 mil"" por WhatsApp
+    Then Twilio reenvía el mensaje a POST /whatsapp/webhook
+    And la API verifica la firma X-Twilio-Signature
+    And el asistente anota la venta y responde por WhatsApp
+
+  Scenario: Firma inválida
+    When llega una petición al webhook sin firma válida
+    Then la API la rechaza
+
+  Scenario: Twilio no configurado en staging o producción
+    Given Twilio no está configurado y el ambiente es staging o producción
+    When llega una petición al webhook
+    Then se rechaza
+{noformat}
+
+_Referencia: sección 2 de funcionalidades.md_","179","tendia","cuaderno-tendi","Sprint 4"
+"184","Story","Responder a celulares no registrados por WhatsApp","*Como* persona no registrada, *quiero* saber qué hacer si escribo sin cuenta, *para* poder registrarme.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Responder a celulares no registrados por WhatsApp
+
+  Scenario: Celular desconocido
+    Given mi celular no está registrado en TendIA
+    When escribo a Tendi por WhatsApp
+    Then recibo ""Hola, soy Tendi de TendIA. Primero regístrate en la app TendIA con este mismo número y luego escríbeme aquí.""
+{noformat}
+
+_Referencia: sección 2 de funcionalidades.md_","179","tendia","cuaderno-tendi","Sprint 4"
+"187","Story","Guardar la foto del cuaderno enviada por WhatsApp","*Como* tendero, *quiero* mandar la foto de mi cuaderno por WhatsApp, *para* pasarlo sin abrir la app.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Guardar la foto del cuaderno enviada por WhatsApp
+
+  Scenario: Lectura y confirmación
+    When envío una foto de mi cuaderno
+    Then Tendi responde con lo leído, hasta 8 líneas por día
+    And me pide ""Responde SÍ para guardarlo o NO para descartarlo.""
+
+  Scenario Outline: Confirmar
+    Given Tendi me mostró una lectura
+    When respondo ""<respuesta>""
+    Then la lectura <resultado>
+
+    Examples:
+      | respuesta | resultado       |
+      | sí        | se guarda       |
+      | dale      | se guarda       |
+      | listo     | se guarda       |
+      | no        | se descarta     |
+
+  Scenario: Origen de las fotos
+    Then las fotos solo se descargan desde los servidores de Twilio
+{noformat}
+
+_Referencia: sección 2 de funcionalidades.md_","179","tendia","cuaderno-tendi","Sprint 4"
+"191","Story","Avisar las decisiones de la entidad por WhatsApp (T11)","*Como* tendero, *quiero* recibir por WhatsApp la decisión de la entidad, *para* enterarme de inmediato.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Avisar las decisiones de la entidad por WhatsApp (T11)
+
+  Scenario Outline: Aviso de decisión
+    Given Twilio está configurado
+    When la entidad <decision> mi solicitud
+    Then recibo un WhatsApp con <contenido>
+
+    Examples:
+      | decision         | contenido                   |
+      | aprueba          | monto, plazo y tasa         |
+      | rechaza          | el aviso de rechazo         |
+      | pide garantía en | el tipo de garantía pedida  |
+
+  Scenario: Falla el aviso
+    Given el envío por WhatsApp falla
+    Then la decisión de la entidad se guarda igual
+    And el fallo queda registrado
+
+  Scenario: Celulares de demostración
+    Given el tendero usa un celular de demostración
+    Then no se envía el aviso
+{noformat}
+
+_Referencia: sección 2, 1.10 de funcionalidades.md_","179","tendia","cuaderno-tendi","Sprint 4"
+"196","Story","Ingresar al portal con correo y contraseña","*Como* analista, *quiero* ingresar con mi correo y contraseña, *para* acceder al portal de mi entidad.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ingresar al portal con correo y contraseña
+
+  Scenario: Credenciales correctas
+    Given tengo una cuenta con MFA activo
+    When escribo mi correo y contraseña y pulso ""Continuar""
+    Then paso a ""Verificación en dos pasos""
+
+  Scenario: Credenciales incorrectas
+    When escribo un correo inexistente o una contraseña errada
+    Then veo ""Correo o contraseña incorrectos""
+    And el tiempo de respuesta es igual en ambos casos
+
+  Scenario: Sesión
+    Given ingresé correctamente
+    Then la sesión dura 8 horas y se guarda por pestaña
+    And al vencer, el portal vuelve al ingreso
+
+  Scenario: Cerrar sesión
+    When pulso cerrar sesión en la barra lateral
+    Then vuelvo al ingreso
+{noformat}
+
+_Referencia: sección 3.1 de funcionalidades.md_","195","tendia","portal-aliado","Sprint 1"
+"201","Story","Activar y usar la verificación en dos pasos (MFA)","*Como* analista, *quiero* proteger mi cuenta con una app autenticadora, *para* que nadie entre solo con mi contraseña.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Activar y usar la verificación en dos pasos (MFA)
+
+  Scenario: Primer ingreso
+    Given es mi primer ingreso
+    When paso la contraseña
+    Then veo ""Activa la verificación en dos pasos"" con un código QR y la clave escrita
+
+  Scenario: Código correcto
+    When escribo el código de 6 dígitos de mi autenticador y pulso ""Ingresar""
+    Then entro a la bandeja
+    And si soy del Equipo TendIA entro a la administración
+
+  Scenario: Paso intermedio vencido
+    Given pasé la contraseña hace más de 5 minutos
+    When escribo el código
+    Then debo volver a empezar
+{noformat}
+
+_Referencia: sección 3.1 de funcionalidades.md_","195","tendia","portal-aliado","Sprint 1"
+"206","Story","Bloquear la cuenta tras intentos fallidos","*Como* administrador del aliado, *quiero* que las cuentas se bloqueen ante intentos repetidos, *para* evitar accesos por fuerza bruta.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Bloquear la cuenta tras intentos fallidos
+
+  Scenario: Bloqueo
+    Given fallé 4 intentos de contraseña o código
+    When fallo un quinto intento
+    Then la cuenta se bloquea 15 minutos
+    And veo ""Cuenta bloqueada por intentos fallidos. Intenta de nuevo en N minutos.""
+    And el bloqueo queda en la bitácora
+
+  Scenario: Límite por IP
+    Given una IP hizo 10 peticiones de ingreso en un minuto
+    When hace otra
+    Then la API responde 429
+{noformat}
+
+_Referencia: sección 3.1 de funcionalidades.md_","195","tendia","portal-aliado","Sprint 1"
+"210","Story","Aceptar una invitación y crear mi cuenta","*Como* persona invitada por una entidad, *quiero* crear mi cuenta desde el enlace que recibí, *para* empezar a usar el portal.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aceptar una invitación y crear mi cuenta
+
+  Scenario: Invitación válida
+    Given recibí un enlace de invitación vigente
+    When lo abro
+    Then veo ""Hola, {nombre}"" y que {Entidad} me invitó como analista o administrador
+
+  Scenario: Crear la contraseña
+    When escribo y repito una contraseña de 12 o más caracteres con letras y números
+    And pulso ""Crear mi cuenta""
+    Then veo ""Tu cuenta está lista"" con el botón ""Ir a ingresar""
+    And la invitación ya no se puede volver a usar
+
+  Scenario: Contraseña débil
+    When escribo una contraseña de 8 caracteres
+    Then no puedo crear la cuenta
+
+  Scenario: Invitación vencida o usada
+    Given la invitación tiene más de 7 días o ya se usó
+    When la abro
+    Then veo ""La invitación venció o ya se usó. Pide una nueva.""
+{noformat}
+
+_Referencia: sección 3.2 de funcionalidades.md_","195","tendia","portal-aliado","Sprint 1"
+"214","Story","Navegar el portal según mi rol","*Como* usuario del portal, *quiero* ver solo las opciones de mi rol, *para* no confundirme ni acceder a lo que no me corresponde.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Navegar el portal según mi rol
+
+  Scenario Outline: Menú por rol
+    Given ingresé como <rol>
+    Then el menú muestra <opciones>
+
+    Examples:
+      | rol                      | opciones                                                              |
+      | Analista                 | Solicitudes, Política (lectura), API y consumo, Satisfacción         |
+      | Administrador del aliado | Solicitudes, Política, API y consumo, Satisfacción, Equipo, Auditoría |
+      | Equipo TendIA            | Bitácora por tendero, Aliados                                         |
+
+  Scenario: Acceso directo a una página de otro rol
+    Given soy analista
+    When abro la URL de Equipo
+    Then el portal me redirige
+    And la API rechaza la petición por rol
+
+  Scenario: Enlaces siempre visibles
+    Then veo Documentación API, Model card y Política de datos
+{noformat}
+
+_Referencia: sección 3.3 de funcionalidades.md_","195","tendia","portal-aliado","Sprint 1"
+"219","Story","Ver la bandeja de solicitudes","*Como* analista, *quiero* ver de un vistazo las solicitudes que me compartieron, *para* priorizar mi trabajo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver la bandeja de solicitudes
+
+  Scenario: Resumen y tabla
+    When abro ""Solicitudes""
+    Then veo las tarjetas ""Por revisar"", ""Total"", ""Aprobadas"" y ""Rechazadas""
+    And veo la tabla con Negocio, Monto, Puntaje, Factores principales, Sugerencia, Estado y Recibida
+    And la tabla está ordenada de la más reciente a la más antigua
+
+  Scenario: Pestañas de estado
+    When elijo la pestaña ""Garantía por evaluar""
+    Then solo veo solicitudes en ese estado
+
+  Scenario: Marca de variación justificada
+    Given una solicitud tiene meses justificados
+    Then su puntaje muestra ""Con variación justificada""
+{noformat}
+
+_Referencia: sección 3.4 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"223","Story","Filtrar la bandeja por franja del puntaje","*Como* analista, *quiero* filtrar por franja, *para* enfocarme en un tipo de riesgo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Filtrar la bandeja por franja del puntaje
+
+  Scenario Outline: Filtro
+    When elijo la franja ""<franja>""
+    Then solo veo solicitudes con puntaje en <rango>
+
+    Examples:
+      | franja | rango      |
+      | Bajo   | 0 a 499    |
+      | Medio  | 500 a 649  |
+      | Bueno  | 650 a 1000 |
+{noformat}
+
+_Referencia: sección 3.4 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"226","Story","Ver la sugerencia según la política de riesgo","*Como* analista, *quiero* ver una sugerencia de decisión basada en la política de mi entidad, *para* decidir más rápido y de forma consistente.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver la sugerencia según la política de riesgo
+
+  Background:
+    Given la política es aprobar con 650 o más, garantía con 500 o más y monto máximo $5.000.000
+
+  Scenario Outline: Sugerencias
+    Given una solicitud de <monto> con puntaje <puntaje>
+    Then la sugerencia es ""<sugerencia>""
+
+    Examples:
+      | monto      | puntaje | sugerencia      |
+      | $3.000.000 | 700     | Aprobar         |
+      | $3.000.000 | 560     | Pedir garantía  |
+      | $3.000.000 | 450     | Rechazar        |
+      | $8.000.000 | 700     | Pedir garantía  |
+      | $8.000.000 | 600     | Rechazar        |
+
+  Scenario: La decisión es del analista
+    Then la sugerencia muestra su motivo y no ejecuta ninguna decisión
+{noformat}
+
+_Referencia: sección 3.4 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"229","Story","Ver el puntaje explicado en el detalle de la solicitud","*Como* analista, *quiero* ver el puntaje y cuánto pesó cada variable, *para* entender el riesgo antes de decidir.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el puntaje explicado en el detalle de la solicitud
+
+  Scenario: Puntaje y componentes
+    When abro el detalle de una solicitud
+    Then veo el puntaje sobre 1000 con la barra de franjas
+    And veo los componentes ""Cómo le pagas a tu proveedor"" y ""Cómo se mueven tus ventas"" con sus puntos y datos de entrenamiento
+    And veo la versión del modelo y el puntaje antes de justificaciones si cambió
+    And veo ""Lo que le explicamos al tendero"" marcado como ""IA generativa"" o ""Plantilla""
+
+  Scenario: Qué pesó en el puntaje
+    Then veo un gráfico de barras con los puntos que suma (índigo) o resta (magenta) cada variable frente a un negocio promedio
+
+  Scenario: Registro de la consulta
+    When abro el detalle
+    Then queda en la bitácora con la finalidad ""evaluar el crédito""
+
+  Scenario: Solicitud de otra entidad
+    When pido el detalle de una solicitud que no me enviaron
+    Then la API responde ""No encontramos esa solicitud""
+{noformat}
+
+_Referencia: sección 3.5 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"234","Story","Ver ventas, pagos y meses justificados en el detalle","*Como* analista, *quiero* ver el historial de ventas, pagos al proveedor y justificaciones, *para* validar la información del tendero.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver ventas, pagos y meses justificados en el detalle
+
+  Scenario: Ventas por mes
+    Then veo el gráfico de ventas de los últimos 12 meses con los meses justificados en naranja
+
+  Scenario: Pagos al proveedor
+    Then veo una tabla por mes con compras fiadas, pagado, cupo, facturas a tiempo y días de retraso
+
+  Scenario: Abrir evidencia
+    Given un mes tiene una justificación con evidencia
+    When pulso abrir la evidencia
+    Then se abre la foto o PDF
+    And queda en la bitácora con la finalidad ""revisar un documento""
+{noformat}
+
+_Referencia: sección 3.5 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"238","Story","Ver indicadores, segmento, referencia de mercado y alertas","*Como* analista, *quiero* tener contexto adicional del negocio, *para* complementar mi análisis.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver indicadores, segmento, referencia de mercado y alertas
+
+  Scenario: Indicadores
+    Then veo ticket promedio, regularidad de recompra, días entre compras, rotación y estacionalidad
+    And se indica que no cambian el puntaje
+
+  Scenario: Segmento y mercado
+    Then veo el segmento del DANE (EMICRON 2024) con ventas y antigüedad típicas
+    And veo la tasa de referencia de la franja, el rango de la Superfinanciera y la tabla de entidades
+
+  Scenario: Alertas de datos
+    Given las ventas declaradas difieren más de 50 % de las reales
+    Then veo esa inconsistencia en ""Alertas de datos""
+
+  Scenario: Datos de la solicitud
+    Then veo monto, plazo, destino, propietario y antigüedad
+{noformat}
+
+_Referencia: sección 3.5 de funcionalidades.md_","218","tendia","portal-aliado","Sprint 3"
+"242","Story","Aprobar un crédito con condiciones","*Como* analista, *quiero* aprobar una solicitud fijando monto, plazo y tasa, *para* formalizar la oferta al tendero.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aprobar un crédito con condiciones
+
+  Scenario: Valores iniciales
+    Given una solicitud ""Por revisar""
+    Then el monto y el plazo vienen con lo que pidió el tendero
+    And la tasa viene con la tasa de referencia de su franja
+
+  Scenario: Aprobar
+    When ajusto las condiciones y pulso ""Aprobar crédito""
+    Then la solicitud queda ""Aprobada"" con esas condiciones
+    And se guarda quién decidió, cuándo y la nota
+    And queda en la bitácora con la finalidad ""decidir el crédito""
+    And se avisa al tendero en la app y por WhatsApp
+
+  Scenario Outline: Condiciones fuera de rango
+    When escribo <campo> = <valor>
+    Then no puedo aprobar
+
+    Examples:
+      | campo | valor        |
+      | monto | $50.000      |
+      | plazo | 61           |
+      | tasa  | 150,5        |
+      | tasa  | 20,123       |
+{noformat}
+
+_Referencia: sección 3.6 de funcionalidades.md_","241","tendia","portal-aliado","Sprint 3"
+"246","Story","Pedir una garantía al tendero","*Como* analista, *quiero* pedir una garantía cuando el riesgo lo amerite, *para* poder aprobar con respaldo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Pedir una garantía al tendero
+
+  Scenario Outline: Pedir garantía
+    Given una solicitud ""Por revisar""
+    When pulso ""Pedir garantía"", elijo ""<tipo>"" y pulso ""Enviar solicitud de garantía""
+    Then la solicitud queda ""Esperando garantía""
+    And se avisa al tendero
+
+    Examples:
+      | tipo                        |
+      | Fondo Nacional de Garantías |
+      | Codeudor                    |
+      | Otra garantía               |
+{noformat}
+
+_Referencia: sección 3.6 de funcionalidades.md_","241","tendia","portal-aliado","Sprint 3"
+"250","Story","Rechazar una solicitud","*Como* analista, *quiero* rechazar una solicitud, *para* cerrar los casos que no cumplen la política.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Rechazar una solicitud
+
+  Scenario: Rechazar
+    Given una solicitud ""Por revisar""
+    When pulso ""Rechazar""
+    Then la solicitud queda ""Rechazada""
+    And el tendero recibe consejos para mejorar
+
+  Scenario: Solicitud ya decidida
+    Given la solicitud ya no está ""Por revisar""
+    When intento decidirla
+    Then veo ""Solo se puede decidir una solicitud en revisión""
+{noformat}
+
+_Referencia: sección 3.6 de funcionalidades.md_","241","tendia","portal-aliado","Sprint 3"
+"253","Story","Evaluar la garantía del tendero","*Como* analista, *quiero* revisar la respuesta y el documento de garantía, *para* cerrar la solicitud.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Evaluar la garantía del tendero
+
+  Scenario: Ver la garantía
+    Given una solicitud en ""Garantía por evaluar""
+    Then veo el tipo pedido, la respuesta del tendero y el documento adjunto
+    When abro el documento
+    Then se abre en una pestaña nueva y queda en la bitácora
+
+  Scenario: Aceptar
+    When pulso ""Aceptar garantía y aprobar"" con las condiciones
+    Then la solicitud queda ""Aprobada""
+
+  Scenario: Rechazar
+    When pulso ""Rechazar garantía""
+    Then la solicitud queda ""Rechazada""
+
+  Scenario: Esperando al tendero
+    Given la solicitud está ""Esperando garantía""
+    Then veo ""Esperando que el tendero responda la solicitud de garantía.""
+{noformat}
+
+_Referencia: sección 3.7 de funcionalidades.md_","241","tendia","portal-aliado","Sprint 3"
+"258","Story","Configurar la política de riesgo","*Como* administrador del aliado, *quiero* definir los puntajes mínimos y el monto máximo, *para* que las sugerencias reflejen mi apetito de riesgo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Configurar la política de riesgo
+
+  Scenario: Guardar la política
+    Given soy administrador
+    When cambio el mínimo para aprobar a 680 y guardo
+    Then veo ""Política guardada. Las sugerencias de la bandeja ya la usan.""
+    And la versión de la política aumenta
+    And el cambio queda en la auditoría con los valores nuevos
+
+  Scenario: Mínimo con garantía mayor que el de aprobar
+    When pongo 700 con garantía y 650 para aprobar
+    Then no puedo guardar
+
+  Scenario: Analista en modo lectura
+    Given soy analista
+    When abro la política
+    Then veo los valores y ""Solo el administrador puede cambiar la política.""
+
+  Scenario: Valores por defecto
+    Given la entidad no ha configurado la política
+    Then los valores son 650, 500 y $5.000.000
+{noformat}
+
+_Referencia: sección 3.8 de funcionalidades.md_","257","tendia","portal-aliado","Sprint 4"
+"262","Story","Crear y revocar llaves de API","*Como* administrador del aliado, *quiero* crear llaves para integrar mi core, *para* consultar el puntaje desde mi sistema.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Crear y revocar llaves de API
+
+  Scenario: Crear una llave
+    When escribo el nombre ""Core producción"" y creo la llave
+    Then veo la llave con forma tnd_XXXXXXXX_… una sola vez
+    And veo ""Copia esta llave ahora; no la volveremos a mostrar""
+    And solo se guarda su huella
+
+  Scenario: Nombre inválido
+    When escribo un nombre de 2 caracteres
+    Then no puedo crear la llave
+
+  Scenario: Revocar
+    When pulso ""Revocar"" en una llave
+    Then queda revocada y las consultas con ella fallan
+    And la acción queda en la auditoría
+
+  Scenario: Analista
+    Given soy analista
+    Then veo ""Solo el administrador gestiona las llaves.""
+{noformat}
+
+_Referencia: sección 3.9 de funcionalidades.md_","257","tendia","portal-aliado","Sprint 4"
+"266","Story","Ver el consumo de la API","*Como* analista, *quiero* ver cuántas consultas hace mi entidad, *para* controlar lo que se factura.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el consumo de la API
+
+  Scenario: Consumo
+    When abro ""API y consumo""
+    Then veo el total y las exitosas de los últimos 30 días con un gráfico por día
+    And veo la tabla de consultas por mes de los últimos 12 meses
+    And veo el botón ""Ver documentación""
+{noformat}
+
+_Referencia: sección 3.9 de funcionalidades.md_","257","tendia","portal-aliado","Sprint 4"
+"270","Story","Invitar personas a mi equipo","*Como* administrador del aliado, *quiero* invitar analistas y administradores, *para* que mi equipo use el portal.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Invitar personas a mi equipo
+
+  Scenario: Crear una invitación
+    When escribo nombre, correo y rol y pulso ""Crear invitación""
+    Then veo ""Invitación lista para {correo}. El enlace vence el {fecha} y solo se muestra esta vez.""
+    And puedo pulsar ""Enviar por correo"" con asunto y mensaje ya escritos o ""Copiar enlace""
+
+  Scenario: Correo ya registrado
+    When invito un correo que ya tiene cuenta
+    Then la invitación se rechaza
+{noformat}
+
+_Referencia: sección 3.10 de funcionalidades.md_","257","tendia","portal-aliado","Sprint 4"
+"274","Story","Ver mi equipo y anular invitaciones","*Como* administrador del aliado, *quiero* ver quién tiene acceso y anular invitaciones, *para* controlar el acceso a mi entidad.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver mi equipo y anular invitaciones
+
+  Scenario: Personas con acceso
+    When abro ""Equipo""
+    Then veo nombre, correo, fecha, rol y si tiene MFA activo
+
+  Scenario: Anular invitación
+    Given hay una invitación pendiente
+    When pulso ""Anular""
+    Then la invitación vence al instante
+{noformat}
+
+_Referencia: sección 3.10 de funcionalidades.md_","257","tendia","portal-aliado","Sprint 4"
+"279","Story","Ver la satisfacción de los tenderos","*Como* analista, *quiero* ver qué tan fácil les pareció el proceso a los tenderos, *para* mejorar la experiencia.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver la satisfacción de los tenderos
+
+  Scenario: Tablero
+    When abro ""Satisfacción""
+    Then veo el promedio sobre 5, el número de respuestas y barras de 5 a 1 estrellas
+    And veo los 20 comentarios más recientes con estrellas y fecha
+    And solo se incluyen solicitudes de mi entidad
+{noformat}
+
+_Referencia: sección 3.11 de funcionalidades.md_","278","tendia","portal-aliado","Sprint 4"
+"283","Story","Consultar la auditoría de mi entidad","*Como* administrador del aliado, *quiero* saber quién consultó o cambió qué, cuándo y para qué, *para* cumplir y controlar el uso de datos.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Consultar la auditoría de mi entidad
+
+  Scenario: Ver la auditoría
+    When abro ""Auditoría""
+    Then veo los últimos 200 eventos con fecha y hora, actor, acción, objeto y finalidad
+    And veo ""La bitácora no se puede editar ni borrar.""
+
+  Scenario: Solo mi entidad
+    Then no veo eventos de otras entidades
+{noformat}
+
+_Referencia: sección 3.12 de funcionalidades.md_","278","tendia","portal-aliado","Sprint 4"
+"288","Story","Consultar la bitácora de un tendero","*Como* miembro del Equipo TendIA, *quiero* ver quién vio los datos de un tendero, cuándo y para qué, *para* atender reclamos y requerimientos de la SIC.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Consultar la bitácora de un tendero
+
+  Scenario: Buscar por celular
+    When escribo el celular del tendero y pulso ""Ver bitácora""
+    Then la API lo busca por su huella sin descifrar el celular
+    And veo hasta 500 eventos con fecha, quién, entidad, acción y finalidad en palabras
+
+  Scenario: La consulta también se registra
+    When consulto la bitácora
+    Then queda un evento con la finalidad ""atender al titular""
+
+  Scenario: Celular no registrado
+    When busco un celular que no existe
+    Then veo que no hay resultados
+{noformat}
+
+_Referencia: sección 4.1 de funcionalidades.md_","287","tendia","admin-tendia","Sprint 5"
+"292","Story","Ver la satisfacción de todas las entidades","*Como* miembro del Equipo TendIA, *quiero* ver la satisfacción de todos los aliados, *para* medir la experiencia global.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver la satisfacción de todas las entidades
+
+  Scenario: Tablero global
+    When abro la administración
+    Then veo el tablero de satisfacción con respuestas de todas las entidades
+    And cada comentario indica de qué entidad viene
+{noformat}
+
+_Referencia: sección 4.2 de funcionalidades.md_","287","tendia","admin-tendia","Sprint 5"
+"297","Story","Dar de alta una entidad aliada","*Como* miembro del Equipo TendIA, *quiero* dar de alta una entidad cuando firma con TendIA, *para* que pueda empezar a usar el portal.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Dar de alta una entidad aliada
+
+  Scenario: Alta
+    When lleno nombre, tipo (Banco, Fintech, Microfinanciera o Distribuidor), nombre y correo del administrador
+    And pulso ""Dar de alta""
+    Then se crea la entidad y una invitación de administrador de 7 días y un solo uso
+    And veo el enlace con ""Enviar por correo"" y ""Copiar enlace""
+
+  Scenario: Nombre repetido
+    Given existe la entidad ""Banco Demo Popular""
+    When intento crear ""banco demo popular""
+    Then la API lo rechaza
+
+  Scenario: Correo ya registrado
+    When uso un correo que ya tiene cuenta
+    Then la API lo rechaza
+{noformat}
+
+_Referencia: sección 4.3 de funcionalidades.md_","296","tendia","admin-tendia","Sprint 5"
+"301","Story","Ver el estado de las entidades y reinvitar administradores","*Como* miembro del Equipo TendIA, *quiero* ver el estado de cada entidad y reenviar invitaciones, *para* asegurar que todas estén operativas.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el estado de las entidades y reinvitar administradores
+
+  Scenario: Lista de entidades
+    When abro ""Aliados""
+    Then veo cada entidad con tipo, personas, solicitudes e invitaciones pendientes
+    And veo las marcas ""Sin administrador"", ""Todos con MFA"" o ""N sin MFA""
+
+  Scenario: Reinvitar
+    Given la invitación del administrador venció
+    When pulso ""Invitar administrador""
+    Then se crea una nueva invitación
+{noformat}
+
+_Referencia: sección 4.3 de funcionalidades.md_","296","tendia","admin-tendia","Sprint 5"
+"305","Story","Reiniciar la verificación en dos pasos de un usuario","*Como* miembro del equipo técnico de TendIA, *quiero* reiniciar el MFA de quien perdió su autenticador, *para* que recupere el acceso.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Reiniciar la verificación en dos pasos de un usuario
+
+  Scenario: Reinicio por script
+    Given una persona perdió su app autenticadora
+    When ejecuto ""node dist/scripts/reset-mfa.js <correo>""
+    Then se borra su secreto MFA y se desbloquea la cuenta
+    And queda en la bitácora
+    And en su siguiente ingreso escanea un QR nuevo
+{noformat}
+
+_Referencia: sección 4.4 de funcionalidades.md_","296","tendia","admin-tendia","Sprint 5"
+"310","Story","Consultar el puntaje desde el core de la entidad","*Como* sistema core del aliado, *quiero* calcular el Puntaje TendIA enviando los datos del negocio, *para* integrar el puntaje en mi proceso de crédito.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Consultar el puntaje desde el core de la entidad
+
+  Scenario: Consulta exitosa
+    Given tengo una llave de API vigente
+    When envío POST /v1/score con x-api-key y datos válidos
+    Then recibo puntaje, franja, probabilidad de incumplimiento, segmento, componentes, aportes, top 3 factores, indicadores, calidad de datos y explicación
+
+  Scenario: Llave inválida o revocada
+    When envío una llave revocada
+    Then recibo ""Llave de API inválida o revocada""
+
+  Scenario: Documentación
+    When abro /api/docs
+    Then veo la documentación OpenAPI interactiva
+{noformat}
+
+_Referencia: sección 5 de funcionalidades.md_","309","tendia","scoring-api","Sprint 5"
+"314","Story","Validar el contrato v2 de la API pública","*Como* sistema core del aliado, *quiero* recibir errores claros si envío datos inválidos, *para* corregir mi integración.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Validar el contrato v2 de la API pública
+
+  Scenario Outline: Datos inválidos
+    When envío <dato>
+    Then recibo 400 ""Datos inválidos"" con el detalle
+
+    Examples:
+      | dato                                          |
+      | una antigüedad de 1300 meses                  |
+      | 37 meses de ventas                            |
+      | 13 ajustes                                    |
+      | un motivo de ajuste de 2 caracteres           |
+      | un campo que no está en el contrato           |
+{noformat}
+
+_Referencia: sección 5 de funcionalidades.md_","309","tendia","scoring-api","Sprint 5"
+"317","Story","Registrar el consumo de la API para facturación","*Como* equipo de TendIA, *quiero* registrar cada consulta de la API, *para* facturar a las entidades.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Registrar el consumo de la API para facturación
+
+  Scenario: Registro de la consulta
+    When una entidad hace una consulta
+    Then se registra para la facturación aunque termine en error
+    And se actualiza el último uso de la llave
+    And se escribe en la bitácora con la finalidad ""consulta por API""
+{noformat}
+
+_Referencia: sección 5 de funcionalidades.md_","309","tendia","scoring-api","Sprint 5"
+"322","Story","Traer las ventas del datáfono","*Como* tendero, *quiero* que TendIA lea mis ventas del datáfono, *para* usarlas en mi puntaje.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Traer las ventas del datáfono
+
+  Scenario: Datos por mes
+    Given autoricé el datáfono con Bold
+    When el conector consulta
+    Then devuelve ventas y número de transacciones por mes de los últimos 12 meses
+{noformat}
+
+_Referencia: sección 6.1 de funcionalidades.md_","321","tendia","scoring-api","Sprint 2"
+"325","Story","Traer los pagos al distribuidor","*Como* tendero, *quiero* que TendIA lea cómo le pago a mi proveedor, *para* demostrar que pago a tiempo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Traer los pagos al distribuidor
+
+  Scenario: Datos por mes
+    Given autoricé al distribuidor
+    When el conector consulta
+    Then devuelve por mes compras, facturas, facturas pagadas a tiempo, días de retraso, monto pagado y cupo
+{noformat}
+
+_Referencia: sección 6.1 de funcionalidades.md_","321","tendia","scoring-api","Sprint 2"
+"328","Story","Traer los ingresos de la cuenta bancaria (open finance)","*Como* tendero, *quiero* que TendIA lea lo que entra a mi cuenta, *para* complementar mis ventas.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Traer los ingresos de la cuenta bancaria (open finance)
+
+  Scenario: Datos por mes
+    Given autoricé la cuenta del banco
+    When el conector consulta
+    Then devuelve el dinero que entra cada mes
+{noformat}
+
+_Referencia: sección 6.1 de funcionalidades.md_","321","tendia","scoring-api","Sprint 2"
+"331","Story","Simular datos reproducibles con perfiles de demostración","*Como* equipo de TendIA, *quiero* que la simulación sea reproducible y realista, *para* hacer demos y pruebas confiables.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Simular datos reproducibles con perfiles de demostración
+
+  Scenario: Reproducibilidad
+    Given el mismo negocio
+    When consulto los conectores dos veces
+    Then recibo el mismo historial
+
+  Scenario: Estacionalidad
+    Then enero es bajo y diciembre alto
+
+  Scenario: Perfil nuevo
+    Given el perfil ""nuevo""
+    Then solo hay 4 meses de historia y la solicitud queda en datos incompletos
+{noformat}
+
+_Referencia: sección 6.1 de funcionalidades.md_","321","tendia","scoring-api","Sprint 2"
+"336","Story","Calcular el puntaje con el scorecard interpretable","*Como* analista, *quiero* un puntaje explicable variable por variable, *para* cumplir el SARC y entender el riesgo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Calcular el puntaje con el scorecard interpretable
+
+  Scenario: Fórmula
+    Given una probabilidad de incumplimiento de 10 %
+    When se calcula el puntaje
+    Then el resultado es 615 puntos
+    And el puntaje = 303 + 142 × ln(p pagar / p no pagar), recortado entre 0 y 1000
+
+  Scenario: Aditividad
+    When se calcula cualquier puntaje
+    Then la suma de los aportes de las variables da exactamente el puntaje
+
+  Scenario: Componentes
+    Then el componente de pagos al proveedor pesa 1,0 y el de negocio 0,5
+
+  Scenario: Desempeño
+    Then el componente de pagos tiene AUC ≥ 0,74 en datos de prueba
+{noformat}
+
+_Referencia: sección 6.2, 6.8 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"341","Story","Preparar las ventas con prioridad de fuentes y meses justificados","*Como* equipo de TendIA, *quiero* que las ventas se preparen con reglas claras, *para* que el puntaje sea consistente.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Preparar las ventas con prioridad de fuentes y meses justificados
+
+  Scenario: Prioridad de fuentes
+    Given un mes tiene ventas de datáfono, de cuenta bancaria y declaradas
+    Then se usa la del datáfono
+
+  Scenario: Exclusión de meses justificados
+    Given el tendero justificó enero
+    Then enero se excluye de estabilidad, tendencia y proporción de meses flojos
+
+  Scenario: Una sola fuente para la estabilidad
+    Then estabilidad, tendencia y meses flojos se calculan con la fuente de más meses
+{noformat}
+
+_Referencia: sección 6.2 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"344","Story","Evaluar la calidad de los datos y generar alertas","*Como* analista, *quiero* ver alertas de inconsistencias, *para* detectar posibles errores o fraudes.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Evaluar la calidad de los datos y generar alertas
+
+  Scenario Outline: Alertas de consistencia
+    Given <condicion>
+    Then se genera una alerta y el puntaje igual se calcula
+
+    Examples:
+      | condicion                                                |
+      | las ventas declaradas se alejan más de 50 % de las reales |
+      | las compras al proveedor superan 1,2 veces las ventas     |
+      | las compras son menos de 0,3 veces las ventas             |
+
+  Scenario: Sin puntaje
+    Given hay menos de 6 meses de ventas
+    Then el motor no devuelve puntaje e informa el faltante
+{noformat}
+
+_Referencia: sección 6.3 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"347","Story","Calcular los indicadores del negocio","*Como* analista, *quiero* ver indicadores de contexto, *para* complementar el puntaje.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Calcular los indicadores del negocio
+
+  Scenario: Indicadores
+    When se evalúa un negocio
+    Then se calculan ticket promedio, regularidad de recompra, días entre compras, rotación y estacionalidad
+    And no modifican el puntaje
+{noformat}
+
+_Referencia: sección 6.4 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"350","Story","Asignar el segmento con datos del DANE","*Como* analista, *quiero* saber a qué segmento real pertenece el negocio, *para* contextualizar el riesgo.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Asignar el segmento con datos del DANE
+
+  Scenario: Asignación de segmento
+    When se evalúa un negocio
+    Then se asigna uno de: Tienda consolidada, Tienda tradicional, Negocio joven o Negocio de subsistencia
+    And el segmento no entra en el puntaje
+{noformat}
+
+_Referencia: sección 6.5 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"353","Story","Calcular las tasas de referencia de la Superfinanciera","*Como* analista, *quiero* tener una tasa de referencia por franja, *para* precargar condiciones razonables.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Calcular las tasas de referencia de la Superfinanciera
+
+  Scenario Outline: Tasa por franja
+    Given la franja es <franja>
+    Then la tasa de referencia es el <percentil> (<tasa>)
+
+    Examples:
+      | franja | percentil    | tasa    |
+      | Bueno  | percentil 25 | 48,8 %  |
+      | Medio  | mediana      | 61,9 %  |
+      | Bajo   | percentil 75 | 65,5 %  |
+{noformat}
+
+_Referencia: sección 6.6 de funcionalidades.md_","335","tendia","scoring-api","Sprint 2"
+"358","Story","Generar la explicación del puntaje con Claude","*Como* tendero, *quiero* una explicación sencilla de mi puntaje, *para* entender qué mejorar.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Generar la explicación del puntaje con Claude
+
+  Scenario: Datos enviados a la IA
+    When se genera la explicación
+    Then a Claude solo se le envían puntaje, franja, segmento, factores principales y meses justificados
+    And nunca datos que identifiquen al tendero
+
+  Scenario: Formato
+    Then la respuesta tiene un resumen de máximo 2 frases, hasta 3 fortalezas y hasta 3 cosas por mejorar
+
+  Scenario: La IA no calcula
+    Then la IA nunca calcula ni cambia el puntaje
+{noformat}
+
+_Referencia: sección 6.7 de funcionalidades.md_","357","tendia","scoring-api","Sprint 3"
+"361","Story","Validar la explicación y usar la plantilla de respaldo","*Como* equipo de TendIA, *quiero* descartar explicaciones inseguras, *para* no confundir ni prometer créditos.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Validar la explicación y usar la plantilla de respaldo
+
+  Scenario Outline: Texto descartado
+    Given la IA devuelve un texto que <problema>
+    Then se descarta y se usa la plantilla
+
+    Examples:
+      | problema                    |
+      | dice ""aprobado""             |
+      | dice ""te prestamos""         |
+      | dice ""garantizado""          |
+      | menciona DataCrédito        |
+      | dice que TendIA presta      |
+      | es demasiado largo          |
+
+  Scenario: Sin IA
+    Given no hay llave de Claude
+    Then se usa la plantilla ""Tu Puntaje TendIA es X de 1000, franja Y…"" con fortalezas y consejos de las 11 variables
+{noformat}
+
+_Referencia: sección 6.7 de funcionalidades.md_","357","tendia","scoring-api","Sprint 3"
+"366","Story","Cifrar los datos personales","*Como* responsable de cumplimiento, *quiero* que los datos personales estén cifrados, *para* cumplir la Ley 1581.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Cifrar los datos personales
+
+  Scenario: Cifrado en reposo
+    When se guarda el celular de un tendero o un secreto MFA
+    Then se cifra con AES-256-GCM
+    And se guarda una huella HMAC para buscarlo sin descifrar
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"370","Story","Aislar los datos por entidad con Row Level Security","*Como* administrador del aliado, *quiero* que ninguna otra entidad vea mis solicitudes, *para* proteger la confidencialidad.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aislar los datos por entidad con Row Level Security
+
+  Scenario: Filtro en la API
+    Given soy analista de Banco Demo
+    When consulto solicitudes
+    Then solo veo las que los tenderos le enviaron a Banco Demo
+
+  Scenario: Defensa en la base de datos
+    Given una consulta olvida el filtro de entidad
+    Then Postgres con Row Level Security no devuelve filas de otras entidades
+
+  Scenario: No revelar existencia
+    When pido una solicitud ajena
+    Then recibo ""No encontramos esa solicitud""
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"374","Story","Mantener una bitácora inmutable","*Como* responsable de cumplimiento, *quiero* una bitácora que no se pueda alterar, *para* demostrar quién hizo qué ante la SIC.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Mantener una bitácora inmutable
+
+  Scenario: Registro sin datos personales
+    When ocurre una acción auditada
+    Then se guarda quién, cuándo y para qué, sin datos personales
+
+  Scenario: Inmutabilidad
+    When alguien intenta editar o borrar un evento
+    Then un disparador de la base de datos lo rechaza
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"378","Story","Controlar los archivos adjuntos","*Como* responsable de seguridad, *quiero* que los adjuntos sean seguros y de acceso controlado, *para* evitar archivos maliciosos y fugas.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Controlar los archivos adjuntos
+
+  Scenario: Tipos permitidos
+    Then solo se aceptan JPG, PNG, WEBP o PDF de hasta 3 MB con la firma del archivo verificada
+
+  Scenario: Acceso
+    Given un adjunto de una solicitud enviada a Banco Demo
+    When otra entidad intenta descargarlo
+    Then no puede
+    And cada descarga de Banco Demo queda registrada
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"382","Story","Limitar la tasa de peticiones","*Como* responsable de seguridad, *quiero* límites de peticiones por ruta, *para* evitar abusos y ataques.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Limitar la tasa de peticiones
+
+  Scenario Outline: Límites
+    Given se superan <limite> peticiones por minuto en <ruta>
+    Then la API responde 429
+
+    Examples:
+      | ruta                  | limite |
+      | general               | 120    |
+      | ingreso               | 10     |
+      | Tendi                 | 30     |
+      | lectura del cuaderno  | 10     |
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"385","Story","Registrar logs y errores sin datos personales","*Como* responsable de seguridad, *quiero* que los logs no expongan datos sensibles, *para* cumplir la Ley 1581.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Registrar logs y errores sin datos personales
+
+  Scenario: Logs
+    Then los logs ocultan encabezados de autorización, llaves y cuerpos de las peticiones
+
+  Scenario: Sentry
+    Then Sentry solo recibe errores 500 sin usuarios, cookies ni cuerpos
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"389","Story","Aplicar cabeceras de seguridad en el portal","*Como* responsable de seguridad, *quiero* que el portal no se pueda incrustar ni revele su tecnología, *para* reducir la superficie de ataque.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Aplicar cabeceras de seguridad en el portal
+
+  Scenario: Cabeceras
+    When se carga el portal
+    Then las cabeceras impiden incrustarlo en otras páginas
+    And no exponen la tecnología del servidor
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"392","Story","Publicar documentos legales y revisión OWASP","*Como* responsable de cumplimiento, *quiero* tener la política de datos, el aviso de privacidad y la revisión OWASP, *para* cumplir la regulación.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Publicar documentos legales y revisión OWASP
+
+  Scenario: Documentos disponibles
+    Then la política de tratamiento de datos y el aviso de privacidad están en docs/legal/
+    And la revisión OWASP API Top 10 está en docs/security/
+    And la app y el portal enlazan la política de datos
+{noformat}
+
+_Referencia: sección 7 de funcionalidades.md_","365","tendia","seguridad","Sprint 1"
+"396","Story","Exponer el estado de salud del sistema","*Como* equipo de TendIA, *quiero* un endpoint de salud, *para* monitorear la plataforma.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Exponer el estado de salud del sistema
+
+  Scenario: Todo bien
+    When consulto GET /api/health
+    Then responde el estado de la base de datos, del scoring y la versión desplegada
+
+  Scenario: Falla el scoring
+    Given el motor de scoring no responde
+    Then el estado es ""degradado""
+
+  Scenario: Falla la base de datos
+    Given la base de datos no responde
+    Then responde error
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","395","tendia","operacion","Sprint 1"
+"399","Story","Funcionar sin servicios externos","*Como* equipo de TendIA, *quiero* que el sistema funcione aunque falte Claude, Twilio o Sentry, *para* no depender de terceros.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Funcionar sin servicios externos
+
+  Scenario Outline: Degradación
+    Given no está configurado <servicio>
+    Then <comportamiento>
+
+    Examples:
+      | servicio | comportamiento                                                               |
+      | Claude   | la explicación usa plantilla, Tendi usa reglas y el cuaderno se anota a mano |
+      | Twilio   | el código se muestra en pantalla solo en desarrollo y no hay WhatsApp       |
+      | Sentry   | no se reportan errores                                                       |
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","395","tendia","operacion","Sprint 1"
+"402","Story","Cargar datos de demostración","*Como* equipo de TendIA, *quiero* cuentas y políticas de demostración, *para* hacer demos rápido.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Cargar datos de demostración
+
+  Scenario: Seed
+    Given SEED_ON_START=true y el ambiente no es producción
+    When arranca la API
+    Then se crean admin@bancodemo.co, analista@bancodemo.co, admin@microdemo.co y admin@tendia.co
+    And Banco Demo Popular tiene la política 650 / 500 / $8.000.000
+    And Microcrédito Demo tiene la política 620 / 480 / $5.000.000
+
+  Scenario: Producción
+    Given el ambiente es producción
+    Then el seed nunca se ejecuta
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","395","tendia","operacion","Sprint 1"
+"406","Story","Desplegar en Vercel y ejecutar en local con Docker","*Como* equipo de TendIA, *quiero* un despliegue automático y un entorno local reproducible, *para* entregar rápido y con confianza.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Desplegar en Vercel y ejecutar en local con Docker
+
+  Scenario: Despliegue automático
+    When se fusiona un cambio a main
+    Then se despliegan el portal (/), la app (/app), la API (/api, con migraciones al arrancar) y el scoring privado en Vercel
+    And la base de datos es Postgres en Supabase
+
+  Scenario: Local
+    When ejecuto ""docker compose up --build""
+    Then se levantan Postgres, scoring, API y portal
+    And la app se corre con ""npx expo start""
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","395","tendia","operacion","Sprint 1"
+"411","Story","Ejecutar CI por piezas con check obligatorio","*Como* equipo de TendIA, *quiero* que solo se pruebe lo que cambió y que el check ci-ok sea obligatorio, *para* fusionar rápido y seguro.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ejecutar CI por piezas con check obligatorio
+
+  Scenario: Cambio en el scoring
+    Given un PR que solo toca services/scoring
+    Then solo corren las pruebas del scoring
+    And el check ci-ok debe pasar para fusionar
+
+  Scenario: Cobertura
+    Then el scoring mantiene al menos 90 % de cobertura y la API al menos 90 %
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","410","tendia","operacion","Sprint 5"
+"414","Story","Automatizar los flujos felices de extremo a extremo","*Como* equipo de TendIA, *quiero* pruebas e2e del portal y la app, *para* detectar regresiones en los flujos críticos.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Automatizar los flujos felices de extremo a extremo
+
+  Scenario: Portal
+    When corre Playwright
+    Then valida el flujo MFA → aprobar
+
+  Scenario: App
+    When corre Maestro
+    Then valida el flujo feliz del tendero
+    And pasan lint y tipos
+
+  Scenario: Tokens
+    Then pasan las pruebas de contraste WCAG AA
+{noformat}
+
+_Referencia: sección 8 de funcionalidades.md_","410","tendia","operacion","Sprint 5"
+"419","Story","Hablarle a Tendi por voz","*Como* tendero, *quiero* dictarle a Tendi mis ventas y fiados, *para* anotar sin escribir.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Hablarle a Tendi por voz
+
+  Scenario: Nota de voz
+    When envío una nota de voz diciendo ""hoy vendí 300 mil""
+    Then Tendi la transcribe y anota la venta
+    And me confirma lo que anotó
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"422","Story","Integrar conectores reales con los proveedores","*Como* tendero, *quiero* que TendIA lea mis datos reales del datáfono, distribuidor y banco, *para* que mi puntaje refleje mi negocio real.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Integrar conectores reales con los proveedores
+
+  Scenario: Conector real
+    Given TendIA firmó convenio con Bold
+    When autorizo Bold
+    Then el conector trae mis datos reales en lugar de simulados
+{noformat}
+
+_Referencia: sección Anexo D, 6.1 de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"425","Story","Avisar la decisión por correo o SMS y por webhooks a las entidades","*Como* tendero y entidad aliada, *quiero* recibir avisos por más canales, *para* no perder ninguna novedad.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Avisar la decisión por correo o SMS y por webhooks a las entidades
+
+  Scenario: Aviso por SMS
+    When la entidad decide mi solicitud
+    Then recibo también un SMS
+
+  Scenario: Webhook a la entidad
+    When un tendero comparte una solicitud con mi entidad
+    Then mi sistema recibe un webhook firmado
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"428","Story","Enviar las invitaciones automáticamente por correo","*Como* administrador del aliado, *quiero* que TendIA envíe la invitación por correo, *para* no tener que copiar enlaces.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Enviar las invitaciones automáticamente por correo
+
+  Scenario: Envío automático
+    When creo una invitación
+    Then la persona recibe un correo con el enlace sin que yo lo copie
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"431","Story","Gestionar las personas del equipo desde el portal","*Como* administrador del aliado, *quiero* quitar personas, cambiar su rol y reiniciar su MFA, *para* administrar mi equipo sin pedir soporte.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Gestionar las personas del equipo desde el portal
+
+  Scenario: Quitar acceso
+    When quito a una persona del equipo
+    Then ya no puede ingresar y queda en la auditoría
+
+  Scenario: Cambiar rol
+    When cambio a un analista a administrador
+    Then su menú cambia en el siguiente ingreso
+
+  Scenario: Reiniciar MFA
+    When reinicio el MFA de una persona
+    Then debe escanear un QR nuevo en su próximo ingreso
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"434","Story","Ver el historial de versiones de la política de riesgo","*Como* administrador del aliado, *quiero* ver las versiones anteriores de la política, *para* auditar los cambios.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Ver el historial de versiones de la política de riesgo
+
+  Scenario: Historial
+    When abro la política
+    Then veo cada versión con fecha, autor y valores
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"437","Story","Pedir más información al tendero","*Como* analista, *quiero* pedirle al tendero información adicional sin exigir garantía, *para* decidir con más contexto.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Pedir más información al tendero
+
+  Scenario: Pedir información
+    Given una solicitud ""Por revisar""
+    When pido más información con una nota
+    Then el tendero recibe el pedido y puede responder con texto y adjuntos
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"440","Story","Buscar, ordenar y paginar la bandeja","*Como* analista, *quiero* buscar, ordenar por columnas y paginar la bandeja, *para* manejar muchas solicitudes.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Buscar, ordenar y paginar la bandeja
+
+  Scenario: Buscar
+    When busco ""Tienda La Esperanza""
+    Then solo veo solicitudes de ese negocio
+
+  Scenario: Ordenar
+    When ordeno por puntaje
+    Then la tabla se ordena por esa columna
+
+  Scenario: Paginar
+    Given hay 200 solicitudes
+    Then la bandeja las muestra por páginas
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"443","Story","Quitar una justificación desde la app","*Como* tendero, *quiero* quitar una justificación que hice por error, *para* corregir mi información.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Quitar una justificación desde la app
+
+  Scenario: Quitar
+    Given justifiqué marzo y la solicitud está en ""Puntaje listo""
+    When pulso quitar la justificación de marzo
+    Then se llama DELETE /solicitudes/:id/variaciones/:mes y el puntaje se recalcula
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"446","Story","Pedir la cédula del tendero","*Como* entidad aliada, *quiero* conocer la cédula del tendero, *para* validar su identidad.
+
+h3. Criterios de aceptación
+{noformat}
+Feature: Pedir la cédula del tendero
+
+  Scenario: Registrar cédula
+    When el tendero escribe su cédula
+    Then se guarda cifrada
+    And solo la ve la entidad con la que comparte su solicitud
+{noformat}
+
+_Referencia: sección Anexo D de funcionalidades.md_","418","tendia","roadmap","Sprint 5"
+"3","Sub-task","API: endpoint POST /auth/tendero/otp con normalización y validación","Sub-tarea de: Solicitar el código de ingreso con mi celular","2","tendia","app-tendero",""
+"4","Sub-task","Integración con Twilio Verify para el envío del SMS","Sub-tarea de: Solicitar el código de ingreso con mi celular","2","tendia","app-tendero",""
+"5","Sub-task","App: paso 1 de la pantalla de ingreso (logo, lema, campo celular)","Sub-tarea de: Solicitar el código de ingreso con mi celular","2","tendia","app-tendero",""
+"6","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Solicitar el código de ingreso con mi celular","2","tendia","app-tendero",""
+"8","Sub-task","API: endpoint POST /auth/tendero/verificar y emisión del token de sesión","Sub-tarea de: Verificar el código y crear la cuenta en el primer ingreso","7","tendia","app-tendero",""
+"9","Sub-task","Crear el tendero y su negocio vacío en el primer ingreso","Sub-tarea de: Verificar el código y crear la cuenta en el primer ingreso","7","tendia","app-tendero",""
+"10","Sub-task","App: paso 2 con autocompletado del SMS, Reenviar código y Cambiar número","Sub-tarea de: Verificar el código y crear la cuenta en el primer ingreso","7","tendia","app-tendero",""
+"11","Sub-task","Guardar el token en el almacenamiento seguro (y en el navegador en web)","Sub-tarea de: Verificar el código y crear la cuenta en el primer ingreso","7","tendia","app-tendero",""
+"12","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Verificar el código y crear la cuenta en el primer ingreso","7","tendia","app-tendero",""
+"14","Sub-task","Control de 5 intentos por código","Sub-tarea de: Limitar intentos y envíos de códigos","13","tendia","app-tendero",""
+"15","Sub-task","Límite de 3 códigos cada 10 minutos por celular","Sub-tarea de: Limitar intentos y envíos de códigos","13","tendia","app-tendero",""
+"16","Sub-task","Rate limit de 10 peticiones por minuto por IP en rutas de ingreso","Sub-tarea de: Limitar intentos y envíos de códigos","13","tendia","app-tendero",""
+"17","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Limitar intentos y envíos de códigos","13","tendia","app-tendero",""
+"19","Sub-task","Selector de canal: SMS real o código en pantalla","Sub-tarea de: Ingresar con celulares de demostración fuera de producción","18","tendia","app-tendero",""
+"20","Sub-task","Bloquear el modo de prueba en producción","Sub-tarea de: Ingresar con celulares de demostración fuera de producción","18","tendia","app-tendero",""
+"21","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ingresar con celulares de demostración fuera de producción","18","tendia","app-tendero",""
+"23","Sub-task","App: enlace Salir en el inicio","Sub-tarea de: Cerrar sesión y manejar la sesión vencida","22","tendia","app-tendero",""
+"24","Sub-task","Interceptor de respuestas 401","Sub-tarea de: Cerrar sesión y manejar la sesión vencida","22","tendia","app-tendero",""
+"25","Sub-task","Guardas de ruta para pantallas internas","Sub-tarea de: Cerrar sesión y manejar la sesión vencida","22","tendia","app-tendero",""
+"26","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Cerrar sesión y manejar la sesión vencida","22","tendia","app-tendero",""
+"29","Sub-task","App: pantalla de inicio con encabezado, saludo y tarjeta de solicitud","Sub-tarea de: Ver la pantalla de inicio con el estado de mi solicitud","28","tendia","app-tendero",""
+"30","Sub-task","Textos de estado en lenguaje sencillo","Sub-tarea de: Ver la pantalla de inicio con el estado de mi solicitud","28","tendia","app-tendero",""
+"31","Sub-task","Navegación de Continuar según el estado","Sub-tarea de: Ver la pantalla de inicio con el estado de mi solicitud","28","tendia","app-tendero",""
+"32","Sub-task","Accesos a Tendi, Mi cuaderno y Mis autorizaciones","Sub-tarea de: Ver la pantalla de inicio con el estado de mi solicitud","28","tendia","app-tendero",""
+"33","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver la pantalla de inicio con el estado de mi solicitud","28","tendia","app-tendero",""
+"35","Sub-task","API: endpoint POST /solicitudes/:id/visto","Sub-tarea de: Ver el aviso de una nueva respuesta de la entidad","34","tendia","app-tendero",""
+"36","Sub-task","App: aviso de novedad en el inicio","Sub-tarea de: Ver el aviso de una nueva respuesta de la entidad","34","tendia","app-tendero",""
+"37","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver el aviso de una nueva respuesta de la entidad","34","tendia","app-tendero",""
+"39","Sub-task","App: formulario con monto formateado, chips rápidos, destino, plazo y antigüedad","Sub-tarea de: Crear una solicitud de crédito (T1)","38","tendia","app-tendero",""
+"40","Sub-task","API: POST /solicitudes con validaciones de monto, destino y plazo","Sub-tarea de: Crear una solicitud de crédito (T1)","38","tendia","app-tendero",""
+"41","Sub-task","API: PUT /me/negocio para la antigüedad","Sub-tarea de: Crear una solicitud de crédito (T1)","38","tendia","app-tendero",""
+"42","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Crear una solicitud de crédito (T1)","38","tendia","app-tendero",""
+"44","Sub-task","Regla de una solicitud abierta en la API","Sub-tarea de: Permitir solo una solicitud abierta por tendero","43","tendia","app-tendero",""
+"45","Sub-task","API: DELETE /solicitudes/:id solo antes de enviarla","Sub-tarea de: Permitir solo una solicitud abierta por tendero","43","tendia","app-tendero",""
+"46","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Permitir solo una solicitud abierta por tendero","43","tendia","app-tendero",""
+"49","Sub-task","API: GET /fuentes y GET/POST /consentimientos","Sub-tarea de: Autorizar las fuentes de datos de mi negocio","48","tendia","app-tendero",""
+"50","Sub-task","App: tarjetas marcables por fuente con qué es y qué usamos","Sub-tarea de: Autorizar las fuentes de datos de mi negocio","48","tendia","app-tendero",""
+"51","Sub-task","Aviso de versión de prueba con datos simulados","Sub-tarea de: Autorizar las fuentes de datos de mi negocio","48","tendia","app-tendero",""
+"52","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Autorizar las fuentes de datos de mi negocio","48","tendia","app-tendero",""
+"54","Sub-task","App: selector de proveedor por fuente","Sub-tarea de: Elegir el proveedor de una fuente","53","tendia","app-tendero",""
+"55","Sub-task","API: guardar el proveedor en el consentimiento","Sub-tarea de: Elegir el proveedor de una fuente","53","tendia","app-tendero",""
+"56","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Elegir el proveedor de una fuente","53","tendia","app-tendero",""
+"59","Sub-task","API: POST /solicitudes/:id/evaluar (evaluacion.service.ts)","Sub-tarea de: Evaluar automáticamente mi negocio","58","tendia","app-tendero",""
+"60","Sub-task","Armar el payload para el motor: ventas, pagos, antigüedad y meses justificados","Sub-tarea de: Evaluar automáticamente mi negocio","58","tendia","app-tendero",""
+"61","Sub-task","App: pantalla de progreso con animación y mensajes","Sub-tarea de: Evaluar automáticamente mi negocio","58","tendia","app-tendero",""
+"62","Sub-task","Manejo de demora y errores","Sub-tarea de: Evaluar automáticamente mi negocio","58","tendia","app-tendero",""
+"63","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Evaluar automáticamente mi negocio","58","tendia","app-tendero",""
+"65","Sub-task","Códigos pocas_ventas, pocos_pagos_proveedor y falta_antiguedad","Sub-tarea de: Detectar datos incompletos para el puntaje","64","tendia","app-tendero",""
+"66","Sub-task","Transición a DATOS_INCOMPLETOS y navegación a completar","Sub-tarea de: Detectar datos incompletos para el puntaje","64","tendia","app-tendero",""
+"67","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Detectar datos incompletos para el puntaje","64","tendia","app-tendero",""
+"69","Sub-task","App: pantalla completar (completar.tsx)","Sub-tarea de: Completar los datos del negocio y estimar mis ventas","68","tendia","app-tendero",""
+"70","Sub-task","Cálculo de la estimación: semana = normal × (7 − flojos) + flojo × flojos; mes = semana × 52 / 12","Sub-tarea de: Completar los datos del negocio y estimar mis ventas","68","tendia","app-tendero",""
+"71","Sub-task","API: POST /me/estimacion-ventas y PUT /me/negocio","Sub-tarea de: Completar los datos del negocio y estimar mis ventas","68","tendia","app-tendero",""
+"72","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Completar los datos del negocio y estimar mis ventas","68","tendia","app-tendero",""
+"74","Sub-task","App: campos por mes cerrado","Sub-tarea de: Escribir las ventas de los últimos 6 meses","73","tendia","app-tendero",""
+"75","Sub-task","API: POST /me/ventas-manuales","Sub-tarea de: Escribir las ventas de los últimos 6 meses","73","tendia","app-tendero",""
+"76","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Escribir las ventas de los últimos 6 meses","73","tendia","app-tendero",""
+"79","Sub-task","App: pantalla del puntaje con escala y franjas","Sub-tarea de: Ver mi Puntaje TendIA explicado","78","tendia","app-tendero",""
+"80","Sub-task","Componentes Lo que te ayuda y Lo que puedes mejorar","Sub-tarea de: Ver mi Puntaje TendIA explicado","78","tendia","app-tendero",""
+"81","Sub-task","Aviso de no DataCrédito","Sub-tarea de: Ver mi Puntaje TendIA explicado","78","tendia","app-tendero",""
+"82","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver mi Puntaje TendIA explicado","78","tendia","app-tendero",""
+"84","Sub-task","API: GET /referencias","Sub-tarea de: Ver mi segmento y las tasas de referencia del mercado","83","tendia","app-tendero",""
+"85","Sub-task","App: tarjetas de segmento y tasas","Sub-tarea de: Ver mi segmento y las tasas de referencia del mercado","83","tendia","app-tendero",""
+"86","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver mi segmento y las tasas de referencia del mercado","83","tendia","app-tendero",""
+"88","Sub-task","App: pantalla de justificación con los 6 meses más bajos y motivos","Sub-tarea de: Justificar un mes de ventas bajas","87","tendia","app-tendero",""
+"89","Sub-task","API: POST /solicitudes/:id/variaciones","Sub-tarea de: Justificar un mes de ventas bajas","87","tendia","app-tendero",""
+"90","Sub-task","Recalcular el puntaje como versión 2","Sub-tarea de: Justificar un mes de ventas bajas","87","tendia","app-tendero",""
+"91","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Justificar un mes de ventas bajas","87","tendia","app-tendero",""
+"93","Sub-task","Componente adjuntar.tsx","Sub-tarea de: Adjuntar evidencia a una justificación","92","tendia","app-tendero",""
+"94","Sub-task","Validación de tipo y firma del archivo (common/archivos.ts)","Sub-tarea de: Adjuntar evidencia a una justificación","92","tendia","app-tendero",""
+"95","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Adjuntar evidencia a una justificación","92","tendia","app-tendero",""
+"98","Sub-task","API: GET /aliados y POST /solicitudes/:id/enviar","Sub-tarea de: Compartir mi puntaje con una entidad","97","tendia","app-tendero",""
+"99","Sub-task","App: lista de entidades (Paso 4 de 4)","Sub-tarea de: Compartir mi puntaje con una entidad","97","tendia","app-tendero",""
+"100","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Compartir mi puntaje con una entidad","97","tendia","app-tendero",""
+"102","Sub-task","App: pantalla de seguimiento por estado","Sub-tarea de: Seguir el estado de mi solicitud","101","tendia","app-tendero",""
+"103","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Seguir el estado de mi solicitud","101","tendia","app-tendero",""
+"105","Sub-task","App: explicación por tipo de garantía y formulario de respuesta","Sub-tarea de: Responder una solicitud de garantía (T10)","104","tendia","app-tendero",""
+"106","Sub-task","API: POST /solicitudes/:id/garantia con adjunto","Sub-tarea de: Responder una solicitud de garantía (T10)","104","tendia","app-tendero",""
+"107","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Responder una solicitud de garantía (T10)","104","tendia","app-tendero",""
+"109","Sub-task","App: vista de aprobación con detalle del crédito","Sub-tarea de: Ver el resultado de mi solicitud (T12, T13)","108","tendia","app-tendero",""
+"110","Sub-task","App: vista de rechazo con 3 consejos","Sub-tarea de: Ver el resultado de mi solicitud (T12, T13)","108","tendia","app-tendero",""
+"111","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver el resultado de mi solicitud (T12, T13)","108","tendia","app-tendero",""
+"113","Sub-task","App: encuesta de estrellas y comentario","Sub-tarea de: Calificar mi experiencia con TendIA","112","tendia","app-tendero",""
+"114","Sub-task","API: POST /solicitudes/:id/satisfaccion","Sub-tarea de: Calificar mi experiencia con TendIA","112","tendia","app-tendero",""
+"115","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Calificar mi experiencia con TendIA","112","tendia","app-tendero",""
+"118","Sub-task","API: DELETE /consentimientos/:id con borrado de datos de la fuente","Sub-tarea de: Revocar una autorización de datos","117","tendia","app-tendero",""
+"119","Sub-task","App: pantalla Mis autorizaciones con confirmación","Sub-tarea de: Revocar una autorización de datos","117","tendia","app-tendero",""
+"120","Sub-task","Registro en bitácora","Sub-tarea de: Revocar una autorización de datos","117","tendia","app-tendero",""
+"121","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Revocar una autorización de datos","117","tendia","app-tendero",""
+"124","Sub-task","Aplicar tokens de tipografía y tamaños (packages/tokens)","Sub-tarea de: Aplicar tamaños, contraste y lenguaje simple","123","tendia","app-tendero",""
+"125","Sub-task","Pruebas de contraste WCAG AA","Sub-tarea de: Aplicar tamaños, contraste y lenguaje simple","123","tendia","app-tendero",""
+"126","Sub-task","Revisión de textos con lenguaje simple","Sub-tarea de: Aplicar tamaños, contraste y lenguaje simple","123","tendia","app-tendero",""
+"128","Sub-task","Agregar roles y etiquetas de accesibilidad","Sub-tarea de: Ser compatible con lectores de pantalla","127","tendia","app-tendero",""
+"129","Sub-task","Prueba con TalkBack y VoiceOver","Sub-tarea de: Ser compatible con lectores de pantalla","127","tendia","app-tendero",""
+"132","Sub-task","API: GET /me/registros y POST /me/ventas-diarias","Sub-tarea de: Anotar la venta del día","131","tendia","cuaderno-tendi",""
+"133","Sub-task","App: tarjeta Tus ventas y formulario de venta","Sub-tarea de: Anotar la venta del día","131","tendia","cuaderno-tendi",""
+"134","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Anotar la venta del día","131","tendia","cuaderno-tendi",""
+"136","Sub-task","API: POST /me/fiados y POST /me/fiados/:id/pago","Sub-tarea de: Registrar fiados y marcarlos como pagados","135","tendia","cuaderno-tendi",""
+"137","Sub-task","App: lista de fiados con botón Ya pagó","Sub-tarea de: Registrar fiados y marcarlos como pagados","135","tendia","cuaderno-tendi",""
+"138","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Registrar fiados y marcarlos como pagados","135","tendia","cuaderno-tendi",""
+"140","Sub-task","API: GET /me/cuaderno/disponible","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"141","Sub-task","API: POST /me/cuaderno con Claude visión y limpieza del resultado","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"142","Sub-task","API: POST /me/cuaderno/:id/confirmar y DELETE /me/cuaderno/:id","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"143","Sub-task","App: cámara/galería y pantalla Revisa lo que leímos","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"144","Sub-task","Límite de 10 lecturas por minuto y validación JPG/PNG/WEBP de máximo 3 MB","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"145","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Pasar el cuaderno de papel a la app con una foto","139","tendia","cuaderno-tendi",""
+"147","Sub-task","Validaciones de fecha y monto en registros/","Sub-tarea de: Validar fechas y montos del cuaderno","146","tendia","cuaderno-tendi",""
+"148","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Validar fechas y montos del cuaderno","146","tendia","cuaderno-tendi",""
+"150","Sub-task","Agregar ventas del cuaderno al payload del motor","Sub-tarea de: Contar las ventas del cuaderno en el puntaje","149","tendia","cuaderno-tendi",""
+"151","Sub-task","Regla de 7 días y estimación promedio × días del mes (redondeo a miles)","Sub-tarea de: Contar las ventas del cuaderno en el puntaje","149","tendia","cuaderno-tendi",""
+"152","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Contar las ventas del cuaderno en el puntaje","149","tendia","cuaderno-tendi",""
+"155","Sub-task","API: GET/POST /asistente/mensajes","Sub-tarea de: Conversar con Tendi en la app","154","tendia","cuaderno-tendi",""
+"156","Sub-task","App: pantalla de chat con historial y sugerencias","Sub-tarea de: Conversar con Tendi en la app","154","tendia","cuaderno-tendi",""
+"157","Sub-task","Botón flotante de Tendi","Sub-tarea de: Conversar con Tendi en la app","154","tendia","cuaderno-tendi",""
+"158","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Conversar con Tendi en la app","154","tendia","cuaderno-tendi",""
+"160","Sub-task","Herramientas del modelo: registrar venta, registrar fiado y marcar pagado","Sub-tarea de: Anotar ventas y fiados en lenguaje natural","159","tendia","cuaderno-tendi",""
+"161","Sub-task","Parser de montos coloquiales (registros/montos.ts)","Sub-tarea de: Anotar ventas y fiados en lenguaje natural","159","tendia","cuaderno-tendi",""
+"162","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Anotar ventas y fiados en lenguaje natural","159","tendia","cuaderno-tendi",""
+"164","Sub-task","Herramientas consultar resumen y consultar solicitud","Sub-tarea de: Consultar mi resumen y el estado de mi crédito con Tendi","163","tendia","cuaderno-tendi",""
+"165","Sub-task","Contexto del modelo: fecha, tienda, datos guardados y últimos 12 mensajes","Sub-tarea de: Consultar mi resumen y el estado de mi crédito con Tendi","163","tendia","cuaderno-tendi",""
+"166","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Consultar mi resumen y el estado de mi crédito con Tendi","163","tendia","cuaderno-tendi",""
+"168","Sub-task","Guardar las acciones realizadas en cada respuesta","Sub-tarea de: Evitar que Tendi anote dos veces lo mismo","167","tendia","cuaderno-tendi",""
+"169","Sub-task","Fechar los mensajes de días anteriores en el contexto","Sub-tarea de: Evitar que Tendi anote dos veces lo mismo","167","tendia","cuaderno-tendi",""
+"170","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Evitar que Tendi anote dos veces lo mismo","167","tendia","cuaderno-tendi",""
+"172","Sub-task","Intérprete de reglas (interprete.ts) para venta, fiado, pago, resumen y crédito","Sub-tarea de: Responder con reglas cuando la IA no esté disponible","171","tendia","cuaderno-tendi",""
+"173","Sub-task","Conmutación automática ante fallos de la IA","Sub-tarea de: Responder con reglas cuando la IA no esté disponible","171","tendia","cuaderno-tendi",""
+"174","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Responder con reglas cuando la IA no esté disponible","171","tendia","cuaderno-tendi",""
+"176","Sub-task","Prompt del sistema con reglas (ADR-003)","Sub-tarea de: Aplicar las reglas de comportamiento de Tendi","175","tendia","cuaderno-tendi",""
+"177","Sub-task","Rate limit de 30 mensajes por minuto","Sub-tarea de: Aplicar las reglas de comportamiento de Tendi","175","tendia","cuaderno-tendi",""
+"178","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Aplicar las reglas de comportamiento de Tendi","175","tendia","cuaderno-tendi",""
+"181","Sub-task","API: whatsapp.controller.ts con verificación de firma","Sub-tarea de: Recibir mensajes verificados de WhatsApp","180","tendia","cuaderno-tendi",""
+"182","Sub-task","Enrutar el mensaje al mismo asistente de la app","Sub-tarea de: Recibir mensajes verificados de WhatsApp","180","tendia","cuaderno-tendi",""
+"183","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Recibir mensajes verificados de WhatsApp","180","tendia","cuaderno-tendi",""
+"185","Sub-task","Búsqueda del tendero por huella del celular","Sub-tarea de: Responder a celulares no registrados por WhatsApp","184","tendia","cuaderno-tendi",""
+"186","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Responder a celulares no registrados por WhatsApp","184","tendia","cuaderno-tendi",""
+"188","Sub-task","Descarga segura de medios desde Twilio","Sub-tarea de: Guardar la foto del cuaderno enviada por WhatsApp","187","tendia","cuaderno-tendi",""
+"189","Sub-task","Flujo de confirmación SÍ/NO","Sub-tarea de: Guardar la foto del cuaderno enviada por WhatsApp","187","tendia","cuaderno-tendi",""
+"190","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Guardar la foto del cuaderno enviada por WhatsApp","187","tendia","cuaderno-tendi",""
+"192","Sub-task","notificador.service.ts con plantillas de aviso","Sub-tarea de: Avisar las decisiones de la entidad por WhatsApp (T11)","191","tendia","cuaderno-tendi",""
+"193","Sub-task","Manejo de errores sin afectar la decisión","Sub-tarea de: Avisar las decisiones de la entidad por WhatsApp (T11)","191","tendia","cuaderno-tendi",""
+"194","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Avisar las decisiones de la entidad por WhatsApp (T11)","191","tendia","cuaderno-tendi",""
+"197","Sub-task","API: POST /auth/aliado/login","Sub-tarea de: Ingresar al portal con correo y contraseña","196","tendia","portal-aliado",""
+"198","Sub-task","Portal: página de login","Sub-tarea de: Ingresar al portal con correo y contraseña","196","tendia","portal-aliado",""
+"199","Sub-task","Respuesta en tiempo constante","Sub-tarea de: Ingresar al portal con correo y contraseña","196","tendia","portal-aliado",""
+"200","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ingresar al portal con correo y contraseña","196","tendia","portal-aliado",""
+"202","Sub-task","API: POST /auth/aliado/mfa con TOTP","Sub-tarea de: Activar y usar la verificación en dos pasos (MFA)","201","tendia","portal-aliado",""
+"203","Sub-task","Portal: pantalla de enrolamiento con QR","Sub-tarea de: Activar y usar la verificación en dos pasos (MFA)","201","tendia","portal-aliado",""
+"204","Sub-task","Guardar el secreto MFA cifrado","Sub-tarea de: Activar y usar la verificación en dos pasos (MFA)","201","tendia","portal-aliado",""
+"205","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Activar y usar la verificación en dos pasos (MFA)","201","tendia","portal-aliado",""
+"207","Sub-task","Contador de intentos y bloqueo temporal","Sub-tarea de: Bloquear la cuenta tras intentos fallidos","206","tendia","portal-aliado",""
+"208","Sub-task","Registro en bitácora","Sub-tarea de: Bloquear la cuenta tras intentos fallidos","206","tendia","portal-aliado",""
+"209","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Bloquear la cuenta tras intentos fallidos","206","tendia","portal-aliado",""
+"211","Sub-task","API: GET/POST /auth/invitacion/:token guardando solo la huella del token","Sub-tarea de: Aceptar una invitación y crear mi cuenta","210","tendia","portal-aliado",""
+"212","Sub-task","Portal: página /invitacion/{token}","Sub-tarea de: Aceptar una invitación y crear mi cuenta","210","tendia","portal-aliado",""
+"213","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Aceptar una invitación y crear mi cuenta","210","tendia","portal-aliado",""
+"215","Sub-task","Portal: barra lateral (horizontal en celular) por rol","Sub-tarea de: Navegar el portal según mi rol","214","tendia","portal-aliado",""
+"216","Sub-task","Guardas de rol en API y portal","Sub-tarea de: Navegar el portal según mi rol","214","tendia","portal-aliado",""
+"217","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Navegar el portal según mi rol","214","tendia","portal-aliado",""
+"220","Sub-task","API: GET /aliado/solicitudes?estado=","Sub-tarea de: Ver la bandeja de solicitudes","219","tendia","portal-aliado",""
+"221","Sub-task","Portal: tarjetas de resumen, pestañas y tabla","Sub-tarea de: Ver la bandeja de solicitudes","219","tendia","portal-aliado",""
+"222","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver la bandeja de solicitudes","219","tendia","portal-aliado",""
+"224","Sub-task","Portal: filtro de franja","Sub-tarea de: Filtrar la bandeja por franja del puntaje","223","tendia","portal-aliado",""
+"225","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Filtrar la bandeja por franja del puntaje","223","tendia","portal-aliado",""
+"227","Sub-task","Función recomendar en common/vistas.ts","Sub-tarea de: Ver la sugerencia según la política de riesgo","226","tendia","portal-aliado",""
+"228","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver la sugerencia según la política de riesgo","226","tendia","portal-aliado",""
+"230","Sub-task","API: GET /aliado/solicitudes/:id","Sub-tarea de: Ver el puntaje explicado en el detalle de la solicitud","229","tendia","portal-aliado",""
+"231","Sub-task","Portal: sección Puntaje TendIA y gráfico de aportes (charts.tsx)","Sub-tarea de: Ver el puntaje explicado en el detalle de la solicitud","229","tendia","portal-aliado",""
+"232","Sub-task","Registro en bitácora","Sub-tarea de: Ver el puntaje explicado en el detalle de la solicitud","229","tendia","portal-aliado",""
+"233","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver el puntaje explicado en el detalle de la solicitud","229","tendia","portal-aliado",""
+"235","Sub-task","API: GET /aliado/solicitudes/:id/adjuntos/:adjuntoId","Sub-tarea de: Ver ventas, pagos y meses justificados en el detalle","234","tendia","portal-aliado",""
+"236","Sub-task","Portal: gráfico de ventas, tabla de pagos y variaciones","Sub-tarea de: Ver ventas, pagos y meses justificados en el detalle","234","tendia","portal-aliado",""
+"237","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver ventas, pagos y meses justificados en el detalle","234","tendia","portal-aliado",""
+"239","Sub-task","Portal: columna lateral con indicadores, tipo de negocio y referencia","Sub-tarea de: Ver indicadores, segmento, referencia de mercado y alertas","238","tendia","portal-aliado",""
+"240","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver indicadores, segmento, referencia de mercado y alertas","238","tendia","portal-aliado",""
+"243","Sub-task","API: POST /aliado/solicitudes/:id/decision (aprobar)","Sub-tarea de: Aprobar un crédito con condiciones","242","tendia","portal-aliado",""
+"244","Sub-task","Portal: tarjeta de decisión con condiciones y nota de hasta 500 caracteres","Sub-tarea de: Aprobar un crédito con condiciones","242","tendia","portal-aliado",""
+"245","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Aprobar un crédito con condiciones","242","tendia","portal-aliado",""
+"247","Sub-task","API: decisión pedir garantía","Sub-tarea de: Pedir una garantía al tendero","246","tendia","portal-aliado",""
+"248","Sub-task","Portal: selector de tipo de garantía","Sub-tarea de: Pedir una garantía al tendero","246","tendia","portal-aliado",""
+"249","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Pedir una garantía al tendero","246","tendia","portal-aliado",""
+"251","Sub-task","API: decisión rechazar y validación de estado","Sub-tarea de: Rechazar una solicitud","250","tendia","portal-aliado",""
+"252","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Rechazar una solicitud","250","tendia","portal-aliado",""
+"254","Sub-task","API: POST /aliado/solicitudes/:id/garantia","Sub-tarea de: Evaluar la garantía del tendero","253","tendia","portal-aliado",""
+"255","Sub-task","Portal: tarjeta de evaluación de garantía y estados finales","Sub-tarea de: Evaluar la garantía del tendero","253","tendia","portal-aliado",""
+"256","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Evaluar la garantía del tendero","253","tendia","portal-aliado",""
+"259","Sub-task","API: GET/PUT /aliado/politica con versionado","Sub-tarea de: Configurar la política de riesgo","258","tendia","portal-aliado",""
+"260","Sub-task","Portal: formulario y tarjeta Cómo se aplica","Sub-tarea de: Configurar la política de riesgo","258","tendia","portal-aliado",""
+"261","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Configurar la política de riesgo","258","tendia","portal-aliado",""
+"263","Sub-task","API: GET/POST/DELETE /aliado/api-keys","Sub-tarea de: Crear y revocar llaves de API","262","tendia","portal-aliado",""
+"264","Sub-task","Portal: sección Llaves de API","Sub-tarea de: Crear y revocar llaves de API","262","tendia","portal-aliado",""
+"265","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Crear y revocar llaves de API","262","tendia","portal-aliado",""
+"267","Sub-task","API: GET /aliado/consumo","Sub-tarea de: Ver el consumo de la API","266","tendia","portal-aliado",""
+"268","Sub-task","Portal: gráficos y tabla de consumo","Sub-tarea de: Ver el consumo de la API","266","tendia","portal-aliado",""
+"269","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver el consumo de la API","266","tendia","portal-aliado",""
+"271","Sub-task","API: POST /aliado/equipo/invitaciones (common/invitaciones.ts)","Sub-tarea de: Invitar personas a mi equipo","270","tendia","portal-aliado",""
+"272","Sub-task","Portal: formulario de invitación con mailto y copiar","Sub-tarea de: Invitar personas a mi equipo","270","tendia","portal-aliado",""
+"273","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Invitar personas a mi equipo","270","tendia","portal-aliado",""
+"275","Sub-task","API: GET /aliado/equipo y DELETE /aliado/equipo/invitaciones/:id","Sub-tarea de: Ver mi equipo y anular invitaciones","274","tendia","portal-aliado",""
+"276","Sub-task","Portal: listas de personas e invitaciones","Sub-tarea de: Ver mi equipo y anular invitaciones","274","tendia","portal-aliado",""
+"277","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver mi equipo y anular invitaciones","274","tendia","portal-aliado",""
+"280","Sub-task","API: GET /aliado/satisfaccion","Sub-tarea de: Ver la satisfacción de los tenderos","279","tendia","portal-aliado",""
+"281","Sub-task","Portal: tablero de satisfacción","Sub-tarea de: Ver la satisfacción de los tenderos","279","tendia","portal-aliado",""
+"282","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver la satisfacción de los tenderos","279","tendia","portal-aliado",""
+"284","Sub-task","API: GET /aliado/auditoria","Sub-tarea de: Consultar la auditoría de mi entidad","283","tendia","portal-aliado",""
+"285","Sub-task","Portal: tabla de auditoría","Sub-tarea de: Consultar la auditoría de mi entidad","283","tendia","portal-aliado",""
+"286","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Consultar la auditoría de mi entidad","283","tendia","portal-aliado",""
+"289","Sub-task","API: GET /admin/bitacora?celular=","Sub-tarea de: Consultar la bitácora de un tendero","288","tendia","admin-tendia",""
+"290","Sub-task","Portal: página Bitácora por tendero","Sub-tarea de: Consultar la bitácora de un tendero","288","tendia","admin-tendia",""
+"291","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Consultar la bitácora de un tendero","288","tendia","admin-tendia",""
+"293","Sub-task","API: GET /admin/satisfaccion","Sub-tarea de: Ver la satisfacción de todas las entidades","292","tendia","admin-tendia",""
+"294","Sub-task","Portal: tablero global","Sub-tarea de: Ver la satisfacción de todas las entidades","292","tendia","admin-tendia",""
+"295","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver la satisfacción de todas las entidades","292","tendia","admin-tendia",""
+"298","Sub-task","API: POST /admin/aliados","Sub-tarea de: Dar de alta una entidad aliada","297","tendia","admin-tendia",""
+"299","Sub-task","Portal: formulario Dar de alta una entidad","Sub-tarea de: Dar de alta una entidad aliada","297","tendia","admin-tendia",""
+"300","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Dar de alta una entidad aliada","297","tendia","admin-tendia",""
+"302","Sub-task","API: GET /admin/aliados y POST /admin/aliados/:id/invitaciones","Sub-tarea de: Ver el estado de las entidades y reinvitar administradores","301","tendia","admin-tendia",""
+"303","Sub-task","Portal: lista de entidades con marcas de estado","Sub-tarea de: Ver el estado de las entidades y reinvitar administradores","301","tendia","admin-tendia",""
+"304","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Ver el estado de las entidades y reinvitar administradores","301","tendia","admin-tendia",""
+"306","Sub-task","Script reset-mfa.js","Sub-tarea de: Reiniciar la verificación en dos pasos de un usuario","305","tendia","admin-tendia",""
+"307","Sub-task","Documentar el uso en Docker (docker compose exec api …)","Sub-tarea de: Reiniciar la verificación en dos pasos de un usuario","305","tendia","admin-tendia",""
+"308","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Reiniciar la verificación en dos pasos de un usuario","305","tendia","admin-tendia",""
+"311","Sub-task","public-api.controller.ts con guard de x-api-key","Sub-tarea de: Consultar el puntaje desde el core de la entidad","310","tendia","scoring-api",""
+"312","Sub-task","Documentación OpenAPI del contrato v2","Sub-tarea de: Consultar el puntaje desde el core de la entidad","310","tendia","scoring-api",""
+"313","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Consultar el puntaje desde el core de la entidad","310","tendia","scoring-api",""
+"315","Sub-task","Esquema de validación estricto (business, sales, distributor, adjustments)","Sub-tarea de: Validar el contrato v2 de la API pública","314","tendia","scoring-api",""
+"316","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Validar el contrato v2 de la API pública","314","tendia","scoring-api",""
+"318","Sub-task","Tabla de consumo por llave y fecha","Sub-tarea de: Registrar el consumo de la API para facturación","317","tendia","scoring-api",""
+"319","Sub-task","Registro en bitácora","Sub-tarea de: Registrar el consumo de la API para facturación","317","tendia","scoring-api",""
+"320","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Registrar el consumo de la API para facturación","317","tendia","scoring-api",""
+"323","Sub-task","Conector datáfono (Bold, Treinta, Chiper, Vendty) simulado","Sub-tarea de: Traer las ventas del datáfono","322","tendia","scoring-api",""
+"324","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Traer las ventas del datáfono","322","tendia","scoring-api",""
+"326","Sub-task","Conector distribuidor simulado","Sub-tarea de: Traer los pagos al distribuidor","325","tendia","scoring-api",""
+"327","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Traer los pagos al distribuidor","325","tendia","scoring-api",""
+"329","Sub-task","Conector open finance (sandbox)","Sub-tarea de: Traer los ingresos de la cuenta bancaria (open finance)","328","tendia","scoring-api",""
+"330","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Traer los ingresos de la cuenta bancaria (open finance)","328","tendia","scoring-api",""
+"332","Sub-task","Generador con semilla por negocio y distribuciones EMICRON","Sub-tarea de: Simular datos reproducibles con perfiles de demostración","331","tendia","scoring-api",""
+"333","Sub-task","Perfiles bueno, estacional, riesgoso y nuevo","Sub-tarea de: Simular datos reproducibles con perfiles de demostración","331","tendia","scoring-api",""
+"334","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Simular datos reproducibles con perfiles de demostración","331","tendia","scoring-api",""
+"337","Sub-task","scorecard.py y model/tendia-v2.json","Sub-tarea de: Calcular el puntaje con el scorecard interpretable","336","tendia","scoring-api",""
+"338","Sub-task","pagos.py: variables de pago de los últimos 6 meses","Sub-tarea de: Calcular el puntaje con el scorecard interpretable","336","tendia","scoring-api",""
+"339","Sub-task","Actualizar model-card.md y diccionario-variables.md","Sub-tarea de: Calcular el puntaje con el scorecard interpretable","336","tendia","scoring-api",""
+"340","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Calcular el puntaje con el scorecard interpretable","336","tendia","scoring-api",""
+"342","Sub-task","features.py: ventana de 12 meses y prioridad de fuentes","Sub-tarea de: Preparar las ventas con prioridad de fuentes y meses justificados","341","tendia","scoring-api",""
+"343","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Preparar las ventas con prioridad de fuentes y meses justificados","341","tendia","scoring-api",""
+"345","Sub-task","Reglas de calidad y alertas","Sub-tarea de: Evaluar la calidad de los datos y generar alertas","344","tendia","scoring-api",""
+"346","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Evaluar la calidad de los datos y generar alertas","344","tendia","scoring-api",""
+"348","Sub-task","Cálculo de indicadores en el motor","Sub-tarea de: Calcular los indicadores del negocio","347","tendia","scoring-api",""
+"349","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Calcular los indicadores del negocio","347","tendia","scoring-api",""
+"351","Sub-task","Modelo K-means sobre 20.488 micronegocios de EMICRON 2024","Sub-tarea de: Asignar el segmento con datos del DANE","350","tendia","scoring-api",""
+"352","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Asignar el segmento con datos del DANE","350","tendia","scoring-api",""
+"354","Sub-task","Tabla de referencias (5.992 créditos, ago 2025 – jul 2026)","Sub-tarea de: Calcular las tasas de referencia de la Superfinanciera","353","tendia","scoring-api",""
+"355","Sub-task","API: GET /referencias","Sub-tarea de: Calcular las tasas de referencia de la Superfinanciera","353","tendia","scoring-api",""
+"356","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Calcular las tasas de referencia de la Superfinanciera","353","tendia","scoring-api",""
+"359","Sub-task","explicacion.service.ts con llamada a Claude","Sub-tarea de: Generar la explicación del puntaje con Claude","358","tendia","scoring-api",""
+"360","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Generar la explicación del puntaje con Claude","358","tendia","scoring-api",""
+"362","Sub-task","Validador de seguridad del texto","Sub-tarea de: Validar la explicación y usar la plantilla de respaldo","361","tendia","scoring-api",""
+"363","Sub-task","Plantillas por variable","Sub-tarea de: Validar la explicación y usar la plantilla de respaldo","361","tendia","scoring-api",""
+"364","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Validar la explicación y usar la plantilla de respaldo","361","tendia","scoring-api",""
+"367","Sub-task","Servicio de cifrado AES-256-GCM","Sub-tarea de: Cifrar los datos personales","366","tendia","seguridad",""
+"368","Sub-task","Huella HMAC para búsquedas","Sub-tarea de: Cifrar los datos personales","366","tendia","seguridad",""
+"369","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Cifrar los datos personales","366","tendia","seguridad",""
+"371","Sub-task","Políticas RLS en Postgres","Sub-tarea de: Aislar los datos por entidad con Row Level Security","370","tendia","seguridad",""
+"372","Sub-task","Contexto de entidad por petición","Sub-tarea de: Aislar los datos por entidad con Row Level Security","370","tendia","seguridad",""
+"373","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Aislar los datos por entidad con Row Level Security","370","tendia","seguridad",""
+"375","Sub-task","Tabla de bitácora y disparador anti edición/borrado","Sub-tarea de: Mantener una bitácora inmutable","374","tendia","seguridad",""
+"376","Sub-task","Registrar todas las acciones listadas en la sección 7","Sub-tarea de: Mantener una bitácora inmutable","374","tendia","seguridad",""
+"377","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Mantener una bitácora inmutable","374","tendia","seguridad",""
+"379","Sub-task","Validación de firma de archivos","Sub-tarea de: Controlar los archivos adjuntos","378","tendia","seguridad",""
+"380","Sub-task","Control de acceso a descargas","Sub-tarea de: Controlar los archivos adjuntos","378","tendia","seguridad",""
+"381","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Controlar los archivos adjuntos","378","tendia","seguridad",""
+"383","Sub-task","Configurar throttling por ruta","Sub-tarea de: Limitar la tasa de peticiones","382","tendia","seguridad",""
+"384","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Limitar la tasa de peticiones","382","tendia","seguridad",""
+"386","Sub-task","Redacción de logs","Sub-tarea de: Registrar logs y errores sin datos personales","385","tendia","seguridad",""
+"387","Sub-task","Configuración de Sentry","Sub-tarea de: Registrar logs y errores sin datos personales","385","tendia","seguridad",""
+"388","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Registrar logs y errores sin datos personales","385","tendia","seguridad",""
+"390","Sub-task","Configurar cabeceras en Next.js","Sub-tarea de: Aplicar cabeceras de seguridad en el portal","389","tendia","seguridad",""
+"391","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Aplicar cabeceras de seguridad en el portal","389","tendia","seguridad",""
+"393","Sub-task","Redactar y publicar documentos legales","Sub-tarea de: Publicar documentos legales y revisión OWASP","392","tendia","seguridad",""
+"394","Sub-task","Revisión OWASP API Top 10","Sub-tarea de: Publicar documentos legales y revisión OWASP","392","tendia","seguridad",""
+"397","Sub-task","Endpoint /health","Sub-tarea de: Exponer el estado de salud del sistema","396","tendia","operacion",""
+"398","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Exponer el estado de salud del sistema","396","tendia","operacion",""
+"400","Sub-task","Banderas de configuración por servicio","Sub-tarea de: Funcionar sin servicios externos","399","tendia","operacion",""
+"401","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Funcionar sin servicios externos","399","tendia","operacion",""
+"403","Sub-task","Script de seed","Sub-tarea de: Cargar datos de demostración","402","tendia","operacion",""
+"404","Sub-task","Bloqueo en producción","Sub-tarea de: Cargar datos de demostración","402","tendia","operacion",""
+"405","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Cargar datos de demostración","402","tendia","operacion",""
+"407","Sub-task","Configuración de Vercel con 4 servicios","Sub-tarea de: Desplegar en Vercel y ejecutar en local con Docker","406","tendia","operacion",""
+"408","Sub-task","docker-compose.yml","Sub-tarea de: Desplegar en Vercel y ejecutar en local con Docker","406","tendia","operacion",""
+"409","Sub-task","Migraciones al arrancar la API","Sub-tarea de: Desplegar en Vercel y ejecutar en local con Docker","406","tendia","operacion",""
+"412","Sub-task","Pipeline por rutas cambiadas","Sub-tarea de: Ejecutar CI por piezas con check obligatorio","411","tendia","operacion",""
+"413","Sub-task","Check ci-ok obligatorio en main","Sub-tarea de: Ejecutar CI por piezas con check obligatorio","411","tendia","operacion",""
+"415","Sub-task","Suite Playwright del portal","Sub-tarea de: Automatizar los flujos felices de extremo a extremo","414","tendia","operacion",""
+"416","Sub-task","Suite Maestro de la app","Sub-tarea de: Automatizar los flujos felices de extremo a extremo","414","tendia","operacion",""
+"417","Sub-task","Pruebas de contraste en packages/tokens","Sub-tarea de: Automatizar los flujos felices de extremo a extremo","414","tendia","operacion",""
+"420","Sub-task","Refinar alcance y proveedor de transcripción","Sub-tarea de: Hablarle a Tendi por voz","419","tendia","roadmap",""
+"421","Sub-task","Diseño de la experiencia de voz en app y WhatsApp","Sub-tarea de: Hablarle a Tendi por voz","419","tendia","roadmap",""
+"423","Sub-task","Convenios y credenciales con proveedores","Sub-tarea de: Integrar conectores reales con los proveedores","422","tendia","roadmap",""
+"424","Sub-task","Implementar conector real por proveedor","Sub-tarea de: Integrar conectores reales con los proveedores","422","tendia","roadmap",""
+"426","Sub-task","Refinar canales y plantillas","Sub-tarea de: Avisar la decisión por correo o SMS y por webhooks a las entidades","425","tendia","roadmap",""
+"427","Sub-task","Diseño de webhooks firmados","Sub-tarea de: Avisar la decisión por correo o SMS y por webhooks a las entidades","425","tendia","roadmap",""
+"429","Sub-task","Elegir proveedor de correo transaccional","Sub-tarea de: Enviar las invitaciones automáticamente por correo","428","tendia","roadmap",""
+"430","Sub-task","Plantilla de invitación","Sub-tarea de: Enviar las invitaciones automáticamente por correo","428","tendia","roadmap",""
+"432","Sub-task","Diseño de permisos y confirmaciones","Sub-tarea de: Gestionar las personas del equipo desde el portal","431","tendia","roadmap",""
+"433","Sub-task","Endpoints de gestión de equipo","Sub-tarea de: Gestionar las personas del equipo desde el portal","431","tendia","roadmap",""
+"435","Sub-task","Diseño de la vista de historial","Sub-tarea de: Ver el historial de versiones de la política de riesgo","434","tendia","roadmap",""
+"436","Sub-task","Endpoint de versiones de política","Sub-tarea de: Ver el historial de versiones de la política de riesgo","434","tendia","roadmap",""
+"438","Sub-task","Nuevo estado en el ciclo de vida","Sub-tarea de: Pedir más información al tendero","437","tendia","roadmap",""
+"439","Sub-task","Diseño de la respuesta del tendero","Sub-tarea de: Pedir más información al tendero","437","tendia","roadmap",""
+"441","Sub-task","Paginación y orden en la API","Sub-tarea de: Buscar, ordenar y paginar la bandeja","440","tendia","roadmap",""
+"442","Sub-task","Componentes de búsqueda y orden en el portal","Sub-tarea de: Buscar, ordenar y paginar la bandeja","440","tendia","roadmap",""
+"444","Sub-task","App: botón quitar justificación","Sub-tarea de: Quitar una justificación desde la app","443","tendia","roadmap",""
+"445","Sub-task","Pruebas automatizadas de los criterios de aceptación","Sub-tarea de: Quitar una justificación desde la app","443","tendia","roadmap",""
+"447","Sub-task","Definir en qué paso se pide","Sub-tarea de: Pedir la cédula del tendero","446","tendia","roadmap",""
+"448","Sub-task","Pantalla y cifrado de la cédula","Sub-tarea de: Pedir la cédula del tendero","446","tendia","roadmap",""

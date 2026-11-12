@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <a href="https://tendia-landing.vercel.app"><img alt="Conoce TendIA" src="https://img.shields.io/badge/✨%20Conoce%20TendIA-F38B54?style=for-the-badge"></a>
-  <a href="https://tendia-app.vercel.app/app"><img alt="Abrir la app del tendero" src="https://img.shields.io/badge/📱%20App%20del%20tendero-362D7C?style=for-the-badge"></a>
-  <a href="https://tendia-app.vercel.app"><img alt="Abrir el portal del aliado" src="https://img.shields.io/badge/🖥️%20Portal%20del%20aliado-362D7C?style=for-the-badge"></a>
-  <a href="https://tendia-app.vercel.app/api/docs"><img alt="Ver la API" src="https://img.shields.io/badge/🔌%20API%20pública-1F1A4D?style=for-the-badge"></a>
+  <a href="https://tendia-landing.vercel.app"><img alt="Conoce TendIA" src="https://img.shields.io/badge/Conoce%20TendIA-F38B54?style=for-the-badge&logo=vercel&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app/app"><img alt="Abrir la app del tendero" src="https://img.shields.io/badge/App%20del%20tendero-362D7C?style=for-the-badge&logo=expo&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app"><img alt="Abrir el portal del aliado" src="https://img.shields.io/badge/Portal%20del%20aliado-362D7C?style=for-the-badge&logo=nextdotjs&logoColor=white"></a>
+  <a href="https://tendia-app.vercel.app/api/docs"><img alt="Ver la API" src="https://img.shields.io/badge/API%20pública-1F1A4D?style=for-the-badge&logo=swagger&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -328,7 +328,7 @@ config:
       plotColorPalette: "#362D7C, #F38B54"
 ---
 xychart-beta
-  title "Ingresos (barras) y gastos (línea) por trimestre, en millones de pesos"
+  title "Ingresos (barras) y gastos (línea) por trimestre"
   x-axis ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"]
   y-axis "Millones de pesos" 0 --> 400
   bar [78, 89, 102, 117, 139, 158, 181, 206, 246, 280, 320, 365]

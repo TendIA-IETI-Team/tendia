@@ -3,7 +3,9 @@
 import { chartColors } from '@tendia/tokens';
 import { useState } from 'react';
 import type { Contribucion } from '@/lib/api';
-import { fecha, mesCorto, millones, pesos } from '@/lib/format';
+import { fecha, mesCorto, millones, pesos, puntos } from '@/lib/format';
+
+export { puntos };
 
 /** Tooltip HTML posicionado sobre el gráfico. */
 function Tip({ left, children }: { left: string; children: React.ReactNode }) {
@@ -39,7 +41,8 @@ export function VentasChart({
   const slot = innerW / datos.length;
   const barW = Math.min(36, slot - 6);
   const y = (v: number) => pad.top + innerH - (v / max) * innerH;
-  const ticks = [0, max / 2, max].map((t) => Math.round(t / 1_000_000) * 1_000_000);
+  // Marcas redondeadas a cien mil: redondear a millones repetía "1 M" en ventas de ~1 millón.
+  const ticks = [...new Set([0, max / 2, max].map((t) => Math.round(t / 100_000) * 100_000))];
   const motivo = (mes: string) => justificados.find((j) => j.mes === mes)?.motivo;
 
   return (
@@ -108,13 +111,6 @@ export function VentasChart({
       )}
     </figure>
   );
-}
-
-/** Puntos con signo; los valores que redondean a cero se muestran como 0. */
-export function puntos(p: number, decimales = 1): string {
-  const r = Number(p.toFixed(decimales));
-  if (r === 0) return (0).toFixed(decimales);
-  return `${r > 0 ? '+' : ''}${r.toFixed(decimales)}`;
 }
 
 /**

@@ -20,14 +20,16 @@ export const CONSEJOS: Record<string, string> = {
     'Evita atrasos largos con el proveedor: si te vas a demorar, abona algo y avísale.',
   pago_proporcion_pagada: 'Paga completo lo que te fía el proveedor antes de pedir más.',
   pago_uso_cupo: 'No uses todo el cupo que te da el proveedor: deja un margen libre.',
-  pago_tendencia_compras: 'Compra al proveedor de forma pareja, según lo que vendes.',
+  pago_tendencia_compras:
+    'Evita subir tus compras al proveedor de golpe: que crezcan al mismo ritmo que tus ventas.',
   sales_cv:
     'Registra todas tus ventas en el datáfono o con el asistente para mostrar ventas más estables.',
   low_months_ratio: 'Si un mes fue malo por algo puntual, justifícalo en la app.',
   sales_trend: 'Mantén o sube tus ventas de los próximos meses: la tendencia cuenta.',
   avg_sales:
     'Registrar todas tus ventas, no solo las de tarjeta, muestra el tamaño real de tu tienda.',
-  purchases_to_sales: 'Compra al proveedor de acuerdo con lo que vendes.',
+  purchases_to_sales:
+    'Compra solo lo que rota: revisa qué productos se quedan quietos en el estante.',
   business_age_months:
     'Tu negocio gana historial con el tiempo: vuelve a intentarlo en unos meses.',
 };
@@ -39,11 +41,13 @@ const FRASES_PROHIBIDAS = [
   /garantizad/i,
   /datacr[ée]dito/i,
   /tendia (te )?presta/i,
+  // "Aliado" es jerga interna: al tendero siempre se le habla de "la entidad".
+  /\baliad[oa]s?\b/i,
 ];
 
 const SYSTEM = `Eres el asistente de TendIA. Explicas a tenderos de barrio en Colombia su Puntaje TendIA (0 a 1000, en tres franjas: bajo, medio y bueno) con palabras sencillas, en español colombiano, tratando de "tú".
 Reglas:
-- TendIA no presta dinero: evalúa el negocio y le comparte el puntaje al aliado que el tendero elija. Nunca digas que el crédito está aprobado ni prometas un resultado.
+- TendIA no presta dinero: evalúa el negocio y el tendero comparte su puntaje con la entidad (banco, cooperativa o fintech) que elija. Di siempre "entidad", nunca "aliado". Nunca digas que el crédito está aprobado ni prometas un resultado.
 - No es un puntaje de DataCrédito; no lo compares con centrales de riesgo.
 - Usa solo los datos que recibes. No inventes cifras.
 - Evita palabras técnicas como "open finance", "POS", "variable", "modelo" o "probabilidad".

@@ -134,7 +134,7 @@ export class RegistrosService {
       r.ventaHoy
         ? `Hoy llevas ${formatoPesos(r.ventaHoy)} en ventas.`
         : 'Hoy aún no registras ventas.',
-      `Esta semana: ${formatoPesos(r.ventasSemana)}. Este mes: ${formatoPesos(r.ventasMes)} (${r.diasRegistradosMes} días anotados).`,
+      `Esta semana: ${formatoPesos(r.ventasSemana)}. Este mes: ${formatoPesos(r.ventasMes)} (${r.diasRegistradosMes === 1 ? '1 día anotado' : `${r.diasRegistradosMes} días anotados`}).`,
       r.totalFiado
         ? `Te deben ${formatoPesos(r.totalFiado)} en fiados (${r.fiadoPorCliente.length} clientes).`
         : 'No tienes fiados pendientes.',

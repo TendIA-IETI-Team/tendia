@@ -37,6 +37,18 @@ export default function Asistente() {
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const entrada = useRef<ComponentRef<typeof TextInput>>(null);
+  // La respuesta vuelve a dibujar el chat y el campo pierde el foco: lo que el tendero siga
+  // escribiendo se perdería y en el celular se cerraría el teclado. Si estaba escribiendo, el
+  // foco vuelve al campo; si tocó una sugerencia, no se le abre el teclado.
+  const devolverFoco = useRef(false);
+
+  useEffect(() => {
+    if (!enviando && devolverFoco.current) {
+      devolverFoco.current = false;
+      entrada.current?.focus();
+    }
+  }, [enviando]);
 
   useEffect(() => {
     api<MensajeChat[]>('/asistente/mensajes')
@@ -47,6 +59,7 @@ export default function Asistente() {
   async function enviar(contenido: string) {
     const limpio = contenido.trim();
     if (!limpio || enviando) return;
+    devolverFoco.current = entrada.current?.isFocused() ?? false;
     setTexto('');
     setMensajes((m) => [...m, { rol: 'user', contenido: limpio }]);
     setEnviando(true);
@@ -127,6 +140,7 @@ export default function Asistente() {
         </ScrollView>
         <View style={s.barra}>
           <TextInput
+            ref={entrada}
             testID="mensaje"
             style={s.input}
             placeholder="Escribe aquí…"

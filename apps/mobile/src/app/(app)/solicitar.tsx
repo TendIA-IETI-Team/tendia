@@ -29,12 +29,18 @@ export default function Solicitar() {
   const [plazo, setPlazo] = useState<(typeof PLAZOS)[number] | null>(6);
   const [antiguedad, setAntiguedad] = useState<Antiguedad | null>(null);
   const [pideAntiguedad, setPideAntiguedad] = useState(false);
+  // El nombre es opcional, pero sin él la entidad ve "Negocio sin nombre" en su bandeja.
+  const [nombre, setNombre] = useState('');
+  const [pideNombre, setPideNombre] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
     api<Perfil>('/me')
-      .then((p) => setPideAntiguedad(!p.negocio?.antiguedadMeses))
+      .then((p) => {
+        setPideAntiguedad(!p.negocio?.antiguedadMeses);
+        setPideNombre(!p.negocio?.nombre);
+      })
       .catch(() => undefined);
   }, []);
   const valor = soloDigitos(monto);
@@ -47,7 +53,8 @@ export default function Solicitar() {
     (!pideAntiguedad || antiguedad);
 
   const faltantes = [
-    !(valor >= 200_000 && valor <= 50_000_000) && 'el monto',
+    !(valor >= 200_000 && valor <= 50_000_000) &&
+      (valor ? 'un monto entre $200.000 y $50.000.000' : 'el monto'),
     !(destinoFinal && destinoFinal.length >= 3) && 'para qué es',
     !plazo && 'el plazo',
     pideAntiguedad && !antiguedad && 'hace cuánto abriste',
@@ -57,11 +64,12 @@ export default function Solicitar() {
     setError(null);
     setCargando(true);
     try {
-      if (pideAntiguedad && antiguedad) {
-        await api('/me/negocio', {
-          method: 'PUT',
-          body: { antiguedadMeses: ANTIGUEDAD[antiguedad] },
-        });
+      const negocio = {
+        ...(pideAntiguedad && antiguedad && { antiguedadMeses: ANTIGUEDAD[antiguedad] }),
+        ...(pideNombre && nombre.trim() && { nombre: nombre.trim() }),
+      };
+      if (Object.keys(negocio).length) {
+        await api('/me/negocio', { method: 'PUT', body: negocio });
       }
       await api('/solicitudes', {
         method: 'POST',
@@ -126,6 +134,17 @@ export default function Solicitar() {
             onChange={setAntiguedad}
           />
         </>
+      )}
+      {pideNombre && (
+        <Input
+          testID="nombre-tienda"
+          label="¿Cómo se llama tu tienda? (opcional)"
+          placeholder="Tienda Doña Gloria"
+          value={nombre}
+          onChangeText={setNombre}
+          maxLength={80}
+          hint="Así te reconoce la entidad cuando revise tu solicitud."
+        />
       )}
       <Body muted style={{ fontSize: 15 }}>
         La entidad que elijas define la tasa y las cuotas.

@@ -25,7 +25,16 @@ import {
   type Mercado,
   type Segmento,
 } from '@/lib/api';
-import { fecha, GARANTIAS, mesCorto, pesos, porcentaje, RECOMENDACIONES } from '@/lib/format';
+import {
+  decimal,
+  fecha,
+  franjaFemenino,
+  GARANTIAS,
+  mesCorto,
+  pesos,
+  porcentaje,
+  RECOMENDACIONES,
+} from '@/lib/format';
 
 const PRIORIDAD_VENTAS = ['DATAFONO', 'OPEN_FINANCE', 'MANUAL'];
 
@@ -191,7 +200,7 @@ export default function DetallePage({ params }: { params: Promise<{ id: string }
                         <td className="py-1.5 text-right">
                           {r.pagadasATiempo}/{r.facturas}
                         </td>
-                        <td className="py-1.5 text-right">{r.diasRetrasoPromedio ?? 0}</td>
+                        <td className="py-1.5 text-right">{decimal(r.diasRetrasoPromedio ?? 0)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -339,7 +348,7 @@ function MercadoCard({ mercado: m, franja }: { mercado: Mercado; franja: string 
         <span className="tabular text-3xl font-extrabold text-brand-700">
           {m.tasaEfectivaAnual.toLocaleString('es-CO')} %
         </span>
-        <span className="text-sm text-ink-muted">E.A. para franja {franja.toLowerCase()}</span>
+        <span className="text-sm text-ink-muted">E.A. para franja {franjaFemenino(franja)}</span>
       </div>
       <p className="mt-1 text-xs text-ink-muted">
         La mitad de los créditos productivos a tiendas en Bogotá estuvo entre{' '}
@@ -361,7 +370,7 @@ function MercadoCard({ mercado: m, franja }: { mercado: Mercado; franja: string 
               <tr key={e.entidad} className="tabular border-t border-line">
                 <td className="py-1">{e.entidad}</td>
                 <td className="py-1 text-right">{e.creditos.toLocaleString('es-CO')}</td>
-                <td className="py-1 text-right">{e.tasa_promedio_ponderada} %</td>
+                <td className="py-1 text-right">{decimal(e.tasa_promedio_ponderada)} %</td>
               </tr>
             ))}
           </tbody>

@@ -36,6 +36,11 @@ export function mesLargo(mes: string): string {
   return `${MESES[Number(mes.slice(5, 7)) - 1]} ${mes.slice(0, 4)}`;
 }
 
+/** Día AAAA-MM-DD como lo dice un tendero: "2026-10-20" -> "20 de octubre de 2026". */
+export function diaLargo(dia: string): string {
+  return `${Number(dia.slice(8, 10))} de ${MESES[Number(dia.slice(5, 7)) - 1]} de ${dia.slice(0, 4)}`;
+}
+
 /** Últimos n meses cerrados en formato AAAA-MM, del más reciente al más antiguo. */
 export function ultimosMeses(n: number, hoy = new Date()): string[] {
   const out: string[] = [];

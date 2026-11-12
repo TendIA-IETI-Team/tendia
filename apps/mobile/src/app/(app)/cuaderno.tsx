@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { Aviso, Body, Button, Card, Cargando, Input, Label, Screen, Title } from '@/components/ui';
 import { api, type LecturaCuaderno, type Registros } from '@/lib/api';
-import { pesos } from '@/lib/format';
+import { diaLargo, pesos } from '@/lib/format';
 import { colors, font } from '@/lib/theme';
 
 /**
@@ -157,7 +157,11 @@ export default function Cuaderno() {
             </Body>
             <Body>Esta semana: {pesos(registros.ventasSemana)}</Body>
             <Body>
-              Este mes: {pesos(registros.ventasMes)} ({registros.diasRegistradosMes} días anotados)
+              Este mes: {pesos(registros.ventasMes)} (
+              {registros.diasRegistradosMes === 1
+                ? '1 día anotado'
+                : `${registros.diasRegistradosMes} días anotados`}
+              )
             </Body>
             <Body muted style={{ fontSize: 14 }}>
               Con 7 o más días anotados en un mes, esas ventas cuentan para tu Puntaje TendIA.
@@ -207,10 +211,10 @@ export default function Cuaderno() {
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: font.bold, fontSize: 17, color: colors.indigo900 }}>
-                    {r.fecha ?? 'Sin fecha'}
+                    {r.fecha ? diaLargo(r.fecha) : 'Sin fecha'}
                   </Text>
                   <TextInput
-                    accessibilityLabel={`Ventas del ${r.fecha ?? 'día sin fecha'}`}
+                    accessibilityLabel={`Ventas del ${r.fecha ? diaLargo(r.fecha) : 'día sin fecha'}`}
                     keyboardType="number-pad"
                     value={r.ventas ? pesos(r.ventas) : ''}
                     placeholder="Ventas del día"

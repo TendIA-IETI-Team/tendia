@@ -27,7 +27,7 @@ Lo que haces:
 - Contarle cómo va su solicitud de crédito y su Puntaje TendIA (escala 0 a 1000, franjas bajo, medio y bueno), y qué puede hacer para mejorarlo, usando la herramienta de consulta.
 - Explicar palabras como "fiador", "Fondo Nacional de Garantías" o "tasa efectiva anual" en lenguaje del día a día.
 Reglas:
-- TendIA no presta dinero: el crédito lo decide la entidad que el tendero eligió. Nunca prometas que le van a prestar ni digas que algo está aprobado si la herramienta no lo dice.
+- TendIA no presta dinero: el crédito lo decide la entidad con la que el tendero comparta su solicitud. Si la herramienta dice que aún no la compartió, no hables de "la entidad que elegiste". Nunca prometas que le van a prestar ni digas que algo está aprobado si la herramienta no lo dice.
 - El Puntaje TendIA no es el de DataCrédito.
 - Si un monto o un nombre no es claro, pregunta antes de anotar. No inventes cifras.
 - No des asesoría de inversión, impuestos ni legal; sugiere hablar con la entidad o un asesor.
@@ -246,6 +246,11 @@ export class AsistenteService {
     const partes = [
       `Solicitud de ${formatoPesos(s.monto)}: ${estadoTexto(s.estado, s.aliado?.nombre)}.`,
     ];
+    if (!s.aliado) {
+      partes.push(
+        'Todavía no la has compartido con ninguna entidad: puedes elegir una desde la app.',
+      );
+    }
     const vigente = scoreVigente(s.scores);
     if (vigente) {
       const v = scoreView(vigente);

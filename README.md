@@ -10,18 +10,21 @@
 </p>
 
 <p align="center">
-  <a href="https://tendia-landing.vercel.app"><img alt="Página de TendIA" src="https://img.shields.io/badge/página-tendia--landing-F38B54?logo=vercel&logoColor=white"></a>
+  <a href="https://tendia-landing.vercel.app"><img alt="Conoce TendIA" src="https://img.shields.io/badge/✨%20Conoce%20TendIA-F38B54?style=for-the-badge"></a>
+  <a href="https://tendia-app.vercel.app/app"><img alt="Abrir la app del tendero" src="https://img.shields.io/badge/📱%20App%20del%20tendero-362D7C?style=for-the-badge"></a>
+  <a href="https://tendia-app.vercel.app"><img alt="Abrir el portal del aliado" src="https://img.shields.io/badge/🖥️%20Portal%20del%20aliado-362D7C?style=for-the-badge"></a>
+  <a href="https://tendia-app.vercel.app/api/docs"><img alt="Ver la API" src="https://img.shields.io/badge/🔌%20API%20pública-1F1A4D?style=for-the-badge"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/TendIA-IETI-Team/tendia/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://tendia-app.vercel.app"><img alt="Portal en Vercel" src="https://img.shields.io/badge/portal-en%20línea-362D7C?logo=vercel&logoColor=white"></a>
-  <a href="https://tendia-app.vercel.app/app"><img alt="App del tendero en Vercel" src="https://img.shields.io/badge/app%20del%20tendero-en%20línea-F38B54?logo=expo&logoColor=white"></a>
-  <a href="https://tendia-app.vercel.app/api/docs"><img alt="API en Vercel" src="https://img.shields.io/badge/API-OpenAPI-362D7C?logo=swagger&logoColor=white"></a>
   <img alt="Modelo" src="https://img.shields.io/badge/modelo-tendia--v2%20·%20AUC%200%2C741-F38B54">
   <img alt="Datos reales" src="https://img.shields.io/badge/datos-UCI%20·%20DANE%20·%20Superfinanciera-F38B54">
 </p>
 
 <p align="center">
   <img alt="Expo" src="https://img.shields.io/badge/Expo%20SDK-58-000020?logo=expo&logoColor=white">
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white">
   <img alt="NestJS" src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.162-009688?logo=fastapi&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/Postgres-16%20%2B%20RLS-4169E1?logo=postgresql&logoColor=white">
@@ -44,13 +47,34 @@
   <a href="#-documentación">Docs</a>
 </p>
 
+<table align="center">
+  <tr>
+    <td align="center" width="25%"><h2>9,6 %</h2><sub>de las tiendas de Bogotá que pidieron crédito acudió al <b>gota a gota</b> (EMICRON 2024)</sub></td>
+    <td align="center" width="25%"><h2>0 – 1000</h2><sub>Puntaje TendIA con cada factor <b>explicado</b> en palabras sencillas</sub></td>
+    <td align="center" width="25%"><h2>AUC 0,741</h2><sub>con <b>30.000 créditos reales</b>, en un modelo que se explica variable por variable</sub></td>
+    <td align="center" width="25%"><h2>Mes 5</h2><sub><b>punto de equilibrio</b> con 10 entidades que pagan desde el mes 1</sub></td>
+  </tr>
+</table>
+
 ---
 
 ## 🏪 El problema
 
 Una tienda de barrio vende todos los días, pero el sistema financiero no la ve: no tiene historial bancario ni estados financieros, y lleva las cuentas en un cuaderno. Según la **Encuesta de Micronegocios del DANE (EMICRON 2024)**, de las tiendas de Bogotá que pidieron crédito, **el 9,6 % acudió al gota a gota**, que cobra entre 382 % y 666 % al año.
 
-**TendIA** convierte la actividad real de la tienda (ventas con datáfono, pagos al distribuidor, lo que el tendero anota en su cuaderno) en un **Puntaje TendIA de 0 a 1000 explicado**. El tendero lo ve, puede justificarlo y decide con qué entidad compartirlo. TendIA **no presta dinero**: vende la evaluación de riesgo a bancos, fintechs, microfinancieras y distribuidores (B2B2C).
+**TendIA** convierte la actividad real de la tienda (ventas con datáfono, pagos al distribuidor, lo que el tendero anota en su cuaderno) en un **Puntaje TendIA de 0 a 1000 explicado**. El tendero lo ve, puede justificarlo y decide con qué entidad compartirlo.
+
+> [!IMPORTANT]
+> TendIA **no presta dinero** ni es una central de riesgo. Vende la evaluación de riesgo a bancos, fintechs, microfinancieras y distribuidores (B2B2C), y **el tendero nunca paga**.
+
+```mermaid
+flowchart LR
+  d["🧾 Ventas con datáfono<br>🚚 Pagos al distribuidor<br>📒 Cuaderno y Tendi"] --> p(("⭐ Puntaje<br>0 – 1000"))
+  p --> t["🏪 El tendero lo entiende,<br>lo justifica y decide<br>con quién compartirlo"]
+  t --> e["🏦 La entidad decide<br>en minutos, con la razón<br>de cada punto"]
+```
+
+Diseñado con tenderos reales: la primera prueba, con doña Gloria en Kennedy, cambió cinco niveles por tres franjas y "auto-reportado" por "lo que tú nos cuentas" ([prueba de usabilidad](docs/usabilidad.md)).
 
 | Para el tendero                                                                           | Para la entidad (aliado)                                                                  |
 | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -224,11 +248,11 @@ flowchart LR
 | Pieza                                  | Qué es                                                                                                 | Stack                                |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------ |
 | [`apps/mobile`](apps/mobile)           | App del tendero (T1 a T13), Tendi y Mi cuaderno                                                        | Expo SDK 58, Expo Router, TypeScript |
-| [`apps/portal`](apps/portal)           | Portal del aliado (A1 a A4), política, API, equipo, satisfacción, auditoría y administración de TendIA | Next.js 15, Tailwind                 |
+| [`apps/portal`](apps/portal)           | Portal del aliado (A1 a A4), política, API, equipo, satisfacción, auditoría y administración de TendIA | Next.js 16, Tailwind                 |
 | [`services/api`](services/api)         | Identidad, consentimientos, solicitudes, conectores, asistente, WhatsApp y API pública                 | NestJS 11, Prisma, Postgres          |
 | [`services/scoring`](services/scoring) | Motor interpretable (dos scorecards WoE), segmentación y referencias de mercado                        | Python 3.12, FastAPI, scikit-learn   |
 | [`packages/tokens`](packages/tokens)   | Paleta y tipografía de marca, con pruebas de contraste WCAG                                            | TypeScript                           |
-| [`docs`](docs)                         | ADR, modelo de datos, model card, datos, plan de pruebas, legal, seguridad, demo                       | Markdown                             |
+| [`docs`](docs)                         | ADR, modelo de datos, model card, datos, plan de pruebas, legal, seguridad                             | Markdown                             |
 
 La API es un **monolito modular sin estado**: un solo proceso con 14 módulos que no guarda nada en memoria, así que escala agregando instancias. El scoring ya es un servicio aparte. Los diagramas C4, de infraestructura, de clases y entidad-relación están en [docs/diseno](docs/diseno/README.md), junto con el [plan de crecimiento de la infraestructura](docs/diseno/plan-infraestructura.md) y [por qué un monolito](docs/diseno/monolito-sin-estado.md).
 
@@ -257,7 +281,15 @@ sequenceDiagram
 
 ## 📊 Modelo y datos reales
 
-El modelo `tendia-v2` es un **scorecard interpretable** (WoE + regresión logística) con dos componentes, en una escala **0-1000 con tres franjas**: **Bajo** (0-499), **Medio** (500-649) y **Bueno** (650-1000).
+El modelo `tendia-v2` es un **scorecard interpretable** (WoE + regresión logística) con dos componentes, en una escala **0-1000 con tres franjas**:
+
+<p align="center">
+  <img alt="Bajo: 0 a 499" src="https://img.shields.io/badge/Bajo-0%20–%20499-8C84C9?style=for-the-badge">
+  <img alt="Medio: 500 a 649" src="https://img.shields.io/badge/Medio-500%20–%20649-5B4FB0?style=for-the-badge">
+  <img alt="Bueno: 650 a 1000" src="https://img.shields.io/badge/Bueno-650%20–%201000-362D7C?style=for-the-badge">
+</p>
+
+Las franjas van en una rampa de índigo: el naranja nunca significa "malo", y un puntaje bajo se presenta como "En construcción", con consejos para subir ([marca](docs/brand.md)).
 
 | Componente                                    | Peso | Entrenado con                                                                                              | Holdout                   |
 | --------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------- | ------------------------- |
@@ -285,6 +317,25 @@ La entidad paga; **el tendero nunca paga**. Las cifras salen del modelo financie
 | Punto de equilibrio      | **Mes 5**                                                           |
 | En tres años             | ~$2.281 millones de ingresos y ~$545 millones de utilidad operativa |
 | Inversión que pedimos    | **$60 millones** de capital semilla y aporte de los socios          |
+
+```mermaid
+---
+config:
+  xyChart:
+    height: 320
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#362D7C, #F38B54"
+---
+xychart-beta
+  title "Ingresos (barras) y gastos (línea) por trimestre, en millones de pesos"
+  x-axis ["T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"]
+  y-axis "Millones de pesos" 0 --> 400
+  bar [78, 89, 102, 117, 139, 158, 181, 206, 246, 280, 320, 365]
+  line [84, 88, 91, 96, 127, 132, 139, 146, 193, 202, 213, 226]
+```
+
+Los gastos saltan al empezar el año 2 y el año 3 porque crecen la nómina (de $13,2 a $19,8 millones al mes en el año 2), el mercadeo y la infraestructura; aun así, desde el mes 5 los ingresos van por encima. La caja nunca baja de ~$39,7 millones (mes 5).
 
 Clientes objetivo: cooperativas, microfinancieras, distribuidores que fían, fintechs y bancos. Usan el portal o la API pública.
 
@@ -327,7 +378,9 @@ docker compose up --build
 
 App del tendero: `cd apps/mobile && npm install && npx expo start` (Expo Go en el celular o `w` para web). En un celular físico, crea `apps/mobile/.env` con `EXPO_PUBLIC_API_URL=http://<IP de tu computador>:4000`.
 
-### Probar con tus servicios reales
+<details>
+<summary><b>Probar con tus servicios reales</b>: Claude, SMS, WhatsApp y Sentry</summary>
+<br>
 
 Copia [`.env.example`](.env.example) como `.env` en la raíz y **quita el `#`** de las líneas que llenes (las comentadas no se leen). `docker compose` lo carga en la API.
 
@@ -338,7 +391,11 @@ Copia [`.env.example`](.env.example) como `.env` en la raíz y **quita el `#`** 
 | **WhatsApp** | Las mismas + `PUBLIC_API_URL`                  | `ngrok http 4000`, pon la URL en `PUBLIC_API_URL` y en Twilio → Messaging → _Try it out_ → WhatsApp sandbox configura _When a message comes in_ = `https://<túnel>/whatsapp/webhook` (POST). Únete al sandbox desde un celular registrado como tendero y escribe "hoy vendí 200 mil" o manda la foto del cuaderno. Las decisiones de la entidad también llegan por ahí |
 | **Sentry**   | `SENTRY_DSN` (el DSN del proyecto **Node.js**) | En local solo la API lee `.env`. Un error 500 llega a Sentry con `release=local`; los 4xx no se envían                                                                                                                                                                                                                                                                 |
 
-### Desarrollo sin Docker
+</details>
+
+<details>
+<summary><b>Desarrollo sin Docker</b>: cada pieza en su terminal</summary>
+<br>
 
 Requisitos: Node 22.13+, pnpm 9, Python 3.12+ con [uv](https://docs.astral.sh/uv/).
 
@@ -352,6 +409,8 @@ pnpm --filter @tendia/api dev                  # terminal 2
 pnpm --filter @tendia/portal dev               # terminal 3
 cd apps/mobile && npm install && npx expo start  # terminal 4
 ```
+
+</details>
 
 ### Pruebas
 
@@ -390,7 +449,7 @@ tendia/
 │   ├── api/             API TendIA (NestJS + Prisma): única puerta a los datos
 │   └── scoring/         Motor de scoring (FastAPI): scorecard, segmentos y referencias
 ├── packages/tokens/     Paleta y tipografía compartidas, con pruebas de contraste
-├── docs/                Análisis, diseño, ADR, modelo, legal, seguridad y demo
+├── docs/                Análisis, diseño, ADR, modelo, legal y seguridad
 ├── Dockerfile.api       Imagen de la API, igual en local y en Vercel
 ├── docker-compose.yml   Todo el sistema en local
 └── vercel.json          Los cuatro servicios del despliegue
@@ -406,9 +465,32 @@ tendia/
 | Conectores de datáfono, distribuidor y Open Finance  | 🟡 Simulados con distribuciones de EMICRON                                                  |
 | Twilio                                               | 🟡 Cuenta de prueba: SMS solo a números verificados                                         |
 
+```mermaid
+timeline
+  title Cómo llegamos aquí (2026)
+  23 oct : v0.1 · flujo completo del tendero y del aliado
+  25 oct : MVP con datos reales, IA, RLS y Twilio Verify
+  28 oct : alta de aliados y recorridos por rol
+  4 nov : despliegue en Vercel · release v1.0.0
+  10 nov : la app del tendero en la web, en /app
+```
+
 Lo que sigue: convenios con proveedores de datos (Bold, Treinta, distribuidores), un piloto con 10 entidades que pagan desde el mes 1, validar el modelo con los pagos reales de esos créditos y entrar al sandbox de la Superfinanciera.
 
 ## 📚 Documentación
+
+**¿Por dónde empiezo?**
+
+| Si eres…                        | Lee primero                                                                                                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎓 **Jurado o profesor**        | [Contexto](docs/contexto.md) → [Requerimientos](docs/requerimientos.md) → [Diseño (C4, clases, ER)](docs/diseno/README.md) → [Por qué un monolito sin estado](docs/diseno/monolito-sin-estado.md) |
+| 💼 **Inversionista o entidad**  | [Modelo de negocio](#-modelo-de-negocio) → [Planificación y modelo financiero](docs/planificacion.md) → [Model card](docs/model-card.md)                                                          |
+| 🛠️ **Desarrollador**            | [Correr en local](#-correr-en-local) → [ADR-002 Arquitectura](docs/adr/ADR-002-arquitectura.md) → [Modelo de datos](docs/data-model.md) → [Plan de pruebas](docs/test-plan.md)                    |
+| 🔐 **Seguridad o cumplimiento** | [OWASP API Top 10](docs/security/owasp-api-top10.md) → [Política de datos](docs/legal/politica-tratamiento-datos.md) → [Aviso de privacidad](docs/legal/aviso-privacidad.md)                      |
+
+<details>
+<summary><b>Todos los documentos</b></summary>
+<br>
 
 | Documento                                                                                                                           | De qué trata                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -421,11 +503,12 @@ Lo que sigue: convenios con proveedores de datos (Bold, Treinta, distribuidores)
 | [ADR-003 Asistente de IA](docs/adr/ADR-003-asistente-ia.md)                                                                         | Tendi, WhatsApp y lectura del cuaderno                                               |
 | [Modelo de datos](docs/data-model.md)                                                                                               | Diagrama entidad-relación, estados y protección de datos                             |
 | [Model card](docs/model-card.md) · [Diccionario de variables](docs/diccionario-variables.md) · [Datos](docs/datos.md)               | Cómo se entrena, con qué, qué tan bien funciona y sus límites                        |
-| [Plan de pruebas](docs/test-plan.md)                                                                                                | Pirámide, cobertura y casos que no se pueden romper                                  |
+| [Plan de pruebas](docs/test-plan.md) · [Prueba de usabilidad](docs/usabilidad.md)                                                   | Pirámide, cobertura, casos que no se pueden romper y validación con tenderos         |
 | [OWASP API Top 10](docs/security/owasp-api-top10.md)                                                                                | Revisión de seguridad                                                                |
 | [Política de datos](docs/legal/politica-tratamiento-datos.md) · [Aviso de privacidad](docs/legal/aviso-privacidad.md)               | Ley 1581                                                                             |
-| [Guion de demo](docs/demo.md) · [Prueba de usabilidad](docs/usabilidad.md)                                                          | Entrega final y validación con tenderos                                              |
 | [Despliegue](docs/deploy.md) · [Marca](docs/brand.md)                                                                               | Ambientes, secretos, observabilidad y paleta                                         |
+
+</details>
 
 ## 🤝 Cómo trabajamos
 
@@ -435,13 +518,15 @@ Lo que sigue: convenios con proveedores de datos (Bold, Treinta, distribuidores)
 
 ## 👥 Equipo
 
-| Persona                                                                                           | Rol                         |
-| ------------------------------------------------------------------------------------------------- | --------------------------- |
-| Andersson David Sánchez Méndez ([@AnderssonProgramming](https://github.com/AnderssonProgramming)) | QA & Data/ML Lead           |
-| Cristian Santiago Pedraza Rodríguez ([@cris-eci](https://github.com/cris-eci))                    | Backend Developer           |
-| David Santiago Villadiego Médicis ([@Krayangel](https://github.com/Krayangel))                    | Data Scientist              |
-| David Stiven Sarria Arcila ([@DASarria](https://github.com/DASarria))                             | Product & Business Strategy |
-| Juan Esteban Lozano Cárdenas ([@juanLozano-2004](https://github.com/juanLozano-2004))             | UX/UI & Wireframes          |
-| Raquel Iveth Selma Ayala ([@RaquelSAyala](https://github.com/RaquelSAyala))                       | Documentation & QA          |
+<table align="center">
+  <tr>
+    <td align="center" width="16%"><a href="https://github.com/AnderssonProgramming"><img src="https://github.com/AnderssonProgramming.png?size=120" width="80" alt="Andersson David Sánchez Méndez"><br><sub><b>Andersson David Sánchez Méndez</b></sub></a><br><sub>QA & Data/ML Lead</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/cris-eci"><img src="https://github.com/cris-eci.png?size=120" width="80" alt="Cristian Santiago Pedraza Rodríguez"><br><sub><b>Cristian Santiago Pedraza Rodríguez</b></sub></a><br><sub>Backend Developer</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/Krayangel"><img src="https://github.com/Krayangel.png?size=120" width="80" alt="David Santiago Villadiego Médicis"><br><sub><b>David Santiago Villadiego Médicis</b></sub></a><br><sub>Data Scientist</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/DASarria"><img src="https://github.com/DASarria.png?size=120" width="80" alt="David Stiven Sarria Arcila"><br><sub><b>David Stiven Sarria Arcila</b></sub></a><br><sub>Product & Business Strategy</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/juanLozano-2004"><img src="https://github.com/juanLozano-2004.png?size=120" width="80" alt="Juan Esteban Lozano Cárdenas"><br><sub><b>Juan Esteban Lozano Cárdenas</b></sub></a><br><sub>UX/UI & Wireframes</sub></td>
+    <td align="center" width="16%"><a href="https://github.com/RaquelSAyala"><img src="https://github.com/RaquelSAyala.png?size=120" width="80" alt="Raquel Iveth Selma Ayala"><br><sub><b>Raquel Iveth Selma Ayala</b></sub></a><br><sub>Documentation & QA</sub></td>
+  </tr>
+</table>
 
 <p align="center"><sub><a href="https://tendia-landing.vercel.app">tendia-landing.vercel.app</a> · Proyecto de IETI · Escuela Colombiana de Ingeniería Julio Garavito · 2026</sub></p>

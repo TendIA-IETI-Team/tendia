@@ -146,4 +146,30 @@ describe('AsistenteService', () => {
     const { svc } = montar();
     await expect(svc.solicitudTexto('t1')).resolves.toContain('Todavía no tienes una solicitud');
   });
+
+  it('aclara que el puntaje listo aún no se compartió con ninguna entidad', async () => {
+    const { svc, prisma } = montar();
+    prisma.solicitud.findFirst.mockResolvedValueOnce({
+      monto: 3000000,
+      estado: 'SCORE_LISTO',
+      aliado: null,
+      scores: [],
+    } as never);
+    const texto = await svc.solicitudTexto('t1');
+    expect(texto).toContain('Tu Puntaje TendIA está listo');
+    expect(texto).toContain('no la has compartido con ninguna entidad');
+  });
+
+  it('con la solicitud enviada nombra a la entidad y no dice que falta compartirla', async () => {
+    const { svc, prisma } = montar();
+    prisma.solicitud.findFirst.mockResolvedValueOnce({
+      monto: 3000000,
+      estado: 'ENVIADA',
+      aliado: { nombre: 'Banco Demo Popular' },
+      scores: [],
+    } as never);
+    const texto = await svc.solicitudTexto('t1');
+    expect(texto).toContain('Banco Demo Popular está revisando tu solicitud');
+    expect(texto).not.toContain('no la has compartido');
+  });
 });

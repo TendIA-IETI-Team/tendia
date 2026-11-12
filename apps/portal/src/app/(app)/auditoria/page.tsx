@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PageTitle } from '@/components/Shell';
 import { Alerta, Card, Vacio } from '@/components/ui';
 import { api } from '@/lib/api';
+import { accion } from '@/lib/format';
 
 interface Evento {
   id: string;
@@ -66,9 +67,12 @@ export default function AuditoriaPage() {
                     </td>
                     <td className="py-2 pr-4">
                       {ACTORES[e.actorTipo] ?? e.actorTipo}{' '}
-                      <span className="text-xs text-ink-muted">{e.actorId.slice(0, 8)}</span>
+                      <span className="text-xs text-ink-muted">
+                        {/* Los ids se acortan; los nombres del sistema ("reset-mfa") se dejan enteros. */}
+                        {e.actorTipo === 'SISTEMA' ? e.actorId : e.actorId.slice(0, 8)}
+                      </span>
                     </td>
-                    <td className="py-2 pr-4 font-semibold">{e.accion.replaceAll('_', ' ')}</td>
+                    <td className="py-2 pr-4 font-semibold">{accion(e.accion)}</td>
                     <td className="py-2 pr-4">
                       {e.entidad}{' '}
                       <span className="text-xs text-ink-muted">{e.entidadId?.slice(0, 8)}</span>

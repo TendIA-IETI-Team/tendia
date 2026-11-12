@@ -284,12 +284,12 @@ sequenceDiagram
 El modelo `tendia-v2` es un **scorecard interpretable** (WoE + regresión logística) con dos componentes, en una escala **0-1000 con tres franjas**:
 
 <p align="center">
-  <img alt="Bajo: 0 a 499" src="https://img.shields.io/badge/Bajo-0%20–%20499-8C84C9?style=for-the-badge">
-  <img alt="Medio: 500 a 649" src="https://img.shields.io/badge/Medio-500%20–%20649-5B4FB0?style=for-the-badge">
-  <img alt="Bueno: 650 a 1000" src="https://img.shields.io/badge/Bueno-650%20–%201000-362D7C?style=for-the-badge">
+  <img alt="Bajo: 0 a 499" src="https://img.shields.io/badge/Bajo-0%20–%20499-B3261E?style=for-the-badge">
+  <img alt="Medio: 500 a 649" src="https://img.shields.io/badge/Medio-500%20–%20649-875A00?style=for-the-badge">
+  <img alt="Bueno: 650 a 1000" src="https://img.shields.io/badge/Bueno-650%20–%201000-1B7346?style=for-the-badge">
 </p>
 
-Las franjas van en una rampa de índigo: el naranja nunca significa "malo", y un puntaje bajo se presenta como "En construcción", con consejos para subir ([marca](docs/brand.md)).
+Cada franja lleva su nombre escrito, porque el color nunca es la única señal, y un puntaje bajo siempre viene con consejos para subirlo. Los colores son los de estado de la marca, con contraste AA verificado en las pruebas, y el naranja de la marca nunca significa "malo" ([marca](docs/brand.md)).
 
 | Componente                                    | Peso | Entrenado con                                                                                              | Holdout                   |
 | --------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------- | ------------------------- |
@@ -417,7 +417,7 @@ cd apps/mobile && npm install && npx expo start  # terminal 4
 | Pieza   | Comando                                                                                                                   | Qué cubre                                                                                                     | Resultado              |
 | ------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | Scoring | `cd services/scoring && uv sync --group train && uv run pytest`                                                           | Variables, scorecard, indicadores, contrato `/score` v2                                                       | **45 pruebas · 91 %**  |
-| API     | `pnpm --filter @tendia/api test`                                                                                          | Flujo T1 → T13, aislamiento y RLS, Ley 1581, invitaciones, adjuntos, asistente, OTP con Twilio Verify, Sentry | **108 pruebas · 90 %** |
+| API     | `pnpm --filter @tendia/api test`                                                                                          | Flujo T1 → T13, aislamiento y RLS, Ley 1581, invitaciones, adjuntos, asistente, OTP con Twilio Verify, Sentry | **110 pruebas · 91 %** |
 | Portal  | `pnpm --filter @tendia/portal test` y `test:e2e`                                                                          | Formatos y flujo feliz con Playwright (MFA → aprobar con la tasa del mercado)                                 | ✅                     |
 | App     | `npm run lint && npx tsc --noEmit` en `apps/mobile`; [`.maestro/flujo-feliz.yaml`](apps/mobile/.maestro/flujo-feliz.yaml) | Tipos, lint y flujo feliz con Maestro                                                                         | ✅                     |
 | Tokens  | `pnpm --filter @tendia/tokens test`                                                                                       | Contraste WCAG AA de la paleta                                                                                | ✅                     |

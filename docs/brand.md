@@ -16,7 +16,7 @@ La paleta sale del logo: **índigo `#362D7C`** (la casa) y **naranja `#F38B54`**
 ## Reglas
 
 1. **Nunca texto blanco sobre naranja** (2,4:1). Sobre naranja va `indigo900` (6,6:1).
-2. **El naranja nunca significa "malo".** Los niveles del puntaje usan una rampa de índigo con su nombre escrito. Un puntaje bajo es "En construcción".
+2. **El naranja nunca significa "malo".** Las franjas del puntaje (Bajo, Medio, Bueno) usan los colores de estado `danger`, `warning` y `success`, siempre con su nombre escrito. El ámbar de "Medio" (`#875A00`) no es el naranja de la marca, y un puntaje bajo siempre viene con consejos para mejorar.
 3. **Nunca solo color:** cada estado y cada barra lleva texto o signo.
 4. **Tipografía Nunito**, con cuerpo de 18 px en la app y 16 px en el portal, y números tabulares en montos y puntajes.
 5. **Lenguaje simple** (hallazgos con doña Gloria): "ventas con datáfono" en vez de "POS", "cuentas del banco" en vez de "open finance", "respaldo del Fondo Nacional de Garantías" en vez de "aval FNG". Siempre aclarar que TendIA no presta dinero.

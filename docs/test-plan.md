@@ -17,13 +17,13 @@
 | E2E app     | `apps/mobile/.maestro`                            | Maestro                                      | Ingreso con OTP → solicitud → autorización → puntaje → envío                                                                                                                    |
 | Usabilidad  | `apps/portal/scripts/recorrido-usabilidad.js`     | Playwright + axe-core + KLM                  | Las 9 tareas de `docs/usabilidad.md`: pasos, tiempo estimado, accesibilidad y objetivos táctiles                                                                                |
 
-## Cobertura actual (25 oct 2026)
+## Cobertura actual (12 nov 2026)
 
 | Pieza   | Pruebas                    | Cobertura      |
 | ------- | -------------------------- | -------------- |
-| Scoring | 41                         | 91 % de líneas |
-| API     | 101                        | 90 % de líneas |
-| Portal  | 4 unitarias + 1 Playwright | —              |
+| Scoring | 45                         | 91 % de líneas |
+| API     | 110                        | 91 % de líneas |
+| Portal  | 6 unitarias + 1 Playwright | —              |
 
 ## Casos que no se pueden romper
 
@@ -47,3 +47,17 @@ DATABASE_URL=postgresql://tendia:tendia@127.0.0.1:55432/tendia_test pnpm --filte
 pnpm --filter @tendia/api test
 docker compose up -d --build && pnpm --filter @tendia/portal test:e2e
 ```
+
+## Prueba de punta a punta del release 1.1.0 (12 nov 2026)
+
+Antes del release se recorrió todo el producto a mano con Claude in Chrome, sobre `docker compose` y la app del tendero exportada para la web igual que en Vercel (`/app`), con Claude real y los datos sembrados.
+
+| Rol                          | Qué se probó                                                                                                                                                                                                                                           | Resultado |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| Tendero (app web)            | Celular incompleto y código errado, T1 con monto fuera de rango, T2 con dos fuentes, T7, T8 con foto de evidencia, Tendi (venta, fiado, pago, estado y un intento de sacarlo de su papel), foto del cuaderno con Claude, T9 a T13 y revocar una fuente | ✅        |
+| Analista del banco           | Contraseña y MFA errados, enrolamiento con QR, bandeja, detalle, evidencia, pedir garantía, PDF del tendero, tasa inválida y aprobación; no puede cambiar la política (403 en la API)                                                                  | ✅        |
+| Administrador del banco      | Política inválida y válida, crear llave, `POST /v1/score` con llave buena (200) y falsa (401), revocar, consumo facturado, equipo, auditoría y satisfacción                                                                                            | ✅        |
+| Administrador de otro aliado | Pedir la solicitud del banco por la API: 404, igual que una que no existe                                                                                                                                                                              | ✅        |
+| Equipo TendIA                | Bitácora completa del tendero de la prueba y satisfacción de todos los aliados                                                                                                                                                                         | ✅        |
+
+Hallazgos corregidos en el mismo release: "Franja medio" en la app y "franja medio" en el portal; el campo de Tendi perdía el foco al llegar cada respuesta; Tendi hablaba de "la entidad que elegiste" antes de compartir la solicitud; "1 días anotados"; fechas del cuaderno en formato técnico; la bandeja mostraba "Negocio sin nombre" porque la app no pedía el nombre de la tienda; el error de una tasa inválida salía en inglés; decimales con punto y marcas repetidas en la gráfica de ventas; el resumen de la política mostraba rangos imposibles mientras el valor era inválido; la bitácora mostraba códigos internos, cortaba el nombre del actor del sistema y atribuía al aliado lo que hizo el equipo TendIA; la explicación de Claude le decía "aliado" al tendero (ahora es una frase prohibida), y dos consejos de rechazo decían casi lo mismo.

@@ -92,8 +92,12 @@ describe('ExplicacionService', () => {
     expect(parse.mock.calls[0][0].output_config.effort).toBe('low');
   });
 
-  it('descarta respuestas que prometen crédito o hablan de DataCrédito', async () => {
-    for (const resumen of ['Tu crédito está aprobado', 'Es como tu puntaje de DataCrédito']) {
+  it('descarta respuestas que prometen crédito, hablan de DataCrédito o dicen "aliado"', async () => {
+    for (const resumen of [
+      'Tu crédito está aprobado',
+      'Es como tu puntaje de DataCrédito',
+      'Este puntaje se comparte con el aliado que tú elijas',
+    ]) {
       const parse = jest.fn().mockResolvedValue({
         stop_reason: 'end_turn',
         parsed_output: { resumen, fortalezas: [], aMejorar: [] },

@@ -253,6 +253,9 @@ export function EscalaPuntaje({ puntaje }: { puntaje: number }) {
   );
 }
 
+/** "Franja" es femenino: la insignia dice "Franja media", no "Franja medio". */
+const franjaEnFemenino: Record<Banda, string> = { bajo: 'baja', medio: 'media', bueno: 'buena' };
+
 /** Insignia de la franja con su color de estado y su nombre. */
 export function Franja({ franja }: { franja: Banda }) {
   const b = bandas[franja];
@@ -267,7 +270,7 @@ export function Franja({ franja }: { franja: Banda }) {
       }}
     >
       <Text style={{ fontFamily: font.extrabold, fontSize: 15, color: b.color }}>
-        Franja {b.nombre.toLowerCase()}
+        Franja {franjaEnFemenino[franja]}
       </Text>
     </View>
   );

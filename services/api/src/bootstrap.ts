@@ -36,7 +36,7 @@ export function openApiDocument(app: INestApplication) {
       'Crédito basado en tu negocio, no en tu pasado bancario. ' +
         'TendIA no presta dinero: calcula un puntaje explicado que el tendero comparte con el aliado que elige.',
     )
-    .setVersion('0.1.0')
+    .setVersion('1.1.0')
     .addBearerAuth()
     .addApiKey({ type: 'apiKey', in: 'header', name: 'x-api-key' }, 'api-key')
     .build();

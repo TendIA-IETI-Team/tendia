@@ -5,7 +5,7 @@ import { PageTitle } from '@/components/Shell';
 import { type Satisfaccion, TableroSatisfaccion } from '@/components/Satisfaccion';
 import { Alerta, Badge, Button, Card, Field, inputClass, Vacio } from '@/components/ui';
 import { api } from '@/lib/api';
-import { fecha } from '@/lib/format';
+import { accion, fecha } from '@/lib/format';
 
 interface Evento {
   id: string;
@@ -132,9 +132,14 @@ export default function AdminPage() {
                       <td className="tabular py-2 pr-4 text-ink-muted">
                         {new Date(e.creadoEn).toLocaleString('es-CO')}
                       </td>
-                      <td className="py-2 pr-4">{ACTORES[e.actorTipo] ?? e.actorTipo}</td>
+                      <td className="py-2 pr-4">
+                        {/* Todo usuario de un aliado tiene aliado; sin él, es el equipo TendIA. */}
+                        {e.actorTipo === 'USUARIO' && !e.aliado
+                          ? 'Equipo TendIA'
+                          : (ACTORES[e.actorTipo] ?? e.actorTipo)}
+                      </td>
                       <td className="py-2 pr-4">{e.aliado ?? '—'}</td>
-                      <td className="py-2 pr-4 font-semibold">{e.accion.replaceAll('_', ' ')}</td>
+                      <td className="py-2 pr-4 font-semibold">{accion(e.accion)}</td>
                       <td className="py-2">
                         {e.finalidad ? (
                           <Badge tono="info">{FINALIDADES[e.finalidad] ?? e.finalidad}</Badge>

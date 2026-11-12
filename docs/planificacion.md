@@ -1,6 +1,6 @@
 # Planificación
 
-La planeación del MVP vive en **Jira**: 26 épicas, 108 historias de usuario y 314 subtareas repartidas en cinco sprints. Se importó desde el archivo [`docs/jira/tendia-jira.csv`](jira/tendia-jira.csv), que es la fuente de esta página. Cada épica lleva una etiqueta de área (app del tendero, cuaderno y Tendi, portal del aliado, equipo TendIA, scoring y API, seguridad, operación y próximas funcionalidades).
+La planeación del MVP vive en **Jira**: 26 épicas, 108 historias de usuario y 314 subtareas repartidas en cinco sprints. Se importó a Jira desde un CSV del equipo, que es la fuente de esta página. Cada épica lleva una etiqueta de área (app del tendero, cuaderno y Tendi, portal del aliado, equipo TendIA, scoring y API, seguridad, operación y próximas funcionalidades).
 
 En GitHub también están los issues `TND-XXX` y sus milestones, con los que se organizó el trabajo técnico en el repositorio; los requerimientos los citan como trazabilidad.
 
@@ -66,7 +66,7 @@ flowchart LR
 
 ## Historias por sprint
 
-Cada historia se escribió como _Como… quiero… para…_, con criterios de aceptación en Gherkin (Given / When / Then) y subtareas técnicas. El texto completo está en el [CSV de Jira](jira/tendia-jira.csv).
+Cada historia se escribió como _Como… quiero… para…_, con criterios de aceptación en Gherkin (Given / When / Then) y subtareas técnicas. El texto completo, con los criterios y las subtareas, está en Jira.
 
 ### Sprint 1 · Base segura
 

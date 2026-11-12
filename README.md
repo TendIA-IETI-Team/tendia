@@ -410,8 +410,6 @@ Lo que sigue: convenios con proveedores de datos (Bold, Treinta, distribuidores)
 
 ## 📚 Documentación
 
-Todo el análisis y el diseño también está en un solo documento de Word: [**TendIA · Análisis y diseño (.docx)**](docs/TendIA-analisis-y-diseno.docx).
-
 | Documento                                                                                                                           | De qué trata                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | [Contexto](docs/contexto.md) · [Requerimientos](docs/requerimientos.md) · [Datos de entrada y salida](docs/datos-entrada-salida.md) | Problema, actores, requerimientos y qué entra y sale                                 |

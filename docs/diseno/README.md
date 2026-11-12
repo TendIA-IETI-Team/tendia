@@ -2,8 +2,6 @@
 
 Documentación de análisis y diseño del MVP. Los diagramas están en Mermaid, así que GitHub los muestra sin herramientas extra y se actualizan junto con el código.
 
-Todo este material también está en un solo documento de Word, con portada, índice y los diagramas como imágenes: [TendIA-analisis-y-diseno.docx](../TendIA-analisis-y-diseno.docx).
-
 ## Análisis
 
 | Documento                                               | De qué trata                                                       |

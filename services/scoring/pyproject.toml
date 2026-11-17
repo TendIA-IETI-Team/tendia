@@ -10,7 +10,7 @@ dependencies = [
     "pydantic==2.10.3",
     "numpy==2.5.4",
     "structlog==24.4.0",
-    "sentry-sdk[fastapi]==2.73.0",
+    "sentry-sdk[fastapi]==2.75.0",
 ]
 
 [dependency-groups]
